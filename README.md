@@ -18,3 +18,7 @@ Dataset/
      └── results
         └── CSA_rescale_stat.py
 ~~~
+# How to run
+~~~
+sct_run_batch -path-data data process_data.sh -jobs 2
+~~~
