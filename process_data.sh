@@ -112,12 +112,12 @@ sct_resample -i ${SUBJECT}_T2w.nii.gz -f 0.9x0.9x0.9
 
 file_t2_r=${SUBJECT}_T2w_r
 # Segment spinal cord (only if it does not exist)
-segment_if_does_not_exist $file_t2 "t2"
+segment_if_does_not_exist $file_t2_r "t2"
 file_t2_seg_r=$FILESEG
 # Create a close mask around the spinal cord for more accurate registration
 #sct_create_mask -i $file_t2_r.nii.gz -p centerline,$file_t2_seg_r.nii.gz -size 35mm -f cylinder -o mask_t2_r.nii.gz
 # Create labels in the cord at C1 and C3 upper cervical vertebral levels (only if it does not exist)
-label_if_does_not_exist $file_t2 $file_t2_seg_r
+label_if_does_not_exist $file_t2_r $file_t2_seg_r
 file_label_r=$FILELABEL
 # Register to template
 sct_register_to_template -i $file_t2_r.nii.gz -s $file_t2_seg_r.nii.gz -l $file_label_r.nii.gz -c t2 -param step=1,type=seg,algo=centermassrot:step=2,type=im,algo=syn,iter=5,slicewise=1,metric=CC,smooth=0 -qc $PATH_QC
@@ -150,5 +150,6 @@ cd ../../../../
 cp -r CSA_rescale_stat.py ./results
 # use sct envionment
 cd results
-source ~/sct/python/etc/profile.d/conda.sh
+# Change {SCT_DIR} if sct directory is not spinalcordtoolbox
+source {SCT_DIR}/python/etc/profile.d/conda.sh
 conda activate venv_sct
