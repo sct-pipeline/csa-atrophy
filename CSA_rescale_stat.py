@@ -64,9 +64,9 @@ def mean_metric(metrics, key):
     return mean_metric
 
 # Computes percentage difference between theoric and measured CSA rescaled
-def per_dif_metric(metrics, metrics_r, key, atrophy):
-    perc_diff_metric = 100*(abs(np.subtract(metrics_r[key],(atrophy*metrics[key]))))/(atrophy*metrics[key])
-    return perc_diff_metric
+# def per_dif_metric(metrics, metrics_r, key, atrophy):
+#    perc_diff_metric = 100*(abs(np.subtract(metrics_r[key],(atrophy*metrics[key]))))/(atrophy*metrics[key])
+#    return perc_diff_metric
 
 # Computes standard deviation between theoric and measured CSA rescaled
 def std_metric(metrics):
@@ -75,9 +75,9 @@ def std_metric(metrics):
     return std_metric
 
 # computes pearson r between original and rescaled image
-def pearsonr_metric(metrics, metrics_r, key):
-    pearsonr_metric = stats.pearsonr(metrics_r[key], metrics[key])
-    return pearsonr_metric
+# def pearsonr_metric(metrics, metrics_r, key):
+#    pearsonr_metric = stats.pearsonr(metrics_r[key], metrics[key])
+#    return pearsonr_metric
 
 # Computes t test for significance of difference
 def ttest_metric(metrics, metrics_r, key, atrophy):
@@ -119,12 +119,12 @@ def main():
     sct.printv('the std of CSA rescaled is ' + str(std_CSA_r) + ' mm^2\n', 'info')
 
     # computes pearson r between original and rescaled image
-    pearsonr_CSA = pearsonr_metric(metrics_subj_o, metrics_subj_r, 'MEANarea')
-    sct.printv('the pearson correlation coeff between original and rescaled image is ' + str(pearsonr_CSA) + '\n', 'info')
+    # pearsonr_CSA = pearsonr_metric(metrics_subj_o, metrics_subj_r, 'MEANarea')
+    # sct.printv('the pearson correlation coeff between original and rescaled image is ' + str(pearsonr_CSA) + '\n', 'info')
 
     # Computes percentage difference between theoric and measured CSA rescaled
-    perc_diff_CSA = per_dif_metric(metrics_subj_o, metrics_subj_r, 'MEANarea', atrophy)
-    sct.printv('Percentage difference from theoric atrophy is ' + str(perc_diff_CSA) + ' %\n', 'info')
+    # perc_diff_CSA = per_dif_metric(metrics_subj_o, metrics_subj_r, 'MEANarea', atrophy)
+    # sct.printv('Percentage difference from theoric atrophy is ' + str(perc_diff_CSA) + ' %\n', 'info')
 
     # Computes t test for significance of difference
     CSA_ttest,CSA_pval = ttest_metric(metrics_subj_o,metrics_subj_r, 'MEANarea', atrophy)
