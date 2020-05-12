@@ -19,6 +19,7 @@ Dataset/
         └── CSA_rescale_stat.py
 ~~~
 # How to run
+run the script within the Dataset folder
 ~~~
 sct_run_batch -path-data data process_data.sh -jobs 2
 ~~~
