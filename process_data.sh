@@ -25,7 +25,7 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Retrieve input params
 SUBJECT=$1
-FILEPARAM=$2
+#FILEPARAM=$2
 
 
 # FUNCTIONS
@@ -141,13 +141,14 @@ for file in ${FILES_TO_CHECK[@]}; do
   fi
 done
 
-
 # stats correlation of original and resampled
 # =============================================================================
+
+#if
 cd ../../../../
 # python stat script goes with results
-cp -r CSA_rescale_stat.py results
+cp -r CSA_rescale_stat.py ./results
 # use sct envionment
+cd results
 source ~/sct/python/etc/profile.d/conda.sh
 conda activate venv_sct
-python CSA_rescale_stat.py -i CSA.csv -r CSA_r.csv
