@@ -23,3 +23,8 @@ run the script within the Dataset folder
 ~~~
 sct_run_batch -path-data data process_data.sh -jobs 2
 ~~~
+
+then run in Dataset
+~~~
+python CSA_rescale_stat.py -i results/CSA.csv -r results/CSA_r.csv
+~~~
