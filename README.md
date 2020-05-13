@@ -4,9 +4,9 @@ Evaluate the sensitivity of atrophy detection with SCT
 # Data
 ~~~
 Dataset/
-└── CSA_rescale_stat.py
+└── csa_rescale_stat.py
 └── process_data.sh
-└── CSA-fetch-dataset.sh
+└── csa-fetch-dataset.sh
 └── participants.tsv
 └── data
     └── sub-subj01
@@ -18,7 +18,7 @@ Dataset/
          └── sub-subj02_T2w.nii.gz
          └── sub-subj02_T2w.json
  └── results
-     └── CSA_rescale_stat.py
+
 ~~~
 # How to run
 Download (or git clone) this repository:
