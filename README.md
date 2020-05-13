@@ -26,7 +26,7 @@ Download (or git clone) this repository:
 git clone https://github.com/sct-pipeline/csa-atrophy.git
 cd csa-atrophy
 ~~~
-To fetch dataset run command: (this file should be edited according to your needs and chmod permission should be given)
+To fetch dataset run command: (this file should be edited according to your needs)
 ~~~
 ./csa-fetch-dataset
 ~~~
