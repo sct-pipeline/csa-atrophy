@@ -28,7 +28,7 @@ cd csa-atrophy
 ~~~
 To fetch/sync dataset run command: (this file should be edited according to your needs)
 ~~~
-./csa-fetch-dataset
+./csa-fetch-dataset.sh
 ~~~
 Run the script within the Dataset folder (using sct venv if needed)
 ~~~
