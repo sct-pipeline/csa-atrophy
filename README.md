@@ -19,12 +19,20 @@ Dataset/
         └── CSA_rescale_stat.py
 ~~~
 # How to run
-run the script within the Dataset folder
+Download (or git clone) this repository:
+~~~
+git clone https://github.com/sct-pipeline/csa-atrophy.git
+cd csa-atrophy
+~~~
+to fetch dataset run command: (this file should be edited according to your needs and chmod permission should be given)
+~~~
+./csa-fetch-dataset
+~~~
+run the script within the Dataset folder (using sct venv if needed)
 ~~~
 sct_run_batch -path-data data process_data.sh -jobs 2
 ~~~
-
-then run in Dataset
+to output statistics, run in Dataset
 ~~~
 python CSA_rescale_stat.py -i results/CSA.csv -r results/CSA_r.csv
 ~~~
