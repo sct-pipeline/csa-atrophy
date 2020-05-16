@@ -43,7 +43,7 @@ label_if_does_not_exist(){
   else
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -qc ${PATH_QC} -qc-subject ${SUBJECT}
-    # Create labels in the cord at C3 and C5 mid-vertebral levels
+    # Create labels in the cord at C1 and C3 mid-vertebral levels
     sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 3,5 -o ${FILELABEL}.nii.gz
   fi
 }
@@ -77,8 +77,7 @@ cd $SUBJECT
 
 # T2w resampling
 # =============================================================================
-
-# define resamplling coefficients
+# define resampling coefficients
 R_COEFS=(0.85 0.9 0.95 1)
 # iterate resample on subject
 for r_coef in ${R_COEFS[@]}; do
@@ -92,7 +91,7 @@ for r_coef in ${R_COEFS[@]}; do
   segment_if_does_not_exist $file_t2 "t2"
   # name segmented file
   file_t2_seg=$FILESEG
-  # Create labels in the cord at C1 and C3 upper cervical vertebral levels (only if it does not exist)
+  # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
   label_if_does_not_exist $file_t2 $file_t2_seg
   file_label=$FILELABEL
   # Compute average CSA between C1 and C3 levels (append across subjects)
@@ -100,10 +99,11 @@ for r_coef in ${R_COEFS[@]}; do
   # sct_process_segmentation -i $file_t2_seg_r.nii.gz -vert 1:3 -perslice 1 -vertfile label_T2w/template/PAM50_levels.nii.gz -o $PATH_RESULTS/CSA_perslice_r.csv -append 1 -qc ${PATH_QC}
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
+  # add files to check
   FILES_TO_CHECK+=(
   "$PATH_RESULTS/csa_r_${r_coef}.csv"
   "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
- # add files to chexk
+
   )
 done
 
