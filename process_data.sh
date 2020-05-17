@@ -95,13 +95,13 @@ for r_coef in ${R_COEFS[@]}; do
   label_if_does_not_exist $file_t2 $file_t2_seg
   file_label=$FILELABEL
   # Compute average CSA between C1 and C3 levels (append across subjects)
-  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_r_${r_coef}.csv -append 1 -qc ${PATH_QC}
+  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
   # sct_process_segmentation -i $file_t2_seg_r.nii.gz -vert 1:3 -perslice 1 -vertfile label_T2w/template/PAM50_levels.nii.gz -o $PATH_RESULTS/CSA_perslice_r.csv -append 1 -qc ${PATH_QC}
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
   # add files to check
   FILES_TO_CHECK+=(
-  "$PATH_RESULTS/csa_r_${r_coef}.csv"
+  "$PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv"
   "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
 
   )
