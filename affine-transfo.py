@@ -101,9 +101,10 @@ def main():
     i=1
     # iterate transformation for each subject,
     for fname in glob.glob('data/*/*/*T2w.nii.gz'):
-        print('----------affine transformation subject '+str(i)+'------------')
         fname = os.path.join(os.getcwd(), fname) # get file path
         img = nib.load(fname) # load image
+        name = os.path.basename(fname)
+        print('----------affine transformation subject '+name+'------------')
         angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS = random_values()
         # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
         data, min_pad = get_image(img, angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS)
@@ -111,7 +112,7 @@ def main():
         # Crop image (to remove padding)
         data_crop = data_rot[min_pad:min_pad+img.shape[0], min_pad:img.shape[1]+min_pad, min_pad:img.shape[2]+min_pad]
         # load data back to nifti format
-        img_t = nib.Nifti1Image(data_crop, np.eye(4))
+        img_t = nib.Nifti1Image(data_crop, img.affine)
         print('new image shape',img_t.shape)
         nib.save(img_t, fname)
         i += 1
