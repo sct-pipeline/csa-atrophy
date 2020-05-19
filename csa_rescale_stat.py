@@ -4,6 +4,7 @@
 #
 # Evaluate the robustness of automated CSA with global rescaled images
 #
+# example: python csa_rescale_stat.py -i <results>
 # ---------------------------------------------------------------------------------------
 # Authors: Paul Bautin
 #
@@ -26,10 +27,18 @@ from math import ceil
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Compute statistics based on the csv file containing metrics:',
+        description='Compute statistics based on the csv file containing the metrics:',
         add_help=None,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
+
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        "-i",
+        required=True,
+        default='results',
+        help='Input csv file path to results. (e.g. results)',
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -47,21 +56,21 @@ def get_parser():
     return parser
 
 # Functions
-#########################################################################################
+#############################################################################
     # data extraction for pandas
-def get_data():
+def get_data(path_results):
     files = []
-    for file in os.listdir("results"):
+    for file in os.listdir(path_results):
         if file.endswith(".csv"):
-            files.append(os.path.join(os.getcwd(),'results/',file))
-    metrics = pd.concat([pd.read_csv(f).assign(rescale=os.path.basename(f).split('r_')[1].split('.csv')[0]) for f in files ])
+            files.append(os.path.join(path_results,file))
+    metrics = pd.concat([pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[2].split('.csv')[0]) for f in files])
     metrics.to_csv("csa.csv")
 
 def get_plot(atrophy, diff_arr):
     fig = plt.figure()
     y_pos = np.arange(len(atrophy))
     # plot
-    plt.bar(y_pos, diff_arr, align='center', alpha=0.5)
+    plt.bar(y_pos, np.absolute(diff_arr), align='center', alpha=0.5)
     plt.xticks(y_pos, atrophy)
     plt.xlabel('rescaling factor')
     plt.title('error in function of rescaling factor')
@@ -70,30 +79,39 @@ def get_plot(atrophy, diff_arr):
     fig.savefig("err_plot.jpg")
 
 
-def get_plot_sample(z, z_power, std):
-    fig = plt.figure()
+def get_plot_sample(z, z_power, std, mean_CSA):
+    fig, ax = plt.subplots()
     # data for plotting
-    i = np.arange(1.5, 8.0, 0.05)
-    num_n = ((z+z_power)**2)*((2*std)**2)
-    n = (num_n/((i)**2))
-    # plot
-    plt.plot(i, n)
-    plt.ylabel('minimum number of participants')
-    plt.xlabel('atrophy in mm^2')
-    plt.title('minimum number of subjects to detect an atrophy ')
-    plt.grid()
-    fig.savefig("min_subj.jpg")
+    n=[]
+    for z_p in z_power:
+        i = np.arange(1.5, 8.0, 0.05)
+        i_perc = np.arange(1.5, 8.0, 0.05)
+        num_n = ((z+z_p)**2)*((2*std)**2)
+        n.append(num_n/((i)**2))
+        # plot
+    ax.plot(i, n[0], label=('80% power'))
+    ax.plot(i, n[1], label=('90% power'))
+    ax.set_ylabel('minimum number of participants')
+    ax.set_xlabel('atrophy in mm^2')
+    ax.set_title('minimum number of subjects to detect an atrophy ')
+    ax.legend()
+    ax.grid()
+    # TODO: change this functions should take into account variable mean_CSA, default=80
+    def forward(i):
+        i2 = i/80*100
+        return i2
+    def inverse(i):
+        return i/100*80
+    secax = ax.secondary_xaxis('top', functions=(forward, inverse))
+    secax.set_xlabel('atrophy in %')
+    fig.savefig("min_subj.jpg", bbox_inches='tight')
 
 
 
 # Main
-#########################################################################################
+########################################################################
 def main():
-    # get parser elements
-    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
-
     #read data
-    get_data()
     data = pd.read_csv("csa.csv",decimal=".")
 
     #ground truth atrophy
@@ -108,14 +126,15 @@ def main():
         diff_arr.append(gt_CSA-r_CSA)
         print('the difference with ground truth for ',r,' rescaling is ',diff_perc,' %')
 
-    # Computes standard deviation between theoric and measured CSA rescaled
+    # Computes standard deviation of subject mean CSA for each rescaling
+    # TODO: normalization of CSA for intersubject studies
     print("\n====================std==========================\n")
     std_arr = []
     for r in atrophy:
         std = data.groupby('rescale')['MEAN(area)'].get_group(r).std()
         print('CSA std on ',r,' rescaled image is ',float(std),' mm^2 ')
 
-    # Computes t test for significance of difference
+    # Computes t test to measure the significance of the difference between rescaled CSA and original CSA * rescaling factor
     print("\n====================ttest==========================\n")
     for r in atrophy:
         ttest,pvalue = stats.ttest_ind(data.groupby('rescale')['MEAN(area)'].get_group(r), data.groupby('rescale')['MEAN(area)'].get_group(1)*(r**(2/3)))
@@ -123,23 +142,28 @@ def main():
 
     # calculate the minimum number of patients required to detect an atrophy of X (i.e. power analysis)
     print("\n====================size==========================\n")
-    # sample size with certainty 95% z(0.05)=1.645 power 0.8 zscore=1.282
-    num_n = ((1.645+1.282)**2)*((2*std)**2)
-    deno_n = (0.0178*80)**2
+    # sample size with certainty 95% z(0.05/2)=1.96, power 0.8 zscore=0.84, ratio patients/control 1:1
+    # and with the assumption both samples have same std
+    # (temp ref: the best option could be G*Power)
+    num_n = ((1.96+0.84)**2)*((2*std)**2)
+    deno_n = (0.1*80)**2
     n = ceil(num_n/deno_n)
     print('with 80% power, at 5% significance:')
-    print('minimum sample size to detect annual mean MS atrophy (',deno_n,'mm^2): ',n )
+    print('minimum sample size to detect mean 10% atrophy: ',n )
 
-    # plot grah if verbose is 2
+    # plot graph if verbose is 1
     if arguments.v == 1:
         get_plot(atrophy, diff_arr)
-        get_plot_sample(1.645, 1.282, std)
+        get_plot_sample(1.96,(0.84, 1.282), std, 80)
         print('\nfigures have been ploted in dataset')
 
 
 # Run
 #########################################################################################
 if __name__ == "__main__":
-#    sct.init_sct()
+    # get parser elements
     parser = get_parser()
+    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
+    path_results = os.path.join(os.getcwd(),arguments.i)
+    get_data(path_results)
     main()
