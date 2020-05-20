@@ -3,3 +3,6 @@ numpy
 scipy
 matplotlib
 scikit-image
+nibabel
+maths
+glob
