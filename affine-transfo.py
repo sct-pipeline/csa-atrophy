@@ -28,11 +28,11 @@ import nibabel as nib
 
 from  scipy.ndimage import shift
 
-##############################VALUES###############################
+#VALUES
+############################################################
 # generate Gaussian values
 def random_values():
     values = randn(6)
-    np.set_printoptions(precision=3, suppress=True)
     # for 95% of subjects repositioning (2*std away)
     std_angle = 5 # rotation (±10° in each direction),
     std_shift = 2.5 # shifting (±5 voxels in each direction)
@@ -45,7 +45,10 @@ def random_values():
     angle_RL = std_angle*values[4]
     shift_LR = std_shift*values[5]
     return angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS
-##############################IMAGE###############################
+
+
+#IMAGE
+############################################################
 def get_image(img, angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS):
     # upload and pad image
     data = img.get_fdata()
@@ -63,7 +66,9 @@ def get_image(img, angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS):
     print('data shape (image with padding):',data.shape)
     return data, min_pad
 
-##############################ROTATION###############################
+
+#ROTATION
+############################################################
 def transfo(angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS, data):
     # print angles and shifts
     print('angles for rotation IS:',angle_IS,' RL:',angle_RL,' AP:', angle_AP)
@@ -96,14 +101,16 @@ def transfo(angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS, data):
     data_rot = data_rotIS_rotRL_swap_rotAP.swapaxes(1, 2)
     return data_rot
 
-##############################MAIN###############################
+
+
+#MAIN
+############################################################
 def main():
-    i=1
     # iterate transformation for each subject,
-    for fname in glob.glob('data/*/*/*T2w.nii.gz'):
-        fname = os.path.join(os.getcwd(), fname) # get file path
+    for fname in glob.glob('data/*/*/*T2w*.nii.gz'):
+        path = os.path.join(os.getcwd(), fname) # get file path
         img = nib.load(fname) # load image
-        name = os.path.basename(fname)
+        name = os.path.basename(fname).split(fname)[0]
         print('----------affine transformation subject '+name+'------------')
         angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS = random_values()
         # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
@@ -114,9 +121,15 @@ def main():
         # load data back to nifti format
         img_t = nib.Nifti1Image(data_crop, img.affine)
         print('new image shape',img_t.shape)
-        nib.save(img_t, fname)
-        i += 1
+        # create new path to save data
+        new_path = path.split('.nii.gz')[0] + '-t.nii.gz'
+        print(new_path)
+        img_t.to_filename(new_path)
 
-##############################RUN###############################
+
+
+#RUN
+############################################################
 if __name__ == "__main__":
+    np.set_printoptions(precision=3, suppress=True)
     main()
