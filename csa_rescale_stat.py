@@ -27,7 +27,7 @@ from math import ceil
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Compute statistics based on the csv file containing the metrics:',
+        description='Compute statistics based on the csv files containing the CSA metrics:',
         add_help=None,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
@@ -37,21 +37,21 @@ def get_parser():
         "-i",
         required=True,
         default='results',
-        help='Input csv file path to results. (e.g. results)',
+        help='Input csv file path to results. (e.g. "results")',
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-v',
-        type=int,
-        help='Verbose.',
-        required=False,
-        default=1,
-        choices=(0, 1),)
+        help='Verbose, plotting figures',
+        nargs="*"
+    )
+
     optional.add_argument(
         '-h',
-        required=False,
-        help=' help',)
+        help='Help',
+        nargs="*"
+    )
 
     return parser
 
@@ -151,8 +151,8 @@ def main():
     print('with 80% power, at 5% significance:')
     print('minimum sample size to detect mean 10% atrophy: ',n )
 
-    # plot graph if verbose is 1
-    if arguments.v == 1:
+    # plot graph if verbose is present
+    if arguments.v is not None:
         get_plot(atrophy, diff_arr)
         get_plot_sample(1.96,(0.84, 1.282), std, 80)
         print('\nfigures have been ploted in dataset')
@@ -164,6 +164,9 @@ if __name__ == "__main__":
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
-    path_results = os.path.join(os.getcwd(),arguments.i)
-    get_data(path_results)
-    main()
+    if arguments.h is None:
+        path_results = os.path.join(os.getcwd(),arguments.i)
+        get_data(path_results)
+        main()
+    else:
+        parser.print_help()
