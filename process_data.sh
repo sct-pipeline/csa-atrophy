@@ -77,15 +77,15 @@ cd $SUBJECT
 
 # T2w resampling
 # =============================================================================
-# define resampling coefficients
-R_COEFS=(0.85 0.9 0.95 1)
+# define resampling coefficients (always keep value 1 for reference)
+R_COEFS=(0.85 0.90 0.95 1)
 # iterate resample on subject
 for r_coef in ${R_COEFS[@]}; do
   # rename anat to explicit resampling coefficient
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
   # Image homothetic rescaling
-  sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
+  python3 ../../../test_affine.py -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
   file_t2=${SUBJECT}_T2w_r${r_coef}
   # Segment spinal cord (only if it does not exist)
   segment_if_does_not_exist $file_t2 "t2"
@@ -94,14 +94,14 @@ for r_coef in ${R_COEFS[@]}; do
   # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
   label_if_does_not_exist $file_t2 $file_t2_seg
   file_label=$FILELABEL
-  # Compute average CSA between C1 and C3 levels (append across subjects)
-  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
-  # sct_process_segmentation -i $file_t2_seg_r.nii.gz -vert 1:3 -perslice 1 -vertfile label_T2w/template/PAM50_levels.nii.gz -o $PATH_RESULTS/CSA_perslice_r.csv -append 1 -qc ${PATH_QC}
+  # Compute average CSA between C2 and C5 levels (append across subjects)
+  # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
+  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/CSA_perlevel_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
   # add files to check
   FILES_TO_CHECK+=(
-  "$PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv"
+  "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
   "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
 
   )
