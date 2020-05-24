@@ -6,7 +6,7 @@
 #   ./process_data.sh <SUBJECT> <FILEPARAM>
 #
 # Example:
-#   ./process_data.sh sub-03 parameters.sh
+#   ./process_data.sh sub-03
 #
 # Author: Julien Cohen-Adad, Paul Bautin
 
@@ -85,7 +85,7 @@ for r_coef in ${R_COEFS[@]}; do
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
   # Image homothetic rescaling
-  python3 ../../../affine_rescale.py -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
+  python ../../../affine_rescale.py -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
   # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
   file_t2=${SUBJECT}_T2w_r${r_coef}
   # Segment spinal cord (only if it does not exist)
