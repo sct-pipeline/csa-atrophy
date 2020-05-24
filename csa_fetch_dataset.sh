@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  fetching data from openneuro if it those not already exist
+#  fetching data from openneuro if data does not already exist
 #
 # Usage:
 #   ./CSA-dataset
