@@ -8,7 +8,7 @@
 # Example:
 #   ./process_data.sh sub-03 parameters.sh
 #
-# Author: Julien Cohen-Adad
+# Author: Julien Cohen-Adad, Paul Bautin
 
 # The following global variables are retrieved from parameters.sh but could be
 # overwritten here:
@@ -85,8 +85,8 @@ for r_coef in ${R_COEFS[@]}; do
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
   # Image homothetic rescaling
-  python3 ../../../test_affine.py -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
-  #sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
+  python3 ../../../affine_rescale.py -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
+  # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
   file_t2=${SUBJECT}_T2w_r${r_coef}
   # Segment spinal cord (only if it does not exist)
   segment_if_does_not_exist $file_t2 "t2"
@@ -95,7 +95,7 @@ for r_coef in ${R_COEFS[@]}; do
   # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
   label_if_does_not_exist $file_t2 $file_t2_seg
   file_label=$FILELABEL
-  # Compute average CSA between C1 and C3 levels (append across subjects)
+  # Compute average CSA between C2 and C5 levels (append across subjects)
   # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
   sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/CSA_perlevel_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
   cd ../
