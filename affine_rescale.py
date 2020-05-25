@@ -48,6 +48,12 @@ def get_parser():
 #MAIN
 ############################################################
 def main(fname, coef_r):
+    """
+    Main function, rescales input images according to coef_r
+    :param fname: input image
+    :param coef_r: rescaling coefficient
+    :return: rescaled image
+    """
     print(coef_r)
     # iterate transformation for each subject,
     img = nib.load(fname) # load image
