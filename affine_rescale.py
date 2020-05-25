@@ -48,11 +48,11 @@ def get_parser():
 #MAIN
 ############################################################
 def main(fname, coef_r):
-    """
-    Main function, rescales input images according to coef_r
+    """Main function, isotropic rescale of input images according to coef_r
+    rescaled image is saved under name <input file name>_r.nii.gz
+    new image is saved under new name
     :param fname: input image
     :param coef_r: rescaling coefficient
-    :return: rescaled image
     """
     print(coef_r)
     # iterate transformation for each subject,

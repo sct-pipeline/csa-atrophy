@@ -59,6 +59,9 @@ def get_parser():
 #############################################################################
     # data extraction for pandas
 def get_data(path_results):
+    """fetch csv files data from path_resuts to compute statistics with pandas
+    :param path_results: path to data
+    """
     files = []
     for file in os.listdir(path_results):
         if file.endswith(".csv"):
@@ -66,8 +69,11 @@ def get_data(path_results):
     metrics = pd.concat([pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[3].split('.csv')[0]) for f in files])
     metrics.to_csv("csa.csv")
 
-#plot error in function of simulated atrophy
 def get_plot(atrophy, diff_arr):
+    """plot error in function of simulated atrophy and vertebrae levels
+    :param atrophy: simulated atrophy array (rescale factor)
+    :param diff_arr: error array (diff to ground truth)
+    """
     fig = plt.figure()
     y_pos = np.arange(len(atrophy))
     # plot
@@ -91,13 +97,20 @@ def get_plot(atrophy, diff_arr):
 
 
 def get_plot_sample(z, z_power, std, mean_CSA):
+    """plot needed sample size to detect atrophy with 80% power, 5% certainty
+    and 1:1 ratio (patients/controls)
+    :param z: z score for X% of certainty
+    :param z_power: z score for X% power
+    :param std: standard deviation computed on data
+    :param mean_CSA: mean CSA set to 80 mm^2
+    """
     fig, ax = plt.subplots()
     # data for plotting
     n=[]
     for z_p in z_power:
         i = np.arange(1.5, 8.0, 0.05)
         i_perc = np.arange(1.5, 8.0, 0.05)
-        num_n = ((z+z_p)**2)*((2*std)**2)
+        num_n = ((z+z_p)**2)*(2*(std)**2)
         n.append(num_n/((i)**2))
         # plot
     ax.plot(i, n[0], label=('80% power'))
@@ -122,6 +135,12 @@ def get_plot_sample(z, z_power, std, mean_CSA):
 # Main
 ########################################################################
 def main():
+    """Main function, computes statistics
+    diff, Computes mean CSA diff from ground truth over all subjects
+    std, Computes standard deviation of subjects CSA for each rescaling
+    ttest, Computes t test to measure the significance of the difference between rescaled CSA and original CSA * rescaling factor
+    size, calculate the minimum number of patients required to detect an atrophy of X
+    """
     #read data
     data = pd.read_csv("csa.csv",decimal=".")
     data2 = {'Filename':data['Filename'],
@@ -130,7 +149,7 @@ def main():
              'rescale':data['rescale'],}
     df = pd.DataFrame(data2)
 
-    # create pandas group by 
+    # create pandas group by
     df['Filename']=list((os.path.basename(path).split('.')[0].split('_')[0]) for path in data['Filename'])
     CSA_group = df.groupby(['rescale','VertLevel'])['CSA']
 
@@ -141,7 +160,7 @@ def main():
 
 
     print("====================diff==========================\n")
-    # Computes mean of metric over all subjects
+    # Computes mean CSA diff compared to ground truth over all subjects
     diff_perc_arr = []
     gt_CSA = []
     r_CSA = []
@@ -181,7 +200,7 @@ def main():
 
 
     print("\n====================std==========================\n")
-    # Computes standard deviation of subject mean CSA for each rescaling
+    # Computes standard deviation of subjects CSA for each rescaling
     # TODO: normalization of CSA for intersubject studies
     for r in atrophy:
         for n in Vert[1:len(Vert)]:
@@ -203,8 +222,9 @@ def main():
     # calculate the minimum number of patients required to detect an atrophy of X (i.e. power analysis)
     # sample size with certainty 95% z(0.05/2)=1.96, power 0.8 zscore=0.84, ratio patients/control 1:1
     # and with the assumption both samples have same std
-    # (temp ref: the best option could be G*Power)
-    num_n = ((1.96+0.84)**2)*((2*std)**2)
+    # ref: Ard, M Colin, and Steven D Edland. “Power calculations for clinical trials in Alzheimer's disease.”
+    # Journal of Alzheimer's disease : JAD vol. 26 Suppl 3,Suppl 3 (2011): 369-77. doi:10.3233/JAD-2011-0062
+    num_n = ((1.96+0.84)**2)*(2*(std)**2)
     deno_n = (0.1*80)**2
     n = ceil(num_n/deno_n)
     print('with 80% power, at 5% significance, ratio 1:1 (patients/controls):')
