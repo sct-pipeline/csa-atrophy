@@ -1,0 +1,7 @@
+data/
+results/
+log/
+qc/
+*.csv
+*.jpg
+.gitignore
