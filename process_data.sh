@@ -35,6 +35,7 @@ SUBJECT=$1
 label_if_does_not_exist(){
   local file="$1"
   local file_seg="$2"
+  local scale="$3"
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels"
   if [ -e "${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ]; then
@@ -42,9 +43,19 @@ label_if_does_not_exist(){
     rsync -avzh "${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ${FILELABEL}.nii.gz
   else
     # Generate labeled segmentation
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -qc ${PATH_QC} -qc-subject ${SUBJECT}
-    # Create labels in the cord at C3 and C5 mid-vertebral levels
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 3,5 -o ${FILELABEL}.nii.gz
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    # Create labels in the cord
+    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
+
+    # If automatic labeling did not work, you can initialize with manual identification of C2-C3 disc:
+    # sct_label_utils -i ${file}.nii.gz -create-viewer 3 -o label_vert.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
+    # sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -initlabel label_vert.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    # sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
+
+    # If manual labeling did not work, you can initialize with manual identification discs:
+    #sct_label_utils -i ${file}.nii.gz -create-viewer 2,3,4,5,6 -o label_vert.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
+    #sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -discfile label_vert.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    # sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   fi
 }
 
@@ -78,9 +89,18 @@ cd $SUBJECT
 # T2w resampling
 # =============================================================================
 # define resampling coefficients (always keep value 1 for reference)
-R_COEFS=(0.85 0.90 0.95 1)
+R_COEFS=(0.85 0.90 0.95 0.97 0.99 1)
 # iterate resample on subject
 for r_coef in ${R_COEFS[@]}; do
+  if [ -d "anat_r${r_coef}" ]; then
+    rm -r "anat_r${r_coef}"
+    echo "anat_r${r_coef} allready exists: creating new subject"
+  fi
+  if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
+    rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
+    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv allready exists: creating new subject"
+  fi
+
   # rename anat to explicit resampling coefficient
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
@@ -93,11 +113,11 @@ for r_coef in ${R_COEFS[@]}; do
   # name segmented file
   file_t2_seg=$FILESEG
   # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
-  label_if_does_not_exist $file_t2 $file_t2_seg
+  label_if_does_not_exist $file_t2 $file_t2_seg ${r_coef}
   file_label=$FILELABEL
   # Compute average CSA between C2 and C5 levels (append across subjects)
   # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
-  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/CSA_perlevel_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
+  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
   # add files to check
