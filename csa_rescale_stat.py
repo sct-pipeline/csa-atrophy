@@ -60,6 +60,9 @@ def get_parser():
 #############################################################################
     # data extraction for pandas
 def get_data(path_results):
+    '''Fetch and concatenate all csv files into one
+    :param path_results: path to folder containing csv files for statistics
+    '''
     files = []
     for file in os.listdir(path_results):
         if file.endswith(".csv"):
@@ -67,8 +70,11 @@ def get_data(path_results):
     metrics = pd.concat([pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[3].split('.csv')[0]) for f in files])
     metrics.to_csv("csa.csv")
 
-#plot error in function of simulated atrophy
 def get_plot(df_p1):
+    '''plot percentage difference between measured simulated atrophy and ground truth atrophy
+    for different vertebrae levels
+    :param df_p1: dataframe for first plot
+    '''
     fig= plt.figure()
     df_p1.groupby('rescale')[['perc_diff_C2_C3','perc_diff_C2_C4','perc_diff_C2_C5']].mean().plot(kind='bar')
     plt.xlabel('rescaling factor')
@@ -80,6 +86,10 @@ def get_plot(df_p1):
 
 #plot error in function of simulated atrophy
 def get_plot2(df_p2):
+    '''plot percentage difference between measured simulated atrophy and ground truth atrophy
+    between C2 and C5
+    :param df_p2: dataframe for second plot
+    '''
     fig2 = plt.figure()
     df_p2.groupby('rescale').mean().perc_diff_C2_C5.plot(kind='bar')
     plt.xlabel('rescaling factor')
@@ -92,6 +102,9 @@ def get_plot2(df_p2):
 
 #plot error in function of simulated atrophy
 def get_plot3(df_p3):
+    '''plot CSA boxplot over different rescalings
+    :param df_p3: dataframe for third plot
+    '''
     fig3 = plt.figure()
     df_p3.boxplot(column=['CSA'], by='rescale')
     plt.ylabel('CSA in mm^2')
@@ -99,6 +112,9 @@ def get_plot3(df_p3):
 
 
 def get_plot4(df_p4):
+    '''plot percentage of error boxplot over different rescalings
+    :param df_p4: dataframe for fourth plot
+    '''
     fig4 = plt.figure()
     df_p4.boxplot(column=['perc_diff_C2_C5'], by='rescale')
     plt.ylabel('error in %')
@@ -106,6 +122,12 @@ def get_plot4(df_p4):
 
 
 def get_plot_sample(z, z_power, std, mean_CSA):
+    '''plot minimum number of patients required to detect an atrophy of X
+    :param z: z score for X % uncertainty
+    :param z_power: z score for X % Power
+    :param std: standard deviation for ground truth
+    :param mean_CSA: mean value of CSA from which percentage atrophy is calculated (default = 80)
+    '''
     fig6, ax = plt.subplots()
     # data for plotting
     n=[]
@@ -133,65 +155,26 @@ def get_plot_sample(z, z_power, std, mean_CSA):
     fig.savefig("min_subj.jpg", bbox_inches='tight')
 
 
-
-def diff(CSA_group, atrophy, Vert):
-    print("====================diff==========================\n")
-    # Computes mean of metric over all subjects
-    diff_perc_arr = []
-    gt_CSA = []
-    r_CSA = []
-    diff_arr1 = []
-    diff_arr2 = []
-    gt_arr =[]
-    r_arr = []
-    gt_arr2 =[]
-    r_arr2 = []
-    for r in atrophy:
-        for n in Vert[1:len(Vert)]:
-            # compute mean ground truth CSA for vertebras ranges
-            gt_CSA.append(list((CSA_group.get_group((1,i)) for i in range(2, n+1))))
-            gt_arr = np.concatenate(gt_CSA, axis=None).mean()*(r**(2))
-
-            # compute mean rescaled CSA for vertebras ranges
-            r_CSA.append(list(CSA_group.get_group((r,i)) for i in range(2,n+1)))
-            r_arr = np.concatenate(r_CSA, axis=None).mean()
-
-            # compute difference of mean CSA
-            diff_perc_arr.append(100*abs(r_arr - gt_arr)/(gt_arr))
-            diff_perc = np.array(diff_perc_arr).mean()
-            diff_arr1.append(diff_perc)
-
-            # print mean differnce
-            print('the difference with ground truth for ',r,' rescaling on C2/C'+str(n)+' is ',round(diff_perc, 3),' %')
-            diff_perc_arr = []
-            gt_CSA = []
-            r_CSA = []
-        r_arr2.append(r_arr) # values of CSA for rescaled images
-        gt_arr2.append(gt_arr)# values of CSA for original images *(r**(2/3))
-        diff_arr2.append(diff_arr1)# values of difference of CSA
-        r_arr = []
-        gt_arr = []
-        diff_arr1=[]
-        print('\n')
-    return diff_arr2
-
 def std(CSA_group, atrophy, Vert):
+    '''
+    Computes standard deviation of subject mean CSA for each rescaling and different vertebrae levels
+    '''
     print("\n====================std==========================\n")
-    # Computes standard deviation of subject mean CSA for each rescaling
     # TODO: normalization of CSA for intersubject studies
     std_arr = []
     for r in atrophy:
         for n in Vert[1:len(Vert)]:
             std = np.concatenate(list(CSA_group.get_group((r,i)) for i in range(2,n+1)), axis=None).std()
             print('CSA std on ',r,' rescaled image C2/C'+str(n)+' is ',round(std, 3),' mm^2 ')
-            #std_arr.append(std)
-        #std_arr.append(std_arr)
         print('\n')
-        #return std_arr
+
 
 def ttesst(CSA_group, atrophy, Vert):
+    '''
+    Computes t test to measure the significance of the difference between rescaled CSA and original CSA * rescaling factor
+    for each rescaling and different vertebrae levels
+    '''
     print("\n====================ttest==========================\n")
-    # Computes t test to measure the significance of the difference between rescaled CSA and original CSA * rescaling factor
     for r in atrophy:
         for n in Vert[1:len(Vert)]:
             ttest,pvalue = stats.ttest_ind(np.array(list(CSA_group.get_group((1,i)) for i in (2,n))), np.array(list(CSA_group.get_group((1,i)) for i in (2,n)))*(r**2))
@@ -199,20 +182,22 @@ def ttesst(CSA_group, atrophy, Vert):
         print('\n')
 
 def sample_size(std):
+    '''
+    calculate the minimum number of patients required to detect an atrophy of X (i.e. power analysis)
+    sample size with certainty 95% z(0.05/2)=1.96, power 80% z(Power = 80%)=0.84, ratio patients/control 1:1
+    and with the assumption both samples have same std
+    '''
     print("\n====================size==========================\n")
-    # calculate the minimum number of patients required to detect an atrophy of X (i.e. power analysis)
-    # sample size with certainty 95% z(0.05/2)=1.96, power 0.8 zscore=0.84, ratio patients/control 1:1
-    # and with the assumption both samples have same std
-    # (temp ref: the best option could be G*Power)
     num_n = ((1.96+0.84)**2)*((2*std[-1])**2)
     deno_n = (0.1*80)**2
     n = ceil(num_n/deno_n)
     print('with 80% power, at 5% significance, ratio 1:1 (patients/controls):')
     print('minimum sample size to detect mean 10% atrophy: ',n )
 
-######################################################################################
+
 def main():
-    '''main function: gathers stats and calls plots
+    '''
+    main function: gathers stats and calls plots
     '''
     #read data
     data = pd.read_csv("csa.csv",decimal=".")
@@ -226,6 +211,8 @@ def main():
     df1 = df.copy()
     df2 = df.copy()
     df3 = df.copy()
+    df4 = df.copy()
+
     df_gt2 = pd.DataFrame()
 
 
@@ -245,13 +232,11 @@ def main():
             group_CSA_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').groupby('Filename').mean().CSA
         else:
             n.append(i+1)
-            print(n)
             group_CSA_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').drop(index=n).groupby('Filename').mean().CSA
 
         # iterate through rescale groupby
         for name, group in df.groupby('rescale'):
             atrophy = group['rescale'].values
-            print(atrophy[0])
             # mean values from same subject  different vertebrae
             group2 = group.groupby('Filename').mean().reset_index()
             # to locate easily subjects put Filename as index
@@ -281,21 +266,14 @@ def main():
     df_a['perc_diff_C2_C4'] = 100 * df_a['diff_C2_C4'].div(df_a['gt_CSA_C2_C4'])
     df_a['perc_diff_C2_C3'] = 100 * df_a['diff_C2_C3'].div(df_a['gt_CSA_C2_C3'])
 
-
-    #print(df.groupby(['rescale','Filename'])['CSA'].get_group((1,subject_CSA)))
-    #CSA_group = df.groupby(['rescale','VertLevel'])['CSA']
+    CSA_group = df4.groupby(['rescale','VertLevel'])['CSA']
 
     #ground truth atrophy
-    #atrophy = sorted(set(df['rescale'].values))
+    atrophy = sorted(set(df4['rescale'].values))
     # get vertebrae levels
-    #Vert = sorted(set(df['VertLevel'].values))
-    #std(CSA_group, atrophy, Vert)
-    #ttesst(CSA_group, atrophy, Vert)
-    #diff_err = diff(CSA_group, atrophy, Vert)
-
-
-
-
+    Vert = sorted(set(df['VertLevel'].values))
+    std(CSA_group, atrophy, Vert)
+    ttesst(CSA_group, atrophy, Vert)
 
     # plot graph if verbose is present
     if arguments.v is not None:
@@ -309,7 +287,7 @@ def main():
         get_plot4(df_p4)
         #get_plot5(df5)
 
-        # get_plot_sample(1.96,(0.84, 1.282), std, 80)
+        get_plot_sample(1.96,(0.84, 1.282), std, 80)
         print('\nfigures have been ploted in dataset')
 
 
