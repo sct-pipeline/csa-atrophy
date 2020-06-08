@@ -22,7 +22,7 @@ Dataset/
 # Installation
 csa-atrophy requires specific python packages for computing statistics and processing images. If not already present on the computers python environment such packages will automatically be installed by running pip command:
 ~~~
-pip install requirements.txt
+pip install -r requirements.txt
 ~~~
 # How to run
 Download (or git clone) this repository:
@@ -45,7 +45,6 @@ sct_run_batch -path-data data process_data.sh
 ~~~
 To output statistics, run in Dataset
 ~~~
-pip install -r requirements.txt
 python csa_rescale_stat.py -i results -v
 ~~~
 
