@@ -19,6 +19,11 @@ Dataset/
  └── results
 
 ~~~
+# Installation
+csa-atrophy requires specific python packages for computing statistics and processing images. If not already present on the computers python environment such packages will automatically be installed by running pip command:
+~~~
+pip install requirements.txt
+~~~
 # How to run
 Download (or git clone) this repository:
 ~~~
@@ -34,11 +39,11 @@ Fetch dataset (2 choices):
   ~~~
   openneuro download --snapshot 1.0.5 ds001919 data
   ~~~
-Run the script within the Dataset folder (script can be ran on desired subjects using flag -include)
+Run the following script within the Dataset folder to extract CSA. This script can be ran on desired subjects using flag -include and in parallel processing using flag -jobs.
 ~~~
 sct_run_batch -path-data data process_data.sh
 ~~~
-To output statistics, run in Dataset (if needed run requirements file)
+To output statistics, run in Dataset
 ~~~
 pip install -r requirements.txt
 python csa_rescale_stat.py -i results -v
