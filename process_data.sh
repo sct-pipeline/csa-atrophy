@@ -43,14 +43,14 @@ label_if_does_not_exist(){
     rsync -avzh "${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ${FILELABEL}.nii.gz
   else
     # Generate labeled segmentation
-    #sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -qc ${PATH_QC} -qc-subject ${SUBJECT}
     # Create labels in the cord
-    #sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
+    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
 
     # If automatic labeling did not work, you can initialize with manual identification of C2-C3 disc:
-    sct_label_utils -i ${file}.nii.gz -create-viewer 3 -o label_vert.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -initlabel label_vert.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
+    # sct_label_utils -i ${file}.nii.gz -create-viewer 3 -o label_vert.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
+    # sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -initlabel label_vert.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    # sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
 
     # If manual labeling did not work, you can initialize with manual identification discs:
     #sct_label_utils -i ${file}.nii.gz -create-viewer 2,3,4,5,6 -o label_vert.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
@@ -105,7 +105,7 @@ for r_coef in ${R_COEFS[@]}; do
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
   # Image homothetic rescaling
-  python3 ../../../affine_rescale.py -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
+  python ../../../affine_rescale.py -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
   # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
   file_t2=${SUBJECT}_T2w_r${r_coef}
   # Segment spinal cord (only if it does not exist)
