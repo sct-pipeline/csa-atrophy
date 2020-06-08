@@ -36,7 +36,7 @@ Fetch dataset (2 choices):
   ~~~
 Run the script within the Dataset folder (script can be ran on desired subjects using flag -include)
 ~~~
-sct_run_batch -path-data data process_data.sh -jobs 2
+sct_run_batch -path-data data process_data.sh
 ~~~
 To output statistics, run in Dataset (if needed run requirements file)
 ~~~
