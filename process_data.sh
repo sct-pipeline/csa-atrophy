@@ -84,6 +84,7 @@ cd $PATH_RESULTS
 # Copy ###source images
 cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
 cd $SUBJECT
+rm -r dwi
 
 
 # T2w resampling
@@ -100,7 +101,6 @@ for r_coef in ${R_COEFS[@]}; do
     rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
     echo "csa_perlevel_${SUBJECT}_${r_coef}.csv allready exists: creating new csv file"
   fi
-
   # rename anat to explicit resampling coefficient
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
@@ -113,18 +113,17 @@ for r_coef in ${R_COEFS[@]}; do
   # name segmented file
   file_t2_seg=$FILESEG
   # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
-  label_if_does_not_exist $file_t2 $file_t2_seg ${r_coef}
+  label_if_does_not_exist $file_t2 $file_t2_seg
   file_label=$FILELABEL
   # Compute average CSA between C2 and C5 levels (append across subjects)
   # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
-  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
+  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/CSA_perlevel_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
   # add files to check
   FILES_TO_CHECK+=(
   "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
   "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
-
   )
 done
 

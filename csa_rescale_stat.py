@@ -120,19 +120,18 @@ def get_plot_sample(z, z_power, std, mean_CSA):
     # data for plotting
     n=[]
     for z_p in z_power:
-        i = np.arange(1.5, 8.0, 0.05)
-        i_perc = np.arange(1.5, 8.0, 0.05)
-        num_n = ((z+z_p)**2)*((2*5)**2)
+        i = np.arange(1.5, 8.0, 0.05) # x_axis values ranging from 1.5 to 8.0 mm^2
+        num_n = 2*((z+z_p)**2)*(std**2) # numerator of sample size equation
         n.append(num_n/((i)**2))
         # plot
     ax.plot(i, n[0], label=('80% power'))
     ax.plot(i, n[1], label=('90% power'))
-    ax.set_ylabel('minimum number of participants')
+    ax.set_ylabel('minimum number of participants per arm')
     ax.set_xlabel('atrophy in mm^2')
-    ax.set_title('minimum number of subjects to detect an atrophy ')
+    ax.set_title('minimum number of subjects to detect an atrophy with 5% uncertainty\n std = '+str(round(std,2))+'mm², mean_CSA = 80mm²')
     ax.legend()
     ax.grid()
-    # TODO: change: this functions should take into account variable mean_CSA, default=80
+    # TODO: change: this functions should take into account parameter mean_CSA, default=80 mm^2
     def forward(i):
         i2 = i/80*100
         return i2
@@ -163,6 +162,7 @@ def std(df_a):
         print('CSA std on '+str(atrophy)+'  rescaled image C3/C5 is ',round(std, 3),' mm^2 ')
 
 
+
 def cohen_d(df, small = None):
     '''compute cohen d to express sample effect
     :param df: original DataFrame
@@ -188,14 +188,14 @@ def cohen_d(df, small = None):
             print('cohen d: '+str(round(d, 3))+'  for atrophy simultation  '+str(r))
 
 
-def sample_size(df, conf, power, mean_control, mean_patient):
+def sample_size(df_a, conf, power, mean_control, mean_patient):
     '''
     calculate the minimum number of patients required to detect an atrophy of X (i.e. power analysis)
     sample size with certainty 95% z(0.05/2)=1.96, power 80% z(Power = 80%)=0.84, ratio patients/control 1:1
     and with the assumption both samples have same std
     :param df: dataframe containing csv files values
-    :param conf: Confdence level in % (i.e. 0.60, 0.70, 0.8, 0.85, 0.90, 0.95)
-    :param power: Power level in % (i.e. 0.60, 0.70, 0.8, 0.85, 0.90, 0.95)
+    :param conf: Confidence level (i.e. 0.60, 0.70, 0.8, 0.85, 0.90, 0.95)
+    :param power: Power level (i.e. 0.60, 0.70, 0.8, 0.85, 0.90, 0.95)
     :param atrophy: expected atrophy to detect
     :param mean_control: mean value of control group
     :param mean_patient: mean value of patient group
@@ -206,12 +206,14 @@ def sample_size(df, conf, power, mean_control, mean_patient):
 
     dfs = pd.DataFrame(data3)
     dfs = dfs.set_index('Confidence_Level')
-    num_n = 2 * ((dfs.at[conf, 'z_value'] + dfs.at[power, 'z_value']) ** 2) * ((df.groupby('rescale').get_group(1)['CSA_C2_C5'].std()) ** 2)
+    std = df_a.groupby('rescale').get_group(1)['CSA_C2_C5'].std()
+    print('std: '+str(std))
+    num_n = 2 * ((dfs.at[conf, 'z_value'] + dfs.at[power, 'z_value']) ** 2) * (std ** 2)
     # mean CSA is approximatively 80 so %atrophy * 80 is the difference between study means
     deno_n = (abs(mean_control - mean_patient))**2
     sample = ceil(num_n/deno_n)
-    print('with 80% power, at 5% significance, ratio 1:1 (patients/controls):')
-    print('minimum sample size to detect mean 10% atrophy: '+ str(sample))
+    print('with '+str(power*100)+'% power, at '+str(conf*100)+'% significance, ratio 1:1 (patients/controls):')
+    print('minimum sample size to detect mean '+str(mean_control-mean_patient)+' mm² atrophy: '+ str(sample))
 
 
 def dataframe_add(df):
@@ -219,25 +221,23 @@ def dataframe_add(df):
     :param df: original dataframe
     :return df_a: modified dataframe with added gt_CSA, diff_CSA, perc_diff_CSA for different vertbrae levels
     '''
+    # create dataframes
     df1 = df.copy()
     df2 = df.copy()
     df3 = df.copy()
-    df4 = df.copy()
-
     df_gt2 = pd.DataFrame()
 
-    # add NaN column to dataframe to insert GT values
-    df['gt_CSA_C2_C5'] = np.nan
-    df['gt_CSA_C2_C4'] = np.nan
-    df['gt_CSA_C2_C3'] = np.nan
-
     # iterate throuh different vertebrae levels
+
+    # dataframe and variable for iteration
     df_a = df.groupby(['rescale','Filename']).mean()
     n = []
-    for i in range(5,1,-1):
+    max_vert = df['VertLevel'].max()
+    # iteration
+    for i in range(max_vert,1,-1):
         df_gt2 = pd.DataFrame()
         # get GT values
-        if i==5:
+        if i==max_vert:
             group_CSA_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').groupby('Filename').mean().CSA_C2_C5
         elif i==2:
             group_CSA_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').drop(index=i).groupby('Filename').mean().CSA_C2_C5
@@ -256,29 +256,38 @@ def dataframe_add(df):
                 # if dataframe subject exist in GT (rescale = 1)
                 if subjectj in group_CSA_gt.index.values:
                     group3.at[subjectj,'gt_CSA_C2_C'+str(i)] = group_CSA_gt.loc[subjectj] * (atrophy[0] ** 2)
-            #print(group3['gt_CSA_C2_C'+str(i-1)])
             df_gt = df.groupby('rescale').get_group(atrophy[0]).groupby('Filename').mean()
             df_gt['gt_CSA_C2_C'+str(i)] = (group3['gt_CSA_C2_C'+str(i)].values)
             df_gt2 = pd.concat([df_gt2, df_gt])
+        # regroup to add row in new dataframe
         df_a['gt_CSA_C2_C'+str(i)] = df_gt2['gt_CSA_C2_C'+str(i)].values
 
 
     # add CSA vqlues for different vertebrae levels
-    df_a['CSA_C2_C4'] = df2.set_index('VertLevel').drop(index=[5]).groupby(['rescale','Filename']).mean().values
-    df_a['CSA_C2_C3'] = df2.set_index('VertLevel').drop(index=[4,5]).groupby(['rescale','Filename']).mean().values
-    df_a['CSA_C3_C5'] = df2.set_index('VertLevel').drop(index=[2]).groupby(['rescale','Filename']).mean().values
+    m = []
+    l = []
+    max_vertd = df['VertLevel'].max()
+    # iterate throug diffent vertebrae levels
+    for j in range(max_vertd, 2, -1):
+        df2 = df.copy()
+        if j == max_vertd:
+            # iterate droping higher vertebrae starting C2
+            for k in range(3,max_vertd-1):
+                l.append(k-1)
+                df_a['CSA_C'+str(k)+'_C'+str(max_vertd)] = np.nan
+                df_a['CSA_C'+str(k)+'_C'+str(max_vertd)] = df2.set_index('VertLevel').drop(index=l).groupby(['rescale','Filename']).mean().values
+                df_a['diff_C'+str(k)+'_C'+str(max_vertd)] = df_a['CSA_C'+str(k)+'_C'+str(max_vertd)].sub(df_a['gt_CSA_C2_C2']).abs()
+                df_a['perc_diff_C3_C5'] = 100 * df_a['diff_C3_C5'].div(df_a['gt_CSA_C2_C2'])
+                df_a['diff_C2_C'+str(j)] = df_a['CSA_C2_C'+str(j)].sub(df_a['gt_CSA_C2_C'+str(j)]).abs()
+                df_a['perc_diff_C2_C'+str(j)] = 100 * df_a['diff_C2_C'+str(j)].div(df_a['gt_CSA_C2_C'+str(j)])
+        else:
+            # iterate droping lower vertebrae
+            m.append(j+1)
+            df_a['CSA_C2_C'+str(j)] = np.nan
+            df_a['CSA_C2_C'+str(j)] = df2.set_index('VertLevel').drop(index=m).groupby(['rescale','Filename']).mean().values
+            df_a['diff_C2_C'+str(j)] = df_a['CSA_C2_C'+str(j)].sub(df_a['gt_CSA_C2_C'+str(j)]).abs()
+            df_a['perc_diff_C2_C'+str(j)] = 100 * df_a['diff_C2_C'+str(j)].div(df_a['gt_CSA_C2_C'+str(j)])
 
-    # difference between mean CSA and GT CSA for differennt vertebrae levels
-    df_a['diff_C2_C5'] = df_a['CSA_C2_C5'].sub(df_a['gt_CSA_C2_C5']).abs()
-    df_a['diff_C2_C4'] = df_a['CSA_C2_C4'].sub(df_a['gt_CSA_C2_C4']).abs()
-    df_a['diff_C2_C3'] = df_a['CSA_C2_C3'].sub(df_a['gt_CSA_C2_C3']).abs()
-    df_a['diff_C3_C5'] = df_a['CSA_C3_C5'].sub(df_a['gt_CSA_C2_C2']).abs()
-
-
-    df_a['perc_diff_C2_C5'] = 100 * df_a['diff_C2_C5'].div(df_a['gt_CSA_C2_C5'])
-    df_a['perc_diff_C2_C4'] = 100 * df_a['diff_C2_C4'].div(df_a['gt_CSA_C2_C4'])
-    df_a['perc_diff_C2_C3'] = 100 * df_a['diff_C2_C3'].div(df_a['gt_CSA_C2_C3'])
-    df_a['perc_diff_C3_C5'] = 100 * df_a['diff_C3_C5'].div(df_a['gt_CSA_C2_C2'])
     return df_a
 
 
@@ -311,7 +320,7 @@ def main():
     cohen_d(df5)
 
     #compute sample size
-    sample_size(df, 0.95,0.8, 80, 78)
+    sample_size(df_a, 0.95,0.8, 7.77, 0)
 
 
     #ground truth atrophy
@@ -325,20 +334,18 @@ def main():
 
     # compute std for different vertebrae levels
     std(df_a)
+    std_v = df_a.groupby('rescale').get_group(1)['CSA_C2_C5'].std()
 
     # plot graph if verbose is present
     if arguments.v is not None:
         df_p1 = df_a.copy()
         get_plot(df_p1)
-        df_p2 = df_a.copy()
-        get_plot2(df_p2)
         df_p3 = df_a.copy()
         get_plot3(df_p3)
         df_p4 = df_a.copy()
         get_plot4(df_p4)
         #get_plot5(df5)
-
-        get_plot_sample(1.96,(0.84, 1.282), std, 80)
+        get_plot_sample(1.96,(0.84, 1.282), std_v, 80)
         print('\nfigures have been ploted in dataset')
 
 
