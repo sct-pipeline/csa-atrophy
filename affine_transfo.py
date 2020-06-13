@@ -50,6 +50,12 @@ def get_parser():
         nargs="*"
     )
     optional.add_argument(
+        '-r',
+        help='Number of iterations of transformations on each subject',
+        type=int,
+        default=1,
+    )
+    optional.add_argument(
         '-p',
         help='path to subject image directory',
         default='data',
@@ -128,7 +134,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
 
      c_in=0.5*np.array(data.shape) # find center of data
 
-     # rotation matrix around IS clockwise
+     # rotation matrix around IS
      cos_theta = np.cos(np.deg2rad(-angle_IS))
      sin_theta = np.sin(np.deg2rad(-angle_IS))
      rotation_affine_IS = np.array([[cos_theta, -sin_theta, 0],
@@ -136,7 +142,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
                                 [0, 0, 1]])
      affine_arr_rotIS = rotation_affine_IS.dot(np.eye(3))
 
-     # rotation matrix around PA clockwise
+     # rotation matrix around PA
      cos_fi = np.cos(np.deg2rad(-angle_PA))
      sin_fi = np.sin(np.deg2rad(-angle_PA))
      rotation_affine_PA = np.array([[cos_fi, 0, sin_fi],
@@ -144,7 +150,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
                                 [-sin_fi, 0, cos_fi]])
      affine_arr_rotIS_rotPA = rotation_affine_PA.dot(affine_arr_rotIS)
 
-     #rotation matrix around LR clockwise
+     #rotation matrix around LR
      cos_gamma = np.cos(np.deg2rad(-angle_LR))
      sin_gamma = np.sin(np.deg2rad(-angle_LR))
      rotation_affine_LR = np.array([[1, 0, 0],
@@ -152,7 +158,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
                                     [0, sin_gamma, cos_gamma]])
      affine_arr_rotIS_rotPA_rotLR = rotation_affine_LR.dot(affine_arr_rotIS_rotPA) # affine array for rotation auround IS, AP and RL
 
-     print(affine_arr_rotIS_rotPA_rotLR)
+     print('rotation matrix: \n', affine_arr_rotIS_rotPA_rotLR)
 
      # offset to shift the center of the old grid to the center of the new new grid + random shift
      shift = c_in.dot(affine_arr_rotIS_rotPA_rotLR)-c_in - np.array([shift_LR, shift_PA, shift_IS])
@@ -162,16 +168,14 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      return data_shift_rot
 
 
-def main(fname):
+def main(fname, j):
     """Main function, crop and save image"""
     name = os.path.basename(fname).split(fname)[0]
     path = os.path.join(os.getcwd(), fname) # get file path
-    path_tf = path.split('.nii.gz')[0] + '-t.nii.gz' # create new path to save data
+    path_tf = path.split('.nii.gz')[0] + '-t'+str(j)+'.nii.gz' # create new path to save data
     if os.path.isfile(path_tf):
         os.remove(path_tf)
-    print(path)
     img = nib.load(fname) # load image
-    print(img.affine)
     print('\n----------affine transformation subject: '+name+'------------')
     angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values()
     # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
@@ -193,10 +197,10 @@ if __name__ == "__main__":
             if os.path.isdir(arguments.p+'/'+subject):
                 path = glob.glob(arguments.p+'/'+str(subject)+'/anat/*T2w.nii.gz')
                 for fnames in path:
-                    main(fnames)
+                    [main(fnames, j) for j in range(arguments.r)]
             elif subject == 'all':
                 for fnames in glob.glob(arguments.p+'/*/*/*T2w.nii.gz'):
-                    main(fnames)
+                    [main(fnames, j) for j in range(arguments.r)]
             else:
                 print('error: '+subject+' is not a valide subject')
     else:
