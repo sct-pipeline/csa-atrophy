@@ -23,11 +23,10 @@ from numpy.random import randn
 import numpy as np
 import argparse
 
-from skimage.transform import rotate
-
 import nibabel as nib
 
-from  scipy.ndimage import shift
+from scipy.ndimage import affine_transform
+
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -61,35 +60,34 @@ def get_parser():
 def random_values():
     """generate gaussian distribution random values to simulate subject repositioning
      :return angle_IS: angle of rotation around Superior/Inferior axis
-     :return angle_AP: angle of rotation around Anterior/Superior axis
-     :return angle_RL: angle of rotation around Right/Left axis
-     :return shift_RL: value of shift along Left/Right axis
+     :return angle_PA: angle of rotation around Anterior/Superior axis
+     :return angle_LR: angle of rotation around Right/Left axis
+     :return shift_LR: value of shift along Left/Right axis
      :return shift_PA: value of shift along Anterior/Superior axis
      :return shift_IS: value of shift along Inferior/Superior axis
      """
     values = randn(6)
-    np.set_printoptions(precision=3, suppress=True)
     # for 95% of subjects repositioning (2*std away)
     std_angle = 5 # rotation (±10° in each direction),
     std_shift = 2.5 # shifting (±5 voxels in each direction)
     angle_IS = std_angle*values[0]
     shift_IS = std_shift*values[1]
 
-    angle_AP = std_angle*values[2]
+    angle_PA = std_angle*values[2]
     shift_PA = std_shift*values[3]
 
-    angle_RL = std_angle*values[4]
+    angle_LR = std_angle*values[4]
     shift_LR = std_shift*values[5]
-    return angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS
+    return angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS
 
 
-def get_image(img, angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS):
+def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
      """fetch nibabel image and calculate minimum padding necessary for rotation boundaries
      :param img: nibabel image
      :param angle_IS: angle of rotation around Superior/Inferior axis
-     :param angle_AP: angle of rotation around Anterior/Superior axis
-     :param angle_RL: angle of rotation around Right/Left axis
-     :param shift_RL: value of shift along Left/Right axis
+     :param angle_PA: angle of rotation around Anterior/Superior axis
+     :param angle_LR: angle of rotation around Right/Left axis
+     :param shift_LR: value of shift along Left/Right axis
      :param shift_PA: value of shift along Anterior/Superior axis
      :param shift_IS: value of shift along Inferior/Superior axis
      :return data: image data with a padding
@@ -100,7 +98,7 @@ def get_image(img, angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS):
      # pad image to avoid edge effect during rotation
      max_shift = np.max(np.abs((shift_LR, shift_PA, shift_IS)))
      max_axes = np.max(data.shape)
-     max_angle = np.deg2rad(np.max(np.abs((angle_IS, angle_AP, angle_RL))))
+     max_angle = np.deg2rad(np.max(np.abs((angle_IS, angle_PA, angle_LR))))
      # estimate upper limit of largest increase with rotation
      increase_angle = (max_axes/2)*(np.sqrt(2)*np.sin(((np.pi/4)-max_angle))-1)
      increase_axes = np.sqrt(2*increase_angle**2)
@@ -112,71 +110,78 @@ def get_image(img, angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS):
      return data, min_pad
 
 
-def transfo(angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS, data):
+def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      """apply rotation and translation on image
      :param angle_IS: angle of rotation around Superior/Inferior axis
-     :param angle_AP: angle of rotation around Anterior/Superior axis
-     :param angle_RL: angle of rotation around Right/Left axis
-     :param shift_RL: value of shift along Left/Right axis
+     :param angle_PA: angle of rotation around Anterior/Superior axis
+     :param angle_LR: angle of rotation around Right/Left axis
+     :param shift_LR: value of shift along Left/Right axis
      :param shift_PA: value of shift along Anterior/Superior axis
      :param shift_IS: value of shift along Inferior/Superior axis
-     :param data: padded image data     
+     :param data: padded image data
      :return data: image data with a padding
      :return data_rot: returns image data after applied random rotation and translation
      """
      # print angles and shifts
-     print('angles for rotation IS:',angle_IS,' RL:',angle_RL,' AP:', angle_AP)
+     print('angles for rotation IS:',angle_IS,' PA:', angle_PA, ' LR:',angle_LR)
      print('number of pixel shift LR:',shift_LR,' PA:',shift_PA,' IS:', shift_IS)
 
-      # shift in RAS dimensions
-     data_shiftRA = shift(data, np.array([shift_LR, shift_PA, shift_IS]))
+     c_in=0.5*np.array(data.shape) # find center of data
 
-      # ROTATION AROUND IS AXIS
-     # rotate (in deg in counter-clockwise direction.), and re-grid using linear interpolation
-     data_rotIS = rotate(data_shiftRA, angle_IS, resize=False, center=None, order=1, mode='constant', cval=0, clip=False, preserve_range=False)
+     # rotation matrix around IS clockwise
+     cos_theta = np.cos(np.deg2rad(-angle_IS))
+     sin_theta = np.sin(np.deg2rad(-angle_IS))
+     rotation_affine_IS = np.array([[cos_theta, -sin_theta, 0],
+                                [sin_theta, cos_theta, 0],
+                                [0, 0, 1]])
+     affine_arr_rotIS = rotation_affine_IS.dot(np.eye(3))
 
-      # ROTATION AROUND RL AXIS
-     # Swap x-z axes (to make a rotation within y-z plane, as rotate will apply rotation on the first 2 dims)
-     data_rotIS_swap = data_rotIS.swapaxes(0, 2)
+     # rotation matrix around PA clockwise
+     cos_fi = np.cos(np.deg2rad(-angle_PA))
+     sin_fi = np.sin(np.deg2rad(-angle_PA))
+     rotation_affine_PA = np.array([[cos_fi, 0, sin_fi],
+                                [0, 1, 0],
+                                [-sin_fi, 0, cos_fi]])
+     affine_arr_rotIS_rotPA = rotation_affine_PA.dot(affine_arr_rotIS)
 
-      # rotate (in deg), and re-grid using linear interpolation
-     data_rotIS_swap_rotRL = rotate(data_rotIS_swap, angle_RL, resize=False, center=None, order=1, mode='constant',cval=0, clip=False, preserve_range=False)
-     # swap back
-     data_rotIS_rotRL = data_rotIS_swap_rotRL.swapaxes(0, 2)
+     #rotation matrix around LR clockwise
+     cos_gamma = np.cos(np.deg2rad(-angle_LR))
+     sin_gamma = np.sin(np.deg2rad(-angle_LR))
+     rotation_affine_LR = np.array([[1, 0, 0],
+                                    [0, cos_gamma, -sin_gamma],
+                                    [0, sin_gamma, cos_gamma]])
+     affine_arr_rotIS_rotPA_rotLR = rotation_affine_LR.dot(affine_arr_rotIS_rotPA) # affine array for rotation auround IS, AP and RL
 
-      # ROTATION AROUND AP AXIS
-     # Swap y-z axes (to make a rotation within x-z plane)
-     data_rotIS_rotRL_swap = data_rotIS_rotRL.swapaxes(1, 2)
-     # rotate (in deg), and re-grid using linear interpolation
-     data_rotIS_rotRL_swap_rotAP = rotate(data_rotIS_rotRL_swap, angle_AP, resize=False, center=None, order=1,
-                                          mode='constant', cval=0, clip=False, preserve_range=False)
+     print(affine_arr_rotIS_rotPA_rotLR)
 
-      # swap back
-     data_rot = data_rotIS_rotRL_swap_rotAP.swapaxes(1, 2)
-     return data_rot
+     # offset to shift the center of the old grid to the center of the new new grid + random shift
+     shift = c_in.dot(affine_arr_rotIS_rotPA_rotLR)-c_in - np.array([shift_LR, shift_PA, shift_IS])
+     # resampling data
+     data_shift_rot = affine_transform(data, affine_arr_rotIS_rotPA_rotLR, offset=shift, order=5)
+
+     return data_shift_rot
 
 
 def main(fname):
     """Main function, crop and save image"""
-    # iterate transformation for each subject
-    #for fname == fnames:
     name = os.path.basename(fname).split(fname)[0]
     path = os.path.join(os.getcwd(), fname) # get file path
+    path_tf = path.split('.nii.gz')[0] + '-t.nii.gz' # create new path to save data
+    if os.path.isfile(path_tf):
+        os.remove(path_tf)
+    print(path)
     img = nib.load(fname) # load image
+    print(img.affine)
     print('\n----------affine transformation subject: '+name+'------------')
-    angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS = random_values()
+    angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values()
     # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
-    data, min_pad = get_image(img, angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS)
-    data_rot = transfo(angle_IS, angle_AP, angle_RL, shift_LR, shift_PA, shift_IS, data)
-    # Crop image (to remove padding)
-    data_crop = data_rot[min_pad:min_pad+img.shape[0], min_pad:img.shape[1]+min_pad, min_pad:img.shape[2]+min_pad]
+    data, min_pad = get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS)
+    data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data)
     # load data back to nifti format
-    img_t = nib.Nifti1Image(data_crop, img.affine)
+    img_t = nib.Nifti1Image(data_shift_rot, img.affine)
     print('new image shape: ',img_t.shape)
-    # create new path to save data
-    new_path = path.split('.nii.gz')[0] + '-t.nii.gz'
-    print('new image path: '+new_path)
-    img_t.to_filename(new_path)
+    print('new image path: '+path_tf)
+    img_t.to_filename(path_tf)
 
 
 if __name__ == "__main__":
