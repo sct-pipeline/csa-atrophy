@@ -50,15 +50,14 @@ def get_parser():
         nargs="*"
     )
     optional.add_argument(
-        '-r',
-        help='Number of iterations of transformations on each subject',
-        type=int,
-        default=1,
+        '-o',
+        help='Output filename extension to identify new file,\nexample: (input = t) sub-amu01_T2W.nii.gz ==> sub-amu01_T2w_t.nii.gz',
+        default='_t',
     )
     optional.add_argument(
         '-p',
-        help='path to subject image directory',
-        default='data',
+        help='Path to subject image directory, default: ./data',
+        default= 'data',
     )
     return parser
 
@@ -168,11 +167,11 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      return data_shift_rot
 
 
-def main(fname, j):
+def main(fname, fname_ext):
     """Main function, crop and save image"""
     name = os.path.basename(fname).split(fname)[0]
     path = os.path.join(os.getcwd(), fname) # get file path
-    path_tf = path.split('.nii.gz')[0] + '-t'+str(j)+'.nii.gz' # create new path to save data
+    path_tf = path.split('.nii.gz')[0] + '_'+str(fname_ext)+'.nii.gz' # create new path to save data
     if os.path.isfile(path_tf):
         os.remove(path_tf)
     img = nib.load(fname) # load image
@@ -197,10 +196,10 @@ if __name__ == "__main__":
             if os.path.isdir(arguments.p+'/'+subject):
                 path = glob.glob(arguments.p+'/'+str(subject)+'/anat/*T2w.nii.gz')
                 for fnames in path:
-                    [main(fnames, j) for j in range(arguments.r)]
+                    main(fnames, arguments.o)
             elif subject == 'all':
                 for fnames in glob.glob(arguments.p+'/*/*/*T2w.nii.gz'):
-                    [main(fnames, j) for j in range(arguments.r)]
+                    main(fnames, arguments.o)
             else:
                 print('error: '+subject+' is not a valide subject')
     else:
