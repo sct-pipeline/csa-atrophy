@@ -51,7 +51,7 @@ def get_parser():
     )
     optional.add_argument(
         '-o',
-        help='Output filename extension to identify new file,\nexample: (input = t) sub-amu01_T2W.nii.gz ==> sub-amu01_T2w_t.nii.gz',
+        help="Suffix for output file name.\nexample: '-i MYFILE.nii -o _t' would output MYFILE_t.nii",
         default='_t',
     )
     optional.add_argument(
@@ -167,11 +167,13 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      return data_shift_rot
 
 
-def main(fname, fname_ext):
+def main(fname, suffix):
     """Main function, crop and save image"""
     name = os.path.basename(fname).split(fname)[0]
     path = os.path.join(os.getcwd(), fname) # get file path
-    path_tf = path.split('.nii.gz')[0] + '_'+str(fname_ext)+'.nii.gz' # create new path to save data
+    print(path.split('.nii.gz')[0])
+    path_tf = os.path.join(path, path.split('.nii.gz')[0]+str(suffix)+'.nii.gz')# create new path to save data
+    print(path_tf)
     if os.path.isfile(path_tf):
         os.remove(path_tf)
     img = nib.load(fname) # load image
@@ -193,12 +195,12 @@ if __name__ == "__main__":
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     if arguments.h is None:
         for subject in arguments.i:
-            if os.path.isdir(arguments.p+'/'+subject):
-                path = glob.glob(arguments.p+'/'+str(subject)+'/anat/*T2w.nii.gz')
+            if os.path.isdir(arguments.p+'/'+subject): # verify presence of subject in dataset
+                path = glob.glob(arguments.p+'/'+str(subject)+'/anat/*T2w.nii.gz') # find subject in dataset
                 for fnames in path:
                     main(fnames, arguments.o)
             elif subject == 'all':
-                for fnames in glob.glob(arguments.p+'/*/*/*T2w.nii.gz'):
+                for fnames in glob.glob(arguments.p+'/*/*/*T2w.nii.gz'): # apply transformation on all subjects of dataset
                     main(fnames, arguments.o)
             else:
                 print('error: '+subject+' is not a valide subject')
