@@ -128,15 +128,18 @@ def get_plot_sample(z, z_power, std, mean_CSA):
     ax.plot(i, n[1], label=('90% power'))
     ax.set_ylabel('minimum number of participants per arm')
     ax.set_xlabel('atrophy in mm^2')
-    ax.set_title('minimum number of subjects to detect an atrophy with 5% uncertainty\n std = '+str(round(std,2))+'mm², mean_CSA = 80mm²')
+    ax.set_title('minimum number of subjects to detect an atrophy with 5% uncertainty\n std = '+str(round(std,2))+'mm², mean_CSA = '+str(mean_CSA)+'mm²')
     ax.legend()
     ax.grid()
-    # TODO: change: this functions should take into account parameter mean_CSA, default=80 mm^2
+    # create global variable for secax functions
+    global mean_CSA_sample
+    mean_CSA_sample = mean_CSA
+
     def forward(i):
-        i2 = i/80*100
+        i2 = i/mean_CSA_sample*100
         return i2
     def inverse(i):
-        return i/100*80
+        return i/100*mean_CSA_sample
     secax = ax.secondary_xaxis('top', functions=(forward, inverse))
     secax.set_xlabel('atrophy in %')
     plt.savefig("min_subj.jpg", bbox_inches='tight')
@@ -160,32 +163,6 @@ def std(df_a):
         std = group[gt_CSA].std()
         atrophy = set(group.reset_index().rescale)
         print('CSA std on '+str(atrophy)+'  rescaled image C3/C5 is ',round(std, 3),' mm^2 ')
-
-
-
-def cohen_d(df, small = None):
-    '''compute cohen d to express sample effect
-    :param df: original DataFrame
-    :param small: correction of cohen d for small sample <50, not used by default
-    '''
-    print("\n====================cohen d==========================\n")
-    group1_mean = df.groupby('rescale').get_group(1)['CSA_C2_C5'].mean()
-    group1_std = df.groupby('rescale').get_group(1)['CSA_C2_C5'].std()
-    group_r = df.groupby('rescale')['CSA_C2_C5']
-    nb = df.groupby('rescale').get_group(1)['CSA_C2_C5'].count()
-    atrophy = sorted(set(df['rescale'].values))
-    if small is None:
-        print('\n cohen d for samples >50')
-        for r in atrophy:
-            sd_pooled = np.sqrt((group1_std**2 + (group_r.get_group(r).std())**2)/2)
-            d = (group1_mean - group_r.get_group(r).mean())/sd_pooled
-            print('cohen d: '+str(d)+'  for atrophy simultation  '+str(r))
-    else:
-        print('\n cohen d for small samples <50')
-        for r in atrophy:
-            sd_pooled = np.sqrt((group1_std**2 + (group_r.get_group(r).std())**2)/2)
-            d = ((group1_mean - group_r.get_group(r).mean())/sd_pooled)*((nb-3)/(nb-2.25))*np.sqrt((nb-2)/nb)
-            print('cohen d: '+str(round(d, 3))+'  for atrophy simultation  '+str(r))
 
 
 def sample_size(df_a, conf, power, mean_control, mean_patient):
@@ -291,7 +268,6 @@ def dataframe_add(df):
     return df_a
 
 
-
 def main():
     '''
     main function: gathers stats and calls plots
@@ -315,13 +291,8 @@ def main():
     print("\n====================mean==========================\n")
     print(" mean CSA: " + str(df.groupby('rescale').get_group(1)['CSA_C2_C5'].mean()))
 
-    # compute cohen d
-    df5 = df.copy()
-    cohen_d(df5)
-
     #compute sample size
     sample_size(df_a, 0.95,0.8, 7.77, 0)
-
 
     #ground truth atrophy
     df4 = df.copy()
