@@ -34,16 +34,13 @@ def get_parser():
         add_help=None,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
-
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatory.add_argument(
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
         "-i",
-        required=True,
-        help="Input T2w images to be transformed specify 'all' to transform entire dataset",
+        help="Input T2w images to be transformed, otherwise by default all subjects in dataset are transformed",
         type=str,
         nargs="*"
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-h',
         help='Help',
@@ -73,8 +70,10 @@ def random_values():
      """
     values = randn(6)
     # for 95% of subjects repositioning (2*std away)
-    std_angle = 5 # rotation (±10° in each direction),
-    std_shift = 2.5 # shifting (±5 voxels in each direction)
+    # rotation (±10° in each direction),
+    std_angle = 5
+    # shifting (±5 voxels in each direction)
+    std_shift = 2.5
     angle_IS = std_angle*values[0]
     shift_IS = std_shift*values[1]
 
@@ -131,7 +130,8 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      print('angles for rotation IS:',angle_IS,' PA:', angle_PA, ' LR:',angle_LR)
      print('number of pixel shift LR:',shift_LR,' PA:',shift_PA,' IS:', shift_IS)
 
-     c_in=0.5*np.array(data.shape) # find center of data
+     # find center of data
+     c_in=0.5*np.array(data.shape)
 
      # rotation matrix around IS
      cos_theta = np.cos(np.deg2rad(-angle_IS))
@@ -155,7 +155,8 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      rotation_affine_LR = np.array([[1, 0, 0],
                                     [0, cos_gamma, -sin_gamma],
                                     [0, sin_gamma, cos_gamma]])
-     affine_arr_rotIS_rotPA_rotLR = rotation_affine_LR.dot(affine_arr_rotIS_rotPA) # affine array for rotation auround IS, AP and RL
+     # affine array for rotation auround IS, AP and RL
+     affine_arr_rotIS_rotPA_rotLR = rotation_affine_LR.dot(affine_arr_rotIS_rotPA)
 
      print('rotation matrix: \n', affine_arr_rotIS_rotPA_rotLR)
 
@@ -170,13 +171,14 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
 def main(fname, suffix):
     """Main function, crop and save image"""
     name = os.path.basename(fname).split(fname)[0]
-    path = os.path.join(os.getcwd(), fname) # get file path
-    print(path.split('.nii.gz')[0])
-    path_tf = os.path.join(path, path.split('.nii.gz')[0]+str(suffix)+'.nii.gz')# create new path to save data
-    print(path_tf)
+    # get file path
+    path = os.path.join(os.getcwd(), fname)
+    # create new path to save data
+    path_tf = os.path.join(path, path.split('.nii.gz')[0]+str(suffix)+'.nii.gz')
     if os.path.isfile(path_tf):
         os.remove(path_tf)
-    img = nib.load(fname) # load image
+    # load image
+    img = nib.load(fname)
     print('\n----------affine transformation subject: '+name+'------------')
     angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values()
     # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
@@ -193,16 +195,24 @@ if __name__ == "__main__":
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
+
+    # According to CL instruction, transformations are applied on copies of selected subject T2w images
+    # or by default on all subject T2w images in the dataset
     if arguments.h is None:
-        for subject in arguments.i:
-            if os.path.isdir(arguments.p+'/'+subject): # verify presence of subject in dataset
-                path = glob.glob(arguments.p+'/'+str(subject)+'/anat/*T2w.nii.gz') # find subject in dataset
-                for fnames in path:
-                    main(fnames, arguments.o)
-            elif subject == 'all':
-                for fnames in glob.glob(arguments.p+'/*/*/*T2w.nii.gz'): # apply transformation on all subjects of dataset
-                    main(fnames, arguments.o)
-            else:
-                print('error: '+subject+' is not a valide subject')
+        # by default all subjects in dataset are found and transformations are applied
+        if arguments.i is None:
+            for fnames in glob.glob(os.path.join(arguments.p, '*/*/*T2w.nii.gz')):
+                main(fnames, arguments.o)
+        # otherwise transformations are applied for each selected subject
+        else:
+            for subject in arguments.i:
+                # check existence of the subject in the dataset
+                if os.path.isdir(os.path.join(arguments.p, subject)):
+                    path = glob.glob(arguments.p+'/'+str(subject)+'/anat/*T2w.nii.gz')
+                    for fnames in path:
+                        main(fnames, arguments.o)
+                # raise output error if the subject does not exist
+                else:
+                    print('error: '+subject+' is not a valid subject')
     else:
         parser.print_help()
