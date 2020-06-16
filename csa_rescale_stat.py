@@ -50,6 +50,11 @@ def get_parser():
         help='Verbose, plotting figures',
         nargs="*"
     )
+    optional.add_argument(
+        '-l',
+        help='Indicate vertebrae levels of interest in list',
+        nargs="*"
+    )
 
     optional.add_argument(
         '-h',
@@ -193,7 +198,7 @@ def sample_size(df_a, conf, power, mean_control, mean_patient):
     print('minimum sample size to detect mean '+str(mean_control-mean_patient)+' mm² atrophy: '+ str(sample))
 
 
-def dataframe_add(df):
+def add_to_dataframe(df, VertLevels):
     '''dataframe column additions gt_CSA, diff_CSA, perc_diff_CSA for different vertbrae levels
     :param df: original dataframe
     :return df_a: modified dataframe with added gt_CSA, diff_CSA, perc_diff_CSA for different vertbrae levels
@@ -205,11 +210,10 @@ def dataframe_add(df):
     df_gt2 = pd.DataFrame()
 
     # iterate throuh different vertebrae levels
-
     # dataframe and variable for iteration
     df_a = df.groupby(['rescale','Filename']).mean()
     n = []
-    max_vert = df['VertLevel'].max()
+    max_vert = VertLevels.max()
     # iteration
     for i in range(max_vert,1,-1):
         df_gt2 = pd.DataFrame()
@@ -240,10 +244,10 @@ def dataframe_add(df):
         df_a['gt_CSA_C2_C'+str(i)] = df_gt2['gt_CSA_C2_C'+str(i)].values
 
 
-    # add CSA vqlues for different vertebrae levels
+    # add CSA values for vertebrae levels of interest
     m = []
     l = []
-    max_vertd = df['VertLevel'].max()
+    max_vertd = VertLevels.max()
     # iterate throug diffent vertebrae levels
     for j in range(max_vertd, 2, -1):
         df2 = df.copy()
@@ -285,7 +289,8 @@ def main():
     df['Filename'] = list((os.path.basename(path).split('.')[0].split('_')[0]) for path in data['Filename'])
 
     # dataframe column additions gt,diff,perc diff for different vertbrae levels
-    df_a = dataframe_add(df)
+    VertLevels = sorted(set(df['VertLevel'].values))
+    df_a = add_to_dataframe(df, VertLevels)
 
     # print mean CSA gt
     print("\n====================mean==========================\n")
@@ -329,6 +334,6 @@ if __name__ == "__main__":
     if arguments.h is None:
         path_results = os.path.join(os.getcwd(),arguments.i)
         get_data(path_results)
-        main()
+        main(arguments.l)
     else:
         parser.print_help()
