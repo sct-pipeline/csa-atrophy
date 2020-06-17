@@ -78,34 +78,44 @@ cd $SUBJECT
 # T2w resampling
 # =============================================================================
 # define resampling coefficients (always keep value 1 for reference)
-R_COEFS=(0.85 0.90 0.95 1)
+R_COEFS=(0.90 0.95 1)
 # iterate resample on subject
 for r_coef in ${R_COEFS[@]}; do
+  if [ -d "anat_r${r_coef}" ]; then
+   rm -r "anat_r${r_coef}"
+   echo "anat_r${r_coef} allready exists: creating folder"
+ fi
+ if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
+   rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
+   echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
+ fi
   # rename anat to explicit resampling coefficient
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
-  # Image homothetic rescaling
-  python ../../../affine_rescale.py -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
-  # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
-  file_t2=${SUBJECT}_T2w_r${r_coef}
-  # Segment spinal cord (only if it does not exist)
-  segment_if_does_not_exist $file_t2 "t2"
-  # name segmented file
-  file_t2_seg=$FILESEG
-  # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
-  label_if_does_not_exist $file_t2 $file_t2_seg
-  file_label=$FILELABEL
-  # Compute average CSA between C2 and C5 levels (append across subjects)
-  # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
-  sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/CSA_perlevel_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
+  for j in 0 1 2; do
+    # Image homothetic rescaling
+    python ../../../affine_transfo.py -i ${SUBJECT}_T2w.nii.gz -o _t${j}
+    python ../../../affine_rescale.py -i ${SUBJECT}_T2w_t${j}.nii.gz -r ${r_coef}
+    # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
+    file_t2=${SUBJECT}_T2w_t${j}_r${r_coef}
+    # Segment spinal cord (only if it does not exist)
+    segment_if_does_not_exist $file_t2 "t2"
+    # name segmented file
+    file_t2_seg=$FILESEG
+    # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
+    label_if_does_not_exist $file_t2 $file_t2_seg
+    file_label=$FILELABEL
+    # Compute average CSA between C2 and C5 levels (append across subjects)
+    # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${j}_${r_coef}.csv -qc ${PATH_QC}
+    # add files to check
+    FILES_TO_CHECK+=(
+    "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${j}_${r_coef}.csv"
+    "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
+    )
+  done
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
-  # add files to check
-  FILES_TO_CHECK+=(
-  "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
-  "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
-
-  )
 done
 
 

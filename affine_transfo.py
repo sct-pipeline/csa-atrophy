@@ -35,10 +35,11 @@ def get_parser():
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
         "-i",
-        help="Input T2w images to be transformed, otherwise by default all subjects in dataset are transformed",
-        type=str,
+        required=True,
+        help="Input nifti images to be transformed",
         nargs="*"
     )
     optional.add_argument(
@@ -50,11 +51,6 @@ def get_parser():
         '-o',
         help="Suffix for output file name.\nexample: '-i MYFILE.nii -o _t' would output MYFILE_t.nii",
         default='_t',
-    )
-    optional.add_argument(
-        '-p',
-        help='Path to subject image directory, default: ./data',
-        default= 'data',
     )
     return parser
 
@@ -178,6 +174,7 @@ def main(fname, suffix):
     if os.path.isfile(path_tf):
         os.remove(path_tf)
     # load image
+    print(fname)
     img = nib.load(fname)
     print('\n----------affine transformation subject: '+name+'------------')
     angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values()
@@ -196,21 +193,14 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
 
-    # According to CL instruction, transformations are applied on copies of selected subject T2w images
-    # or by default on all subject T2w images in the dataset
+    # According to command line instructions, transformations are applied on
+    # copies of selected subject images
     if arguments.h is None:
-        # by default all subjects in dataset are found and transformations are applied
-        if arguments.i is None:
-            for fnames in glob.glob(os.path.join(arguments.p, '*/*/*T2w.nii.gz')):
-                main(fnames, arguments.o)
-        # otherwise transformations are applied for each selected subject
-        else:
-            for subject in arguments.i:
-                # check existence of the subject in the dataset
-                if os.path.isdir(os.path.join(arguments.p, subject)):
-                    path = glob.glob(arguments.p+'/'+str(subject)+'/anat/*T2w.nii.gz')
-                    for fnames in path:
-                        main(fnames, arguments.o)
+        # transformations are applied for each selected subject
+            for fname in arguments.i:
+                fname_path = os.path.abspath(fname)
+                if fname_path:
+                    main(fname_path, arguments.o)
                 # raise output error if the subject does not exist
                 else:
                     print('error: '+subject+' is not a valid subject')
