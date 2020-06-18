@@ -94,13 +94,16 @@ for r_coef in ${R_COEFS[@]}; do
   cd anat_r${r_coef}
   # set n_transfo sequence to the desired number of transformed images
   # of same subject to be segmented
-  n_transfo=$(seq 10)
-  for j in ${n_transfo[@]}; do
+  n_transfo=$2
+  seq_transfo=$(seq ${n_transfo})
+  echo $@
+  echo $seq_transfo
+  for i_transfo in ${seq_transfo[@]}; do
     # Image homothetic rescaling
-    python ../../../affine_transfo.py -i ${SUBJECT}_T2w.nii.gz -o _t${j}
-    python ../../../affine_rescale.py -i ${SUBJECT}_T2w_t${j}.nii.gz -r ${r_coef}
+    python ../../../affine_transfo.py -i ${SUBJECT}_T2w.nii.gz -o _t${i_transfo}
+    python ../../../affine_rescale.py -i ${SUBJECT}_T2w_t${i_transfo}.nii.gz -r ${r_coef}
     # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
-    file_t2=${SUBJECT}_T2w_t${j}_r${r_coef}
+    file_t2=${SUBJECT}_T2w_t${i_transfo}_r${r_coef}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist $file_t2 "t2"
     # name segmented file
@@ -110,10 +113,10 @@ for r_coef in ${R_COEFS[@]}; do
     file_label=$FILELABEL
     # Compute average CSA between C2 and C5 levels (append across subjects)
     # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
-    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${j}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
-    "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${j}_${r_coef}.csv"
+    "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
     "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
     )
   done
