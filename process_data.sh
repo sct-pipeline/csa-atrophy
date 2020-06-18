@@ -83,7 +83,7 @@ R_COEFS=(0.90 0.95 1)
 for r_coef in ${R_COEFS[@]}; do
   if [ -d "anat_r${r_coef}" ]; then
    rm -r "anat_r${r_coef}"
-   echo "anat_r${r_coef} allready exists: creating folder"
+   echo "anat_r${r_coef} already exists: creating folder"
  fi
  if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
    rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
@@ -92,7 +92,10 @@ for r_coef in ${R_COEFS[@]}; do
   # rename anat to explicit resampling coefficient
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
-  for j in 0 1 2; do
+  # set n_transfo sequence to the desired number of transformed images
+  # of same subject to be segmented
+  n_transfo=$(seq 10)
+  for j in ${n_transfo[@]}; do
     # Image homothetic rescaling
     python ../../../affine_transfo.py -i ${SUBJECT}_T2w.nii.gz -o _t${j}
     python ../../../affine_rescale.py -i ${SUBJECT}_T2w_t${j}.nii.gz -r ${r_coef}
