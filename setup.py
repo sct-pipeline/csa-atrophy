@@ -31,8 +31,8 @@ setup(
     install_requires=install_reqs,
     entry_points={
         'console_scripts': [
-            'affine_transfo = affine_transfo:main'
-            'affine_rescale = affine_rescale:main'
+            'affine_transfo=affine_transfo:main',
+            'affine_rescale=affine_rescale:main'
         ],
     },
 )
