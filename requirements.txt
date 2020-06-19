@@ -4,4 +4,3 @@ scipy
 matplotlib
 scikit-image
 nibabel
-glob
