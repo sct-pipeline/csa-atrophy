@@ -209,8 +209,8 @@ def add_to_dataframe(df, Vertlevels):
     # dataframe and variable for iteration
     df_a = df.groupby(['Rescale','Filename']).mean()
     n = []
-    max_vert = max(list(Vertlevels))
-    min_vert = min(list(Vertlevels))
+    max_vert = max(Vertlevels)
+    min_vert = min(Vertlevels)
     diff_vert = np.setdiff1d(list(set(df['VertLevel'].values)), list(Vertlevels))
     # iteration
     for i in range(max_vert,min_vert,-1):
@@ -264,7 +264,7 @@ def add_to_dataframe(df, Vertlevels):
     return df_a
 
 
-def main(Vertlevels):
+def main(Vertlevels_input):
     '''
     main function: gathers stats and calls plots
     '''
@@ -280,13 +280,19 @@ def main(Vertlevels):
 
 
     # Use filename instead of path to file
-    df['Filename'] = list(('_'.join(os.path.basename(path).split('.')[0].split('_')[0:3])) for path in data['Filename'])
-
-    # dataframe column additions gt,diff,perc diff for different vertbrae levels
-    max_vert = max(list(Vertlevels))
-    min_vert = min(list(Vertlevels))
-    if Vertlevels is None:
-        Vertlevels = set(list(df[Vertlevels].values))
+    df['Filename'] = list((os.path.basename(path).split('_r')[0]) for path in data['Filename'])
+    print(df)
+    # dataframe column additions gt,diff, perc diff for different vertbrae levels
+    if Vertlevels_input is None:
+        Vertlevels = list(set(df['VertLevel'].values))
+        print(Vertlevels)
+    elif Vertlevels_input is not None:
+        Vertlevels = list(map(int, Vertlevels_input))
+        if all(elem in set(list(df['VertLevel'].values)) for elem in Vertlevels):
+            pass
+        else:
+            print('error: Input vertebrae levels ',Vertlevels,' do not exist in csv files')
+            exit()
     df_a = add_to_dataframe(df, Vertlevels)
 
     # print mean CSA gt
@@ -318,6 +324,8 @@ def main(Vertlevels):
         df_p3 = df_a.copy()
         get_plot3(df_p3)
         df_p4 = df_a.copy()
+        max_vert = max(Vertlevels)
+        min_vert = min(Vertlevels)
         min_max_Vert = ['perc_diff_C'+str(min_vert)+'_C'+str(max_vert)]
         get_plot4(df_p4, min_max_Vert)
         #get_plot5(df5)
