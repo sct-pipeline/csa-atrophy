@@ -197,7 +197,7 @@ def sample_size(df_a, conf, power, mean_control, mean_patient):
 def add_to_dataframe(df, Vertlevels):
     '''dataframe column additions gt_CSA, diff_CSA, perc_diff_CSA for different vertbrae levels
     :param df: original dataframe
-    :return df_a: modified dataframe with added gt_CSA, diff_CSA, perc_diff_CSA for different vertbrae levels
+    :return df_a: modified dataframe with added gt_CSA, diff_CSA, perc_diff_CSA for different vertebrae levels
     '''
     # create dataframes
     df1 = df.copy()
