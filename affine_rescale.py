@@ -47,7 +47,14 @@ def get_parser():
 
 #MAIN
 ############################################################
-def main(fname, coef_r):
+def main():
+    # get parser elements
+    parser = get_parser()
+    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
+    # create variables
+    fname = arguments.i
+    coef_r = arguments.r
+
     print(coef_r)
     # iterate transformation for each subject,
     img = nib.load(fname) # load image
@@ -62,9 +69,4 @@ def main(fname, coef_r):
 #RUN
 ############################################################
 if __name__ == "__main__":
-    # get parser elements
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
-    fname = arguments.i
-    coef_r = arguments.r
-    main(fname, coef_r)
+    main()

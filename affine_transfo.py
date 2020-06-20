@@ -164,45 +164,48 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      return data_shift_rot
 
 
-def main(fname, suffix):
-    """Main function, crop and save image"""
-    name = os.path.basename(fname).split(fname)[0]
-    # get file path
-    path = os.path.join(os.getcwd(), fname)
-    # create new path to save data
-    path_tf = os.path.join(path, path.split('.nii.gz')[0]+str(suffix)+'.nii.gz')
-    if os.path.isfile(path_tf):
-        os.remove(path_tf)
-    # load image
-    print(fname)
-    img = nib.load(fname)
-    print('\n----------affine transformation subject: '+name+'------------')
-    angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values()
-    # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
-    data, min_pad = get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS)
-    data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data)
-    # load data back to nifti format
-    img_t = nib.Nifti1Image(data_shift_rot, img.affine)
-    print('new image shape: ',img_t.shape)
-    print('new image path: '+path_tf)
-    img_t.to_filename(path_tf)
-
-
-if __name__ == "__main__":
+def main():
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
+    suffix = arguments.o
 
     # According to command line instructions, transformations are applied on
     # copies of selected subject images
     if arguments.h is None:
+
         # transformations are applied for each selected subject
-            for fname in arguments.i:
-                fname_path = os.path.abspath(fname)
-                if fname_path:
-                    main(fname_path, arguments.o)
+        for fname in arguments.i:
+            fname_path = os.path.abspath(fname)
+            if fname_path:
+                """Main function, crop and save image"""
+                name = os.path.basename(fname_path).split(fname_path)[0]
+                # get file path
+                path = os.path.join(os.getcwd(), fname_path)
+                # create new path to save data
+                path_tf = os.path.join(path, path.split('.nii.gz')[0]+str(suffix)+'.nii.gz')
+                print(path_tf)
+                if os.path.isfile(path_tf):
+                    os.remove(path_tf)
+                # load image
+                print(fname_path)
+                img = nib.load(fname_path)
+                print('\n----------affine transformation subject: '+name+'------------')
+                angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values()
+                # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
+                data, min_pad = get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS)
+                data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data)
+                # load data back to nifti format
+                img_t = nib.Nifti1Image(data_shift_rot, img.affine)
+                print('new image shape: ',img_t.shape)
+                print('new image path: '+path_tf)
+                img_t.to_filename(path_tf)
                 # raise output error if the subject does not exist
-                else:
-                    print('error: '+subject+' is not a valid subject')
+            else:
+                print('error: '+fname_path+' is not a valid subject')
     else:
         parser.print_help()
+
+
+if __name__ == "__main__":
+    main()
