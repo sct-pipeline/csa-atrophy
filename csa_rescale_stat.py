@@ -52,8 +52,8 @@ def get_parser():
     )
     optional.add_argument(
         '-l',
-        help='Indicate vertebrae levels of interest in list',
-        nargs="*"
+        help='Indicate vertebrae levels of interest \nexample: python csa_rescale_stat.py -i <results> -l 2 3 4 5 ',
+        nargs="*",
     )
 
     optional.add_argument(
@@ -73,19 +73,20 @@ def get_data(path_results):
     for file in os.listdir(path_results):
         if file.endswith(".csv"):
             files.append(os.path.join(path_results,file))
-    metrics = pd.concat([pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[3].split('.csv')[0]) for f in files])
+    metrics = pd.concat([pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
     metrics.to_csv("csa.csv")
 
-def get_plot(df_p1):
+def get_plot(df_p1, columns_to_plot):
     '''plot percentage difference between measured simulated atrophy and ground truth atrophy
     for different vertebrae levels
     :param df_p1: dataframe for first plot
     '''
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
-    df_p1.groupby('rescale')[['perc_diff_C2_C3','perc_diff_C2_C4','perc_diff_C2_C5','perc_diff_C3_C5']].mean().plot(kind='bar', ax=axes[0], grid=True)
+    print(df_p1)
+    df_p1.groupby('Rescale')[columns_to_plot].mean().plot(kind='bar', ax=axes[0], grid=True)
     axes[0].set_title('mean error in function of rescaling factor');
     axes[0].set_ylabel('error in %')
-    df_p1.groupby('rescale')[['perc_diff_C2_C3','perc_diff_C2_C4','perc_diff_C2_C5','perc_diff_C3_C5']].std().plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
+    df_p1.groupby('Rescale')[columns_to_plot].std().plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
     axes[1].set_title('STD of error in function of rescaling factor');
     plt.xlabel('rescaling factor')
     plt.ylabel('error in %')
@@ -99,17 +100,17 @@ def get_plot3(df_p3):
     :param df_p3: dataframe for third plot
     '''
     fig3 = plt.figure()
-    df_p3.boxplot(column=['CSA_C2_C5'], by='rescale')
+    df_p3.boxplot(column=['CSA_original'], by='Rescale')
     plt.ylabel('CSA in mm^2')
     plt.savefig("csa_boxplot.jpg")
 
 
-def get_plot4(df_p4):
+def get_plot4(df_p4, min_max_Vertlevels):
     '''plot percentage of error boxplot over different rescalings
     :param df_p4: dataframe for fourth plot
     '''
     fig4 = plt.figure()
-    df_p4.boxplot(column=['perc_diff_C2_C5'], by='rescale')
+    df_p4.boxplot(column=min_max_Vertlevels, by='Rescale')
     plt.ylabel('error in %')
     plt.savefig("err_boxplot.jpg")
 
@@ -150,24 +151,20 @@ def get_plot_sample(z, z_power, std, mean_CSA):
     plt.savefig("min_subj.jpg", bbox_inches='tight')
 
 
-def std(df_a):
+def std(df_a, Vertlevels):
     '''
     Computes standard deviation of subject mean CSA for each rescaling and different vertebrae levels
     '''
     print("\n====================std==========================\n")
     # TODO: normalization of CSA for intersubject studies
-    for i in range(3,6):
-        for name, group in df_a.groupby('rescale'):
-            gt_CSA = 'CSA_C2_C'+str(i)
+    min_vert = min(list(Vertlevels))
+    for i in Vertlevels[1:]:
+        for name, group in df_a.groupby('Rescale'):
+            gt_CSA = 'CSA_C'+str(min_vert)+'_C'+str(i)
             std = group[gt_CSA].std()
-            atrophy = set(group.reset_index().rescale)
-            print('CSA std on '+str(atrophy)+'  rescaled image C2/C'+str(i)+' is ',round(std, 3),' mm^2 ')
+            atrophy = set(group.reset_index().Rescale)
+            print('CSA std on '+str(atrophy)+'  rescaled image C'+str(min_vert)+'/C'+str(i)+' is ',round(std, 3),' mm^2 ')
         print('\n')
-    for name, group in df_a.groupby('rescale'):
-        gt_CSA = 'CSA_C3_C5'
-        std = group[gt_CSA].std()
-        atrophy = set(group.reset_index().rescale)
-        print('CSA std on '+str(atrophy)+'  rescaled image C3/C5 is ',round(std, 3),' mm^2 ')
 
 
 def sample_size(df_a, conf, power, mean_control, mean_patient):
@@ -188,17 +185,16 @@ def sample_size(df_a, conf, power, mean_control, mean_patient):
 
     dfs = pd.DataFrame(data3)
     dfs = dfs.set_index('Confidence_Level')
-    std = df_a.groupby('rescale').get_group(1)['CSA_C2_C5'].std()
+    std = df_a.groupby('Rescale').get_group(1)['CSA_original'].std()
     print('std: '+str(std))
     num_n = 2 * ((dfs.at[conf, 'z_value'] + dfs.at[power, 'z_value']) ** 2) * (std ** 2)
-    # mean CSA is approximatively 80 so %atrophy * 80 is the difference between study means
     deno_n = (abs(mean_control - mean_patient))**2
     sample = ceil(num_n/deno_n)
     print('with '+str(power*100)+'% power, at '+str(conf*100)+'% significance, ratio 1:1 (patients/controls):')
     print('minimum sample size to detect mean '+str(mean_control-mean_patient)+' mm² atrophy: '+ str(sample))
 
 
-def add_to_dataframe(df, VertLevels):
+def add_to_dataframe(df, Vertlevels):
     '''dataframe column additions gt_CSA, diff_CSA, perc_diff_CSA for different vertbrae levels
     :param df: original dataframe
     :return df_a: modified dataframe with added gt_CSA, diff_CSA, perc_diff_CSA for different vertbrae levels
@@ -211,68 +207,64 @@ def add_to_dataframe(df, VertLevels):
 
     # iterate throuh different vertebrae levels
     # dataframe and variable for iteration
-    df_a = df.groupby(['rescale','Filename']).mean()
+    df_a = df.groupby(['Rescale','Filename']).mean()
     n = []
-    max_vert = VertLevels.max()
+    max_vert = max(list(Vertlevels))
+    min_vert = min(list(Vertlevels))
+    diff_vert = np.setdiff1d(list(set(df['VertLevel'].values)), list(Vertlevels))
     # iteration
-    for i in range(max_vert,1,-1):
+    for i in range(max_vert,min_vert,-1):
         df_gt2 = pd.DataFrame()
         # get GT values
         if i==max_vert:
-            group_CSA_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').groupby('Filename').mean().CSA_C2_C5
-        elif i==2:
-            group_CSA_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').drop(index=i).groupby('Filename').mean().CSA_C2_C5
+            group_CSA_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=diff_vert).groupby(['Filename']).mean().CSA_original
         else:
             n.append(i+1)
-            group_CSA_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').drop(index=n).groupby('Filename').mean().CSA_C2_C5
-        # iterate through rescale groupby
-        for name, group in df.groupby('rescale'):
-            atrophy = group['rescale'].values
+            group_CSA_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=n).groupby(['Filename']).mean().CSA_original
+        # iterate through Rescale groupby
+        for name, group in df.groupby('Rescale'):
+            atrophy = group['Rescale'].values
             # mean values from same subject  different vertebrae
-            group2 = group.groupby('Filename').mean().reset_index()
+            group2 = group.groupby(['Filename']).mean().reset_index()
             # to locate easily subjects put Filename as index
-            group3 = group2.set_index('Filename')
+            group3 = group2.set_index(['Filename'])
             # iterate through dataframe subjects
             for subjectj in set(group2['Filename'].values):
-                # if dataframe subject exist in GT (rescale = 1)
+                # if dataframe subject exist in GT (Rescale = 1)
                 if subjectj in group_CSA_gt.index.values:
-                    group3.at[subjectj,'gt_CSA_C2_C'+str(i)] = group_CSA_gt.loc[subjectj] * (atrophy[0] ** 2)
-            df_gt = df.groupby('rescale').get_group(atrophy[0]).groupby('Filename').mean()
-            df_gt['gt_CSA_C2_C'+str(i)] = (group3['gt_CSA_C2_C'+str(i)].values)
+                    group3.at[subjectj,'gt_CSA_C'+str(min_vert)+'_C'+str(i)] = group_CSA_gt.loc[subjectj] * (atrophy[0] ** 2)
+            df_gt = df.groupby('Rescale').get_group(atrophy[0]).groupby('Filename').mean()
+            df_gt['gt_CSA_C'+str(min_vert)+'_C'+str(i)] = (group3['gt_CSA_C'+str(min_vert)+'_C'+str(i)].values)
             df_gt2 = pd.concat([df_gt2, df_gt])
         # regroup to add row in new dataframe
-        df_a['gt_CSA_C2_C'+str(i)] = df_gt2['gt_CSA_C2_C'+str(i)].values
+        df_a['gt_CSA_C'+str(min_vert)+'_C'+str(i)] = df_gt2['gt_CSA_C'+str(min_vert)+'_C'+str(i)].values
 
 
     # add CSA values for vertebrae levels of interest
     m = []
     l = []
-    max_vertd = VertLevels.max()
+    max_vert2 = max(list(Vertlevels))
+    min_vert2 = min(list(Vertlevels))
+    diff_vert2 = np.setdiff1d(list(set(df['VertLevel'].values)), list(Vertlevels))
     # iterate throug diffent vertebrae levels
-    for j in range(max_vertd, 2, -1):
+    for j in range(max_vert2, min_vert2, -1):
         df2 = df.copy()
-        if j == max_vertd:
-            # iterate droping higher vertebrae starting C2
-            for k in range(3,max_vertd-1):
-                l.append(k-1)
-                df_a['CSA_C'+str(k)+'_C'+str(max_vertd)] = np.nan
-                df_a['CSA_C'+str(k)+'_C'+str(max_vertd)] = df2.set_index('VertLevel').drop(index=l).groupby(['rescale','Filename']).mean().values
-                df_a['diff_C'+str(k)+'_C'+str(max_vertd)] = df_a['CSA_C'+str(k)+'_C'+str(max_vertd)].sub(df_a['gt_CSA_C2_C2']).abs()
-                df_a['perc_diff_C3_C5'] = 100 * df_a['diff_C3_C5'].div(df_a['gt_CSA_C2_C2'])
-                df_a['diff_C2_C'+str(j)] = df_a['CSA_C2_C'+str(j)].sub(df_a['gt_CSA_C2_C'+str(j)]).abs()
-                df_a['perc_diff_C2_C'+str(j)] = 100 * df_a['diff_C2_C'+str(j)].div(df_a['gt_CSA_C2_C'+str(j)])
+        if j == max_vert2:
+            df_a['CSA_C'+str(min_vert2)+'_C'+str(max_vert2)] = df2.set_index('VertLevel').drop(index=diff_vert).groupby(['Rescale','Filename']).mean().values
+            df_a['diff_C'+str(min_vert2)+'_C'+str(j)] = df_a['CSA_C'+str(min_vert2)+'_C'+str(j)].sub(df_a['gt_CSA_C'+str(min_vert2)+'_C'+str(j)]).abs()
+            df_a['perc_diff_C'+str(min_vert2)+'_C'+str(j)] = 100 * df_a['diff_C'+str(min_vert2)+'_C'+str(j)].div(df_a['gt_CSA_C'+str(min_vert2)+'_C'+str(j)])
         else:
             # iterate droping lower vertebrae
             m.append(j+1)
-            df_a['CSA_C2_C'+str(j)] = np.nan
-            df_a['CSA_C2_C'+str(j)] = df2.set_index('VertLevel').drop(index=m).groupby(['rescale','Filename']).mean().values
-            df_a['diff_C2_C'+str(j)] = df_a['CSA_C2_C'+str(j)].sub(df_a['gt_CSA_C2_C'+str(j)]).abs()
-            df_a['perc_diff_C2_C'+str(j)] = 100 * df_a['diff_C2_C'+str(j)].div(df_a['gt_CSA_C2_C'+str(j)])
+            df_a['CSA_C'+str(min_vert2)+'_C'+str(j)] = np.nan
+            df_a['CSA_C'+str(min_vert2)+'_C'+str(j)] = df2.set_index('VertLevel').drop(index=m).groupby(['Rescale','Filename']).mean().values
+            df_a['diff_C'+str(min_vert2)+'_C'+str(j)] = df_a['CSA_C'+str(min_vert2)+'_C'+str(j)].sub(df_a['gt_CSA_C'+str(min_vert2)+'_C'+str(j)]).abs()
+            df_a['perc_diff_C'+str(min_vert2)+'_C'+str(j)] = 100 * df_a['diff_C'+str(min_vert2)+'_C'+str(j)].div(df_a['gt_CSA_C'+str(min_vert2)+'_C'+str(j)])
 
     return df_a
 
 
-def main():
+def main(Vertlevels):
     '''
     main function: gathers stats and calls plots
     '''
@@ -280,46 +272,54 @@ def main():
     data = pd.read_csv("csa.csv",decimal=".")
     data2 = {'Filename':data['Filename'],
              'VertLevel':data['VertLevel'],
-             'CSA_C2_C5':data['MEAN(area)'],
-             'rescale':data['rescale'],}
+             'CSA_original':data['MEAN(area)'],
+             'Rescale':data['rescale'],}
     df = pd.DataFrame(data2)
     pd.set_option('display.max_rows', None)
 
+
+
     # Use filename instead of path to file
-    df['Filename'] = list((os.path.basename(path).split('.')[0].split('_')[0]) for path in data['Filename'])
+    df['Filename'] = list(('_'.join(os.path.basename(path).split('.')[0].split('_')[0:3])) for path in data['Filename'])
 
     # dataframe column additions gt,diff,perc diff for different vertbrae levels
-    VertLevels = sorted(set(df['VertLevel'].values))
-    df_a = add_to_dataframe(df, VertLevels)
+    max_vert = max(list(Vertlevels))
+    min_vert = min(list(Vertlevels))
+    if Vertlevels is None:
+        Vertlevels = set(list(df[Vertlevels].values))
+    df_a = add_to_dataframe(df, Vertlevels)
 
     # print mean CSA gt
     print("\n====================mean==========================\n")
-    print(" mean CSA: " + str(df.groupby('rescale').get_group(1)['CSA_C2_C5'].mean()))
+    print(" mean CSA: " + str(df.groupby('Rescale').get_group(1)['CSA_original'].mean()))
 
     #compute sample size
+    print(df_a)
     sample_size(df_a, 0.95,0.8, 7.77, 0)
 
     #ground truth atrophy
     df4 = df.copy()
-    atrophy = sorted(set(df4['rescale'].values))
+    atrophies = sorted(set(df4['Rescale'].values))
     #display number of subjects in test
     print("\n====================number subjects==========================\n")
-    for atr in atrophy:
-        number = df4.groupby('rescale').get_group(atr).groupby('Filename')['CSA_C2_C5'].mean().count()
-        print('number of subjects for '+str(atr)+' rescaling is ' +str(number))
+    for atrophy in atrophies:
+        number_sub = df4.groupby('Filename')['CSA_original'].mean().count()
+        print('For rescaling '+str(atrophy)+' number of subjects is ' +str(number_sub))
 
     # compute std for different vertebrae levels
-    std(df_a)
-    std_v = df_a.groupby('rescale').get_group(1)['CSA_C2_C5'].std()
+    std(df_a, Vertlevels)
+    std_v = df_a.groupby('Rescale').get_group(1)['CSA_original'].std()
 
     # plot graph if verbose is present
     if arguments.v is not None:
         df_p1 = df_a.copy()
-        get_plot(df_p1)
+        columns_to_plot = [i for i in df_p1.columns if 'perc_diff' in i]
+        get_plot(df_p1, columns_to_plot)
         df_p3 = df_a.copy()
         get_plot3(df_p3)
         df_p4 = df_a.copy()
-        get_plot4(df_p4)
+        min_max_Vert = ['perc_diff_C'+str(min_vert)+'_C'+str(max_vert)]
+        get_plot4(df_p4, min_max_Vert)
         #get_plot5(df5)
         get_plot_sample(1.96,(0.84, 1.282), std_v, 80)
         print('\nfigures have been ploted in dataset')
@@ -334,6 +334,6 @@ if __name__ == "__main__":
     if arguments.h is None:
         path_results = os.path.join(os.getcwd(),arguments.i)
         get_data(path_results)
-        main(arguments.l)
+        main(list(map(int, arguments.l)))
     else:
         parser.print_help()
