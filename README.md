@@ -14,15 +14,15 @@ Dataset/
             └── sub-subj01_T2w.json
      └── sub-subj02
          └── anat
-         └── sub-subj02_T2w.nii.gz
-         └── sub-subj02_T2w.json
+            └── sub-subj02_T2w.nii.gz
+            └── sub-subj02_T2w.json
  └── results
 
 ~~~
 # Installation
 csa-atrophy requires specific python packages for computing statistics and processing images. If not already present on the computers python environment such packages will automatically be installed by running pip command:
 ~~~
-pip install -r requirements.txt
+pip install -e .
 ~~~
 # How to run
 Download (or git clone) this repository:
@@ -33,7 +33,7 @@ cd csa-atrophy
 Fetch dataset (2 choices):
   - To fetch/sync dataset run command: (this file should be edited according to your needs)
   ~~~
-  ./csa-fetch-dataset.sh
+  ./csa_fetch_dataset.sh
   ~~~
   - To fetch specific version of openneuro repository (version: 1.0.5, Files: 2501, Size: 7.9GB, Subjects: 248) follow instructions to set openeuro CLI: https://www.npmjs.com/package/openneuro-cli
   ~~~
