@@ -201,7 +201,6 @@ def add_to_dataframe(df, Vertlevels):
     # create dataframes
     df1 = df.copy()
     df2 = df.copy()
-    df3 = df.copy()
     df_gt2 = pd.DataFrame()
 
     # iterate throuh different vertebrae levels
@@ -213,7 +212,6 @@ def add_to_dataframe(df, Vertlevels):
     diff_vert = np.setdiff1d(list(set(df['VertLevel'].values)), list(Vertlevels))
     # iteration
     for i in range(max_vert,min_vert,-1):
-        df_gt2 = pd.DataFrame()
         # get GT values
         if i==max_vert:
             group_CSA_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=diff_vert).groupby(['Filename']).mean().CSA_original
@@ -247,7 +245,6 @@ def add_to_dataframe(df, Vertlevels):
     diff_vert2 = np.setdiff1d(list(set(df['VertLevel'].values)), list(Vertlevels))
     # iterate throug diffent vertebrae levels
     for j in range(max_vert2, min_vert2, -1):
-        df2 = df.copy()
         if j == max_vert2:
             df_a['CSA_C'+str(min_vert2)+'_C'+str(max_vert2)] = df2.set_index('VertLevel').drop(index=diff_vert).groupby(['Rescale','Filename']).mean().values
             df_a['diff_C'+str(min_vert2)+'_C'+str(j)] = df_a['CSA_C'+str(min_vert2)+'_C'+str(j)].sub(df_a['gt_CSA_C'+str(min_vert2)+'_C'+str(j)]).abs()
@@ -276,11 +273,9 @@ def main(Vertlevels_input):
     df = pd.DataFrame(data2)
     pd.set_option('display.max_rows', None)
 
-
-
     # Use filename instead of path to file
     df['Filename'] = list((os.path.basename(path).split('_r')[0]) for path in data['Filename'])
-    print(df)
+
     # dataframe column additions gt,diff, perc diff for different vertbrae levels
     if Vertlevels_input is None:
         Vertlevels = list(set(df['VertLevel'].values))
@@ -299,16 +294,15 @@ def main(Vertlevels_input):
     print(" mean CSA: " + str(df.groupby('Rescale').get_group(1)['CSA_original'].mean()))
 
     #compute sample size
-    print(df_a)
     sample_size(df_a, 0.95,0.8, 7.77, 0)
 
     #ground truth atrophy
-    df4 = df.copy()
-    atrophies = sorted(set(df4['Rescale'].values))
+    df3 = df.copy()
+    atrophies = sorted(set(df3['Rescale'].values))
     #display number of subjects in test
     print("\n====================number subjects==========================\n")
     for atrophy in atrophies:
-        number_sub = df4.groupby('Filename')['CSA_original'].mean().count()
+        number_sub = df3.groupby('Filename')['CSA_original'].mean().count()
         print('For rescaling '+str(atrophy)+' number of subjects is ' +str(number_sub))
 
     # compute std for different vertebrae levels
@@ -324,7 +318,6 @@ def main(Vertlevels_input):
         min_vert = min(Vertlevels)
         min_max_Vert = ['perc_diff_C'+str(min_vert)+'_C'+str(max_vert)]
         boxplot_perc_err(df_a, min_max_Vert)
-        #get_plot5(df5)
         plot_sample_size(1.96,(0.84, 1.282), std_v, 80)
         print('\nfigures have been ploted in dataset')
 
