@@ -65,7 +65,7 @@ def get_parser():
     return parser
 
 # Functions
-def get_data(path_results):
+def concatenate_csv_files(path_results):
     '''Fetch and concatenate all csv files into one
     :param path_results: path to folder containing csv files for statistics
     '''
@@ -76,17 +76,16 @@ def get_data(path_results):
     metrics = pd.concat([pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
     metrics.to_csv("csa.csv")
 
-def get_plot(df_p1, columns_to_plot):
+def plot_perc_err(df, columns_to_plot):
     '''plot percentage difference between measured simulated atrophy and ground truth atrophy
     for different vertebrae levels
-    :param df_p1: dataframe for first plot
+    :param df: dataframe for first plot
     '''
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
-    print(df_p1)
-    df_p1.groupby('Rescale')[columns_to_plot].mean().plot(kind='bar', ax=axes[0], grid=True)
+    df.groupby('Rescale')[columns_to_plot].mean().plot(kind='bar', ax=axes[0], grid=True)
     axes[0].set_title('mean error in function of rescaling factor');
     axes[0].set_ylabel('error in %')
-    df_p1.groupby('Rescale')[columns_to_plot].std().plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
+    df.groupby('Rescale')[columns_to_plot].std().plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
     axes[1].set_title('STD of error in function of rescaling factor');
     plt.xlabel('rescaling factor')
     plt.ylabel('error in %')
@@ -95,27 +94,27 @@ def get_plot(df_p1, columns_to_plot):
     plt.savefig("err_plot.jpg")
 
 
-def get_plot3(df_p3):
+def boxplot_csa(df):
     '''plot CSA boxplot over different rescalings
-    :param df_p3: dataframe for third plot
+    :param df: dataframe for third plot
     '''
     fig3 = plt.figure()
-    df_p3.boxplot(column=['CSA_original'], by='Rescale')
+    df.boxplot(column=['CSA_original'], by='Rescale')
     plt.ylabel('CSA in mm^2')
     plt.savefig("csa_boxplot.jpg")
 
 
-def get_plot4(df_p4, min_max_Vertlevels):
+def boxplot_perc_err(df, min_max_Vertlevels):
     '''plot percentage of error boxplot over different rescalings
-    :param df_p4: dataframe for fourth plot
+    :param df: dataframe for fourth plot
     '''
     fig4 = plt.figure()
-    df_p4.boxplot(column=min_max_Vertlevels, by='Rescale')
+    df.boxplot(column=min_max_Vertlevels, by='Rescale')
     plt.ylabel('error in %')
     plt.savefig("err_boxplot.jpg")
 
 
-def get_plot_sample(z, z_power, std, mean_CSA):
+def plot_sample_size(z, z_power, std, mean_CSA):
     '''plot minimum number of patients required to detect an atrophy of X
     :param z: z score for X % uncertainty
     :param z_power: z score for X % Power
@@ -318,18 +317,15 @@ def main(Vertlevels_input):
 
     # plot graph if verbose is present
     if arguments.v is not None:
-        df_p1 = df_a.copy()
-        columns_to_plot = [i for i in df_p1.columns if 'perc_diff' in i]
-        get_plot(df_p1, columns_to_plot)
-        df_p3 = df_a.copy()
-        get_plot3(df_p3)
-        df_p4 = df_a.copy()
+        columns_to_plot = [i for i in df_a.columns if 'perc_diff' in i]
+        plot_perc_err(df_a, columns_to_plot)
+        boxplot_csa(df_a)
         max_vert = max(Vertlevels)
         min_vert = min(Vertlevels)
         min_max_Vert = ['perc_diff_C'+str(min_vert)+'_C'+str(max_vert)]
-        get_plot4(df_p4, min_max_Vert)
+        boxplot_perc_err(df_a, min_max_Vert)
         #get_plot5(df5)
-        get_plot_sample(1.96,(0.84, 1.282), std_v, 80)
+        plot_sample_size(1.96,(0.84, 1.282), std_v, 80)
         print('\nfigures have been ploted in dataset')
 
 
@@ -341,7 +337,7 @@ if __name__ == "__main__":
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     if arguments.h is None:
         path_results = os.path.join(os.getcwd(),arguments.i)
-        get_data(path_results)
+        concatenate_csv_files(path_results)
         main(list(map(int, arguments.l)))
     else:
         parser.print_help()
