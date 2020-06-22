@@ -2,7 +2,7 @@
 # -*- coding: utf-8
 #########################################################################################
 #
-# implement random transformations to mimic subject repositioning, for each rescaling,
+# implement random transformations to mimic subject repositioning, for each subject,
 #
 # generate randomized transfo per subject, and freeze them in the repos,
 # so that we can reproduce the results by inputting the frozen params in subsequent runs of the pipeline,
