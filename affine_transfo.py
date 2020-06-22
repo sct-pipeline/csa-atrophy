@@ -57,11 +57,11 @@ def get_parser():
 
 def random_values():
     """generate gaussian distribution random values to simulate subject repositioning
-     :return angle_IS: angle of rotation around Superior/Inferior axis
-     :return angle_PA: angle of rotation around Anterior/Superior axis
-     :return angle_LR: angle of rotation around Right/Left axis
+     :return angle_IS: angle of rotation around Inferior/Superior axis
+     :return angle_PA: angle of rotation around Posterior/Anterior axis
+     :return angle_LR: angle of rotation around Left/Right axis
      :return shift_LR: value of shift along Left/Right axis
-     :return shift_PA: value of shift along Anterior/Superior axis
+     :return shift_PA: value of shift along Posterior/Anterior axis
      :return shift_IS: value of shift along Inferior/Superior axis
      """
     values = randn(6)
@@ -84,11 +84,11 @@ def random_values():
 def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
      """fetch nibabel image and calculate minimum padding necessary for rotation boundaries
      :param img: nibabel image
-     :param angle_IS: angle of rotation around Superior/Inferior axis
-     :param angle_PA: angle of rotation around Anterior/Superior axis
-     :param angle_LR: angle of rotation around Right/Left axis
+     :param angle_IS: angle of rotation around Inferior/Superior axis
+     :param angle_PA: angle of rotation around Posterior/Anterior axis
+     :param angle_LR: angle of rotation around Left/Right axis
      :param shift_LR: value of shift along Left/Right axis
-     :param shift_PA: value of shift along Anterior/Superior axis
+     :param shift_PA: value of shift along Posterior/Anterior axis
      :param shift_IS: value of shift along Inferior/Superior axis
      :return data: image data with a padding
      :return min_pad: number of voxels added on each side of the image
@@ -112,11 +112,11 @@ def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
 
 def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      """apply rotation and translation on image
-     :param angle_IS: angle of rotation around Superior/Inferior axis
-     :param angle_PA: angle of rotation around Anterior/Superior axis
-     :param angle_LR: angle of rotation around Right/Left axis
+     :param angle_IS: angle of rotation around Inferior/Superior axis
+     :param angle_PA: angle of rotation around Posterior/Anterior axis
+     :param angle_LR: angle of rotation around Left/Right axis
      :param shift_LR: value of shift along Left/Right axis
-     :param shift_PA: value of shift along Anterior/Superior axis
+     :param shift_PA: value of shift along Posterior/Anterior axis
      :param shift_IS: value of shift along Inferior/Superior axis
      :param data: padded image data
      :return data: image data with a padding
