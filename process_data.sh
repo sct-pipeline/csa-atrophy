@@ -23,9 +23,12 @@ set -e
 # Exit if user presses CTRL+C (Linux) or CMD+C (OSX)
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
+# Global variables
 # Retrieve input params
 SUBJECT=$1
-#FILEPARAM=$2
+# set n_transfo to the desired number of transformed images of same subject to be segmented
+n_transfo=10
+
 
 
 # FUNCTIONS
@@ -91,46 +94,48 @@ rm -r dwi
 # T2w resampling
 #=============================================================================
 # define resampling coefficients (always keep value 1 for reference)
-R_COEFS=(0.85 0.90 0.95 0.97 0.99 1)
+
+R_COEFS=(0.90 0.95 1)
 # iterate resample on subject
 for r_coef in ${R_COEFS[@]}; do
   if [ -d "anat_r${r_coef}" ]; then
-    rm -r "anat_r${r_coef}"
-    echo "anat_r${r_coef} allready exists: creating folder"
-  fi
-  if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
-    rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
-    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
-  fi
+   rm -r "anat_r${r_coef}"
+   echo "anat_r${r_coef} already exists: creating folder"
+ fi
+ if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
+   rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
+   echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
+ fi
   # rename anat to explicit resampling coefficient
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
-  for file_tf in ${SUBJECT}_T2w*.nii.gz; do
-    #subject_tf = basename "file_tf"
+
+  seq_transfo=$(seq ${n_transfo})
+  for i_transfo in ${seq_transfo[@]}; do
     # Image homothetic rescaling
-    echo ${file_tf%%.*}
-    python3 ../../../affine_rescale.py -i ${file_tf%%.*}.nii.gz -r ${r_coef}
-    # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
-    file_t2=${file_tf%%.*}_r${r_coef}
+    affine_rescale -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
+    affine_transfo -i ${SUBJECT}_T2w_r${r_coef}.nii.gz -o _t${i_transfo} -o_file $PATH_RESULTS/transfo_values.csv
+
+    file_t2=${SUBJECT}_T2w_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist $file_t2 "t2"
     # name segmented file
     file_t2_seg=$FILESEG
     # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
-    label_if_does_not_exist $file_t2 $file_t2_seg ${r_coef}
+
+    label_if_does_not_exist $file_t2 $file_t2_seg
     file_label=$FILELABEL
     # Compute average CSA between C2 and C5 levels (append across subjects)
     # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
-    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/CSA_perlevel_${file_tf%%.*}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    # add files to check
+    FILES_TO_CHECK+=(
+    "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
+    "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
+    )
   done
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
-  # add files to check
-  FILES_TO_CHECK+=(
-  "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
-  "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
-  )
-
 done
 
 
