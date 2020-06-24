@@ -27,7 +27,7 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 # Retrieve input params
 SUBJECT=$1
 # set n_transfo to the desired number of transformed images of same subject to be segmented
-n_transfo=3
+n_transfo=10
 
 
 
@@ -99,10 +99,10 @@ for r_coef in ${R_COEFS[@]}; do
   seq_transfo=$(seq ${n_transfo})
   for i_transfo in ${seq_transfo[@]}; do
     # Image homothetic rescaling
-    affine_rescale -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
-    affine_transfo -i ${SUBJECT}_T2w_r${r_coef}.nii.gz -o _t${i_transfo} -o_file $PATH_RESULTS/transfo_values.csv
+    affine_transfo -i ${SUBJECT}_T2w.nii.gz -o _t${i_transfo}
+    affine_rescale -i ${SUBJECT}_T2w_t${i_transfo}.nii.gz -r ${r_coef}
     # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
-    file_t2=${SUBJECT}_T2w_r${r_coef}_t${i_transfo}
+    file_t2=${SUBJECT}_T2w_t${i_transfo}_r${r_coef}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist $file_t2 "t2"
     # name segmented file
