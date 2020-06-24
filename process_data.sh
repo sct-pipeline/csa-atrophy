@@ -27,7 +27,7 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 # Retrieve input params
 SUBJECT=$1
 # set n_transfo to the desired number of transformed images of same subject to be segmented
-n_transfo=10
+n_transfo=2
 
 
 
@@ -84,6 +84,7 @@ segment_if_does_not_exist(){
 # ==============================================================================
 # Go to results folder, where most of the outputs will be located
 cd $PATH_RESULTS
+mkdir csa_data
 # Copy ###source images
 cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
 cd $SUBJECT
@@ -95,7 +96,7 @@ rm -r dwi
 #=============================================================================
 # define resampling coefficients (always keep value 1 for reference)
 
-R_COEFS=(0.90 0.95 1)
+R_COEFS=(0.85 0.90 0.95 1)
 # iterate resample on subject
 for r_coef in ${R_COEFS[@]}; do
   if [ -d "anat_r${r_coef}" ]; then
@@ -123,11 +124,11 @@ for r_coef in ${R_COEFS[@]}; do
     file_t2_seg=$FILESEG
     # Create labels in the cord at C3 and C5 cervical vertebral levels (only if it does not exist)
 
-    label_if_does_not_exist $file_t2 $file_t2_seg
+    label_if_does_not_exist $file_t2 $file_t2_seg $R_COEFS
     file_label=$FILELABEL
     # Compute average CSA between C2 and C5 levels (append across subjects)
     # sct_process_segmentation -i $file_t2_seg.nii.gz -vert 1:3 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_${SUBJECT}_${r_coef}.csv -qc ${PATH_QC}
-    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_data/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"

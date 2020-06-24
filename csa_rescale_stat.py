@@ -61,7 +61,6 @@ def get_parser():
         help='Help',
         nargs="*"
     )
-
     return parser
 
 # Functions
@@ -212,6 +211,7 @@ def add_to_dataframe(df, Vertlevels):
     diff_vert = np.setdiff1d(list(set(df['VertLevel'].values)), list(Vertlevels))
     # iteration
     for i in range(max_vert,min_vert,-1):
+        df_gt2 = pd.DataFrame()
         # get GT values
         if i==max_vert:
             group_CSA_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=diff_vert).groupby(['Filename']).mean().CSA_original
@@ -226,10 +226,10 @@ def add_to_dataframe(df, Vertlevels):
             # to locate easily subjects put Filename as index
             group3 = group2.set_index(['Filename'])
             # iterate through dataframe subjects
-            for subjectj in set(group2['Filename'].values):
+            for subject_j in set(group2['Filename'].values):
                 # if dataframe subject exist in GT (Rescale = 1)
-                if subjectj in group_CSA_gt.index.values:
-                    group3.at[subjectj,'gt_CSA_C'+str(min_vert)+'_C'+str(i)] = group_CSA_gt.loc[subjectj] * (atrophy[0] ** 2)
+                if subject_j in group_CSA_gt.index.values:
+                    group3.at[subject_j,'gt_CSA_C'+str(min_vert)+'_C'+str(i)] = group_CSA_gt.loc[subject_j] * (atrophy[0] ** 2)
             df_gt = df.groupby('Rescale').get_group(atrophy[0]).groupby('Filename').mean()
             df_gt['gt_CSA_C'+str(min_vert)+'_C'+str(i)] = (group3['gt_CSA_C'+str(min_vert)+'_C'+str(i)].values)
             df_gt2 = pd.concat([df_gt2, df_gt])
@@ -273,8 +273,8 @@ def main(Vertlevels_input):
     df = pd.DataFrame(data2)
     pd.set_option('display.max_rows', None)
 
-    # Use filename instead of path to file
-    df['Filename'] = list((os.path.basename(path).split('_r')[0]) for path in data['Filename'])
+    # Use filename with transfo suffix but not rescale suffix instead of path to file
+    df['Filename'] = list((os.path.basename(path).split('_r')[0]+'_'+os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for path in data['Filename'])
 
     # dataframe column additions gt,diff, perc diff for different vertbrae levels
     if Vertlevels_input is None:
@@ -331,6 +331,6 @@ if __name__ == "__main__":
     if arguments.h is None:
         path_results = os.path.join(os.getcwd(),arguments.i)
         concatenate_csv_files(path_results)
-        main(list(map(int, arguments.l)))
+        main(arguments.l)
     else:
         parser.print_help()
