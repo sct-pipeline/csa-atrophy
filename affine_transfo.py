@@ -2,7 +2,7 @@
 # -*- coding: utf-8
 #########################################################################################
 #
-# implement random transformations to mimic subject repositioning, for each subject,
+# implement random transformations to mimic subject repositioning, for each rescaling,
 #
 # generate randomized transfo per subject, and freeze them in the repos,
 # so that we can reproduce the results by inputting the frozen params in subsequent runs of the pipeline,
@@ -22,6 +22,8 @@ import math
 from numpy.random import randn
 import numpy as np
 import argparse
+import csv
+import pandas as pd
 
 import nibabel as nib
 
@@ -52,11 +54,16 @@ def get_parser():
         help="Suffix for output file name.\nexample: '-i MYFILE.nii -o _t' would output MYFILE_t.nii",
         default='_t',
     )
+    optional.add_argument(
+        '-o_file',
+        help="Create csv file to keep a trace of the applied random transformations, this file can be reused in subsequent studies and code testing",
+    )
     return parser
 
 
-def random_values():
-    """generate gaussian distribution random values to simulate subject repositioning
+def random_values(df, subject_name):
+    """generate gaussian distribution random values to simulate subject repositioning, transformation
+    values are kept in a pandas dataframe that is afterwards converted to a csv file
      :return angle_IS: angle of rotation around Inferior/Superior axis
      :return angle_PA: angle of rotation around Posterior/Anterior axis
      :return angle_LR: angle of rotation around Left/Right axis
@@ -78,7 +85,18 @@ def random_values():
 
     angle_LR = std_angle*values[4]
     shift_LR = std_shift*values[5]
-    return angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS
+
+    transfo_dict = {
+                'subjects': subject_name,
+                'angle_IS': angle_IS,
+                'angle_PA': angle_PA,
+                'angle_LR': angle_LR,
+                'shift_LR': shift_LR,
+                'shift_PA': shift_PA,
+                'shift_IS': shift_IS
+    }
+    df = df.append(transfo_dict, ignore_index=True)
+    return df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS
 
 
 def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
@@ -165,6 +183,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
 
 
 def main():
+    """Main function, crop and save image"""
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
@@ -174,24 +193,47 @@ def main():
     # copies of selected subject images
     if arguments.h is None:
 
+        # if csv file containing transformation values does not yet exist it will be created.
+        # else input csv file is used and new subject is added in a new row of a pandas dataframe
+        if arguments.o_file is None:
+            arguments.o_file = 'transfo_values.csv'
+            transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA', 'shift_IS']
+            df = pd.DataFrame(columns=transfo_column_name)
+        else:
+            if os.path.isfile(arguments.o_file):
+                df = pd.read_csv(arguments.o_file, delimiter=',')
+                print(df)
+            else:
+                print('error',arguments.o_file,' is not present in current directory')
+                print('creating new file named ', arguments.o_file)
+                transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA', 'shift_IS']
+                df = pd.DataFrame(columns=transfo_column_name)
+
+
         # transformations are applied for each selected subject
         for fname in arguments.i:
             fname_path = os.path.abspath(fname)
             if fname_path:
-                """Main function, crop and save image"""
                 name = os.path.basename(fname_path).split(fname_path)[0]
                 # get file path
                 path = os.path.join(os.getcwd(), fname_path)
                 # create new path to save data
                 path_tf = os.path.join(path, path.split('.nii.gz')[0]+str(suffix)+'.nii.gz')
-                print(path_tf)
+                subject = os.path.basename(path_tf).split('.nii.gz')[0]
                 if os.path.isfile(path_tf):
                     os.remove(path_tf)
                 # load image
-                print(fname_path)
                 img = nib.load(fname_path)
                 print('\n----------affine transformation subject: '+name+'------------')
-                angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values()
+
+                # make sure subject is not already in dataframe else use dataframe
+                # subject transformation values
+                if subject not in df['subjects'].values:
+                    df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values(df, subject)
+                else:
+                    print(df.set_index('subjects').loc[subject].values)
+                    angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = df.set_index('subjects').loc[subject].values
+
                 # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
                 data, min_pad = get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS)
                 data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data)
@@ -203,6 +245,7 @@ def main():
                 # raise output error if the subject does not exist
             else:
                 print('error: '+fname_path+' is not a valid subject')
+        df.set_index('subjects').to_csv(arguments.o_file)
     else:
         parser.print_help()
 

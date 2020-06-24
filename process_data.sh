@@ -99,10 +99,10 @@ for r_coef in ${R_COEFS[@]}; do
   seq_transfo=$(seq ${n_transfo})
   for i_transfo in ${seq_transfo[@]}; do
     # Image homothetic rescaling
-    affine_transfo -i ${SUBJECT}_T2w.nii.gz -o _t${i_transfo}
-    affine_rescale -i ${SUBJECT}_T2w_t${i_transfo}.nii.gz -r ${r_coef}
-    # sct_resample -i ${SUBJECT}_T2w.nii.gz -o ${SUBJECT}_T2w_r${r_coef}.nii.gz -f ${r_coef}x${r_coef}x${r_coef}
-    file_t2=${SUBJECT}_T2w_t${i_transfo}_r${r_coef}
+    affine_rescale -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
+    affine_transfo -i ${SUBJECT}_T2w_r${r_coef}.nii.gz -o _t${i_transfo} -o_file $PATH_RESULTS/transfo_values.csv
+
+    file_t2=${SUBJECT}_T2w_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist $file_t2 "t2"
     # name segmented file
