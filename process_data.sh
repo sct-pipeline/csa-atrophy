@@ -34,31 +34,22 @@ n_transfo=2
 # FUNCTIONS
 # ==============================================================================
 # Check if manual label already exists. If it does, copy it locally. If it does
-# not, perform labeling.
+# not, perform automatic labeling.
 label_if_does_not_exist(){
   local file="$1"
   local file_seg="$2"
   local scale="$3"
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels"
-  if [ -e "${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ]; then
-    echo "Found manual label: ${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz"
-    rsync -avzh "${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ${FILELABEL}.nii.gz
+  if [ -e "../../../${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ]; then
+    rsync -avzh "../../../${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ${file}_labels-manual.nii.gz
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -discfile ${file}_labels-manual.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   else
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -qc ${PATH_QC} -qc-subject ${SUBJECT}
     # Create labels in the cord
     sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
-
-    # If automatic labeling did not work, you can initialize with manual identification of C2-C3 disc:
-    # sct_label_utils -i ${file}.nii.gz -create-viewer 3 -o label_vert.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
-    # sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -initlabel label_vert.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
-    # sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
-
-    # If manual labeling did not work, you can initialize with manual identification discs:
-    #sct_label_utils -i ${file}.nii.gz -create-viewer 2,3,4,5,6 -o label_vert.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
-    #sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -discfile label_vert.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
-    # sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   fi
 }
 
@@ -84,7 +75,7 @@ segment_if_does_not_exist(){
 # ==============================================================================
 # Go to results folder, where most of the outputs will be located
 cd $PATH_RESULTS
-mkdir csa_data
+mkdir -p csa_data
 # Copy ###source images
 cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
 cd $SUBJECT
