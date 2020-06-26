@@ -48,3 +48,14 @@ To output statistics, run in Dataset
 python csa_rescale_stat.py -i results -v
 ~~~
 
+# Quality Control
+
+After running the analysis, check your Quality Control (QC) report by opening the file qc/index.html. Use the “Search” feature of the QC report to quickly jump to segmentations or labeling results. If you spot issues (wrong labeling), add their filename in the variable array "FILES" of the 'manual_labeling_correction.sh' script. Then manually create labels in the cord on the posterior tip of inter-vertebral discs from C2 to C5 with command:
+~~~
+./manual_labeling_correction.sh
+~~~
+The bash script outputs all effectuated manual labelings to 'results_corrected/seg_manual'. 
+It is now possible to re-run the whole process, pointing to the manual corrections. With the command below labeling will use the manual corrections present in 'seg_manual', otherwise labeling will be done automatically.
+~~~
+sct_run_batch -path-data data -path-output results_corrected -path-segmanual seg_manual process_data.sh
+~~~
