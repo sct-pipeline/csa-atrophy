@@ -11,5 +11,5 @@ for file in ${FILES[@]}; do
   subject=${file%%_*}
   rescaling_split=${file%%_t*}
   rescaling=${rescaling_split#*_r}
-  sct_label_utils -i csa-atrophy_results/results/$subject/anat_r${rescaling}/$file -create-viewer 2,3,4,5,6 -o ${PATH_SEGMANUAL}/${file%%.nii.gz}_labels-manual.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
+  sct_label_utils -i csa_atrophy_results/results/$subject/anat_r${rescaling}/$file -create-viewer 2,3,4,5,6 -o ${PATH_SEGMANUAL}/${file%%.nii.gz}_labels-manual.nii.gz -msg "Click at the posterior tip of inter-vertebral disc"
 done
