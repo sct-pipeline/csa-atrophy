@@ -41,11 +41,11 @@ Fetch dataset (2 choices):
   ~~~
 Run the following script within the Dataset folder to extract CSA. This script can be ran on desired subjects using flag -include and in parallel processing using flag -jobs.
 ~~~
-sct_run_batch -path-data data process_data.sh
+sct_run_batch -path-data data -path-output csa-atrophy_results process_data.sh
 ~~~
 To output statistics, run in Dataset
 ~~~
-python csa_rescale_stat.py -i results -v
+python csa_rescale_stat.py -i csa-atrophy_results/results/csa_data -v
 ~~~
 
 # Quality Control
@@ -54,8 +54,8 @@ After running the analysis, check your Quality Control (QC) report by opening th
 ~~~
 ./manual_labeling_correction.sh
 ~~~
-The bash script outputs all effectuated manual labelings to 'results_corrected/seg_manual'. 
+The bash script outputs all effectuated manual labelings to 'results_corrected/seg_manual'.
 It is now possible to re-run the whole process, pointing to the manual corrections. With the command below labeling will use the manual corrections present in 'seg_manual', otherwise labeling will be done automatically.
 ~~~
-sct_run_batch -path-data data -path-output results_corrected -path-segmanual seg_manual process_data.sh
+sct_run_batch -path-data data -path-output csa-atrophy_results_corrected -path-segmanual seg_manual process_data.sh
 ~~~

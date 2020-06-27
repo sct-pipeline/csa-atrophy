@@ -106,7 +106,7 @@ def boxplot_csa(df):
 def boxplot_perc_err(df, min_max_vertlevels):
     '''plot percentage of error boxplot over different rescalings
     :param df: dataframe for fourth plot
-    :param min_max_vertlevels: uses dataframe column with most distant vertebrae levels. Example: perc_diff_C2_C5
+    :param min_max_vertlevels: uses dataframe columns with most distant vertebrae levels. Example: perc_diff_C2_C5
     '''
     fig4 = plt.figure()
     df.boxplot(column=min_max_vertlevels, by='Rescale')
@@ -127,7 +127,7 @@ def plot_sample_size(z_conf, z_power, std, mean_CSA):
     n=[]
     for z_p in z_power:
         i = np.arange(1.5, 8.0, 0.05) # x_axis values ranging from 1.5 to 8.0 mm^2
-        num_n = 2*((z+z_p)**2)*(std**2) # numerator of sample size equation
+        num_n = 2*((z_conf+z_p)**2)*(std**2) # numerator of sample size equation
         n.append(num_n/((i)**2))
         # plot
     ax.plot(i, n[0], label=('80% power'))
@@ -177,9 +177,9 @@ def sample_size(df_a, conf, power, mean_control=None, mean_patient=None, atrophy
     :param df_a: dataframe grouped by subject containing information from add_to_dataframe
     :param conf: Confidence level. Example 0.8
     :param power: Power level. Example 0.9
-    :param atrophy: expected atrophy to detect in mm^2. Example atrophy=7.7
     :param mean_control: mean CSA value of control group
     :param mean_patient: mean CSA value of patient group
+    :param atrophy: expected atrophy to detect in mm^2. Example atrophy=7.7
     '''
     print("\n====================size==========================\n")
     z_score_dict = {'Confidence_Level':[0.60, 0.70, 0.8, 0.85, 0.90, 0.95],
@@ -191,21 +191,23 @@ def sample_size(df_a, conf, power, mean_control=None, mean_patient=None, atrophy
     print('std: '+str(std))
     num_n = 2 * ((df_sample.at[conf, 'z_value'] + df_sample.at[power, 'z_value']) ** 2) * (std ** 2)
     if atrophy:
-        deno_n = (abs(atrophy))**2
+        atrophy = atrophy
     elif mean_control is not None & mean_patient is not None:
-        deno_n = (abs(mean_control - mean_patient))**2
+        atrophy = abs(mean_control - mean_patient)
     else:
         print('input error: either input mean_control and mean_patient or atrophy in mm^2')
+    deno_n = (abs(atrophy))**2
     sample = ceil(num_n/deno_n)
     print('with '+str(power*100)+'% power, at '+str(conf*100)+'% significance, ratio 1:1 (patients/controls):')
-    print('minimum sample size to detect mean '+str(mean_control-mean_patient)+' mm² atrophy: '+ str(sample))
+    print('minimum sample size to detect mean '+str(atrophy)+' mm² atrophy: '+ str(sample))
+
 
 
 def add_to_dataframe(df, vertlevels):
     '''dataframe column additions gt_CSA, diff_CSA, perc_diff_CSA for different vertbrae levels
-    :param df: original dataframe
-    :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae levels present in csv files
-    levels present in csv concatenate_csv_files
+    :param df: original dataframe with csv file data
+    :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae
+    levels present in csv files
     :return df_a: modified dataframe with added gt_CSA, diff_CSA, perc_diff_CSA for different vertebrae levels
     '''
     # create dataframes
@@ -214,7 +216,7 @@ def add_to_dataframe(df, vertlevels):
     df_gt2 = pd.DataFrame()
 
     # iterate throuh different vertebrae levels and add ground truth values to each subject in dataframe
-    # dataframe and variable for iteration
+    # variables for iteration
     df_a = df.groupby(['Rescale','Filename']).mean()
     n = []
     max_vert = max(vertlevels)
@@ -248,7 +250,7 @@ def add_to_dataframe(df, vertlevels):
         df_a['gt_CSA_C'+str(min_vert)+'_C'+str(i)] = df_gt2['gt_CSA_C'+str(min_vert)+'_C'+str(i)].values
 
 
-    # add CSA values for vertebrae levels of interest
+    # add CSA, diff and perc_diff values for vertebrae levels of interest for each subject
     m = []
     l = []
     max_vert2 = max(list(vertlevels))
@@ -283,10 +285,11 @@ def main(vertlevels_input):
     df = pd.DataFrame(data2)
     pd.set_option('display.max_rows', None)
 
-    # Use filename with transfo suffix but not rescale suffix instead of path to file
+    # Change dataframe['Filenamee'] to basename,
+    # Remove rescale suffix
     df['Filename'] = list((os.path.basename(path).split('_r')[0]+'_'+os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for path in data['Filename'])
 
-    # dataframe column additions gt,diff, perc diff for different vertbrae levels
+    # verify if vertlevels were given in input by user
     if vertlevels_input is None:
         vertlevels = list(set(df['VertLevel'].values))
         print(vertlevels)
@@ -297,9 +300,10 @@ def main(vertlevels_input):
         else:
             print('error: Input vertebrae levels ',vertlevels,' do not exist in csv files')
             exit()
+    # dataframe column additions gt,diff, perc diff for different vertbrae levels
     df_a = add_to_dataframe(df, vertlevels)
 
-    # print mean CSA gt
+    # print mean CSA without rescaling
     print("\n====================mean==========================\n")
     print(" mean CSA: " + str(df.groupby('Rescale').get_group(1)['CSA_original'].mean()))
 
@@ -310,7 +314,7 @@ def main(vertlevels_input):
 
     #ground truth atrophy
     atrophies = sorted(set(df['Rescale'].values))
-    #display number of subjects in test
+    # display number of subjects in test (transformed subjects are considered different)
     print("\n====================number subjects==========================\n")
     for atrophy in atrophies:
         number_sub = df.groupby('Filename')['CSA_original'].mean().count()
