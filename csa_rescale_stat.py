@@ -132,7 +132,7 @@ def plot_sample_size(z_conf, z_power, std, mean_csa):
         # plot
     ax.plot(i, n[0], label=('80% power'))
     ax.plot(i, n[1], label=('90% power'))
-    ax.set_ylabel('number of participants per arm of study \n(patients or controls) with ratio 1:1')
+    ax.set_ylabel('number of participants per group of study \n(patients or controls) with ratio 1:1')
     ax.set_xlabel('atrophy in mm^2')
     ax.set_title('minimum number of participants to detect an atrophy with 5% uncertainty\n std = '+str(round(std,2))+'mm², mean_csa = '+str(mean_csa)+'mm²')
     ax.legend()
