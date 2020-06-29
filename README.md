@@ -45,7 +45,7 @@ sct_run_batch -path-data data -path-output csa_atrophy_results process_data.sh
 ~~~
 To output statistics, run in Dataset
 ~~~
-python csa_rescale_stat.py -i csa_atrophy_results/results/csa_data -v
+python csa_rescale_stat.py -i csa_atrophy_results/results/csa_data -o csa_atrophy_results -v
 ~~~
 
 # Quality Control

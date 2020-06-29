@@ -107,7 +107,8 @@ for r_coef in ${R_COEFS[@]}; do
   for i_transfo in ${seq_transfo[@]}; do
     # Image homothetic rescaling
     affine_rescale -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
-    # Image random transformation (rotation, translation)
+    # Image random transformation (rotation, translation). By default transformation values will be taken from
+    # "transfo_values.csv" file if it already exists
     affine_transfo -i ${SUBJECT}_T2w_r${r_coef}.nii.gz -o _t${i_transfo} -o_file $PATH_RESULTS/transfo_values.csv
 
     file_t2=${SUBJECT}_T2w_r${r_coef}_t${i_transfo}
@@ -116,7 +117,7 @@ for r_coef in ${R_COEFS[@]}; do
     # name segmented file
     file_t2_seg=$FILESEG
 
-    # Create labels in the cord, function uses by default labels file in direcotry seg_manual
+    # Create labels in the cord, function uses by default labels file in directory seg_manual
     label_if_does_not_exist $file_t2 $file_t2_seg $R_COEFS
     file_label=$FILELABEL
     # Compute average CSA between C2 and C5 levels (append across subjects)
