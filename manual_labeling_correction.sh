@@ -1,6 +1,6 @@
 #!/bin/bash
 # Local folder to output the manual labels
-PATH_SEGMANUAL="csa-atrophy_results_corrected/seg_manual"
+PATH_SEGMANUAL="csa_atrophy_results_corrected/seg_manual"
 mkdir -p ${PATH_SEGMANUAL}
 # List of subjects to create manual labels
 FILES=(

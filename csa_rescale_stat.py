@@ -331,10 +331,10 @@ def main(vertlevels_input):
         min_vert = min(vertlevels)
         min_max_Vert = ['perc_diff_c'+str(min_vert)+'_c'+str(max_vert)]
         boxplot_perc_err(df_a, min_max_Vert)
-        # z = z_score for confidence level,
-        # z_power = z_score for confidence level,
+        # z_conf = z_score for confidence level,
+        # z_power = z_score for power level,
         # std_v = STD of subjects without rescaling CSA values
-        # mean_csa =  mean CSA value of subjects without resclaing
+        # mean_csa =  mean CSA value of subjects without rescaling
         plot_sample_size(z_conf=1.96, z_power=(0.84, 1.282), std=std_v, mean_csa=mean_csa)
         print('\nfigures have been ploted in dataset')
 
