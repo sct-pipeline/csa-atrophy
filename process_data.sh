@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Process data. This script should be run within the subject's folder.
+# Process data. This script should be run within the dataset folder.
 #
 # Usage:
 #   ./process_data.sh <SUBJECT> <FILEPARAM>
@@ -26,8 +26,8 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 # Global variables
 # Retrieve input params
 SUBJECT=$1
-# set n_transfo to the desired number of transformed images of same subject to be segmented,
-# n_transfo also represents the number of iterations of the transformation, segmenting, labeling process
+# set n_transfo to the desired number of transformed images of same subject for segmentation,
+# n_transfo also represents the number of iterations of the transformation, segmentation and labeling process
 n_transfo=2
 
 
@@ -49,7 +49,7 @@ label_if_does_not_exist(){
   else
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -qc ${PATH_QC} -qc-subject ${SUBJECT}
-    # Create labels in the cord
+    # Create labels in the Spinal Cord
     sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   fi
 }
@@ -87,9 +87,8 @@ rm -r dwi
 # T2w resampling
 #=============================================================================
 # define resampling coefficients (always keep value 1 for reference)
-
 R_COEFS=(0.90 0.95 1)
-# iterate resample on subject
+# iterate rescaling and transformation on subject
 for r_coef in ${R_COEFS[@]}; do
   if [ -d "anat_r${r_coef}" ]; then
    rm -r "anat_r${r_coef}"
@@ -99,7 +98,7 @@ for r_coef in ${R_COEFS[@]}; do
    rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
  fi
-  # rename anat to explicit resampling coefficient
+  # rename anat to explicit rescaling coefficient
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
 
@@ -107,7 +106,7 @@ for r_coef in ${R_COEFS[@]}; do
   for i_transfo in ${seq_transfo[@]}; do
     # Image homothetic rescaling
     affine_rescale -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
-    # Image random transformation (rotation, translation). By default transformation values will be taken from
+    # Image random transformation (rotation, translation). By default transformation values are taken from
     # "transfo_values.csv" file if it already exists
     affine_transfo -i ${SUBJECT}_T2w_r${r_coef}.nii.gz -o _t${i_transfo} -o_file $PATH_RESULTS/transfo_values.csv
 

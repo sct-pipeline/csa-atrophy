@@ -5,16 +5,16 @@
 # implement random transformations to mimic subject repositioning, for each rescaling,
 #
 # generate randomized transformations per subject, and freeze them in the repos,
-# so that we can reproduce the results by inputting the frozen params in subsequent runs of the pipeline,
-# shifting (±5 voxels in each direction),
-# rotation (±10° in each direction),
+# so that results can be reproduced by using the frozen params in subsequent runs of the pipeline,
+# shifting ±5 voxels in each direction with 95 % certainty,
+# rotation ±10° in each direction with 95 % certainty,
 #
 # ---------------------------------------------------------------------------------------
 # Authors: Paul Bautin
 # SCT source: spinalcordtoolbox/testing/create_test_data.py
 #
 # example python affine_transfo.py -i <sub-amu01 sub-amu02>
-# About the license: see the file LICENSE
+# About the license: see the file LICENSE.TXT
 ###################################################################
 
 import glob, os, sys
@@ -32,7 +32,7 @@ from scipy.ndimage import affine_transform
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='apply random rotation and translation with values following a gaussian distritbution:',
+        description='apply random rotation and translation with values following a gaussian distribution:',
         add_help=None,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
@@ -42,7 +42,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help="Input nifti images to be transformed",
+        help="Input nifti images for transformation",
         nargs="*"
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -53,7 +53,7 @@ def get_parser():
     )
     optional.add_argument(
         '-o',
-        help="Suffix for output file name.\nexample: '-i MYFILE.nii -o _t' would output MYFILE_t.nii",
+        help="Suffix for output file name.\nExample: '-i MYFILE.nii -o _t' would output MYFILE_t.nii",
         default='_t',
     )
     optional.add_argument(
@@ -65,8 +65,8 @@ def get_parser():
 
 
 def random_values(df, subject_name):
-    """generate gaussian distribution random values to simulate subject repositioning, transformation
-    values are kept in a pandas dataframe that is afterwards converted to a csv file
+    """generate gaussian distribution random values to simulate subject repositioning,
+    transformation values are kept in a pandas dataframe that is afterwards converted to a csv file
      :return angle_IS: angle of rotation around Inferior/Superior axis
      :return angle_PA: angle of rotation around Posterior/Anterior axis
      :return angle_LR: angle of rotation around Left/Right axis
@@ -75,10 +75,9 @@ def random_values(df, subject_name):
      :return shift_IS: value of shift along Inferior/Superior axis
      """
     values = randn(6)
-    # for 95% of subjects repositioning (2*std away)
-    # rotation (±10° in each direction),
+    # rotation (95% of values are within ±10° in each direction),
     std_angle = 5
-    # shifting (±5 voxels in each direction)
+    # shifting (95% of values are within ±5 voxels in each direction)
     std_shift = 2.5
     angle_IS = std_angle * values[0]
     shift_IS = std_shift * values[1]
@@ -103,7 +102,8 @@ def random_values(df, subject_name):
 
 
 def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
-    """fetch nibabel image and calculate minimum padding necessary for rotation boundaries
+    """fetch nibabel image and calculate minimum padding necessary for transformed image,
+    minimum padding is computed to contain maximum rotation and shift.
      :param img: nibabel image
      :param angle_IS: angle of rotation around Inferior/Superior axis
      :param angle_PA: angle of rotation around Posterior/Anterior axis
@@ -114,13 +114,12 @@ def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
      :return data: image data with a padding
      :return min_pad: number of voxels added on each side of the image
      """
-    # upload and pad image
+    # upload and pad image to avoid edge overflow during transformation
     data = img.get_fdata()
-    # pad image to avoid edge effect during rotation
     max_shift = np.max(np.abs((shift_LR, shift_PA, shift_IS)))
     max_axes = np.max(data.shape)
     max_angle = np.deg2rad(np.max(np.abs((angle_IS, angle_PA, angle_LR))))
-    # estimate upper limit of largest increase with rotation
+    # estimate upper limit of largest frame increase due to transformation
     increase_angle = (max_axes / 2) * (np.sqrt(2) * np.sin(((np.pi / 4) - max_angle)) - 1)
     increase_axes = np.sqrt(2 * increase_angle ** 2)
     min_pad = math.ceil(increase_axes + np.sqrt(3 * (max_shift ** 2)))
@@ -141,10 +140,10 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
      :param shift_IS: value of shift along Inferior/Superior axis
      :param data: padded image data
      :return data: image data with a padding
-     :return data_rot: returns image data after applied random rotation and translation
+     :return data_rot: return image data after random transformation
      """
     # print angles and shifts
-    print('angles for rotation IS:', angle_IS, ' PA:', angle_PA, ' LR:', angle_LR)
+    print('angles of rotation IS:', angle_IS, ' PA:', angle_PA, ' LR:', angle_LR)
     print('number of pixel shift LR:', shift_LR, ' PA:', shift_PA, ' IS:', shift_IS)
 
     # find center of data
@@ -177,7 +176,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
 
     print('rotation matrix: \n', affine_arr_rotIS_rotPA_rotLR)
 
-    # offset to shift the center of the old grid to the center of the new new grid + random shift
+    # offset to shift the center of the old grid to the center of the new grid + random shift
     shift = c_in.dot(affine_arr_rotIS_rotPA_rotLR) - c_in - np.array([shift_LR, shift_PA, shift_IS])
     # resampling data
     data_shift_rot = affine_transform(data, affine_arr_rotIS_rotPA_rotLR, offset=shift, order=5)
@@ -186,18 +185,16 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
 
 
 def main():
-    """Main function, crop and save image"""
+    """Main function, transform and save image"""
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     suffix = arguments.o
 
-    # According to command line instructions, transformations are applied on
-    # copies of selected subject images
+    # Images of selected subject chosen by user in command line instructions, are copied and transformed
     if arguments.h is None:
-
-        # if csv file containing transformation values does not yet exist it will be created.
-        # else input csv file is used and new subject is added in a new row of a pandas dataframe
+        # if a csv file containing transformation values does not yet exist it will be created,
+        # otherwise command line input csv file is used and a new subject is added in a new row of a pandas dataframe
         if arguments.o_file is None:
             arguments.o_file = 'transfo_values.csv'
             transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA', 'shift_IS']
@@ -228,9 +225,7 @@ def main():
                 # load image
                 img = nib.load(fname_path)
                 print('\n----------affine transformation subject: ' + name + '------------')
-
-                # make sure subject is not already in dataframe else use dataframe
-                # subject transformation values
+                # check if the subject is not already in dataframe, otherwise use dataframe subject values
                 if subject not in df['subjects'].values:
                     df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values(df, subject)
                 else:
@@ -238,7 +233,7 @@ def main():
                     angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = df.set_index('subjects').loc[
                         subject].values
 
-                # nibabel data follows the RAS+ (Right, Anterior, Superior are in the ascending direction) convention,
+                # nibabel data follows the RAS+ convention (Right, Anterior, Superior in the ascending direction)
                 data, min_pad = get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS)
                 data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data)
                 # load data back to nifti format

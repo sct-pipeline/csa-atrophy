@@ -9,7 +9,7 @@
 
 
 # Uncomment for full verbose
-#set -v
+set -v
 
 # Immediately exit if error
 set -e
@@ -25,8 +25,6 @@ SUBJECTS_DIR=(
   "sub-amu01"
   "sub-amu02"
 )
-
-
 
 for SUBJECT in ${SUBJECTS_DIR[@]}; do
   if [ ! -e $SUBJECT ]; then
