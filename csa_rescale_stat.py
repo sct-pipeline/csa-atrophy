@@ -66,8 +66,8 @@ def get_parser():
 
 
 # Functions
-def concatenate_csv_files(path_results):
-    """Fetch and concatenate all csv files into one
+def get_data(path_results):
+    """Fetch and concatenate data from all csv files in results/csa_data to compute statistics with pandas
     :param path_results: path to folder containing csv files for statistics
     """
     files = []
@@ -77,7 +77,6 @@ def concatenate_csv_files(path_results):
     metrics = pd.concat(
         [pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
     metrics.to_csv("csa.csv")
-
 
 def plot_perc_err(df, columns_to_plot, path_output):
     """plot percentage difference between simulated atrophy and ground truth atrophy
@@ -141,7 +140,7 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
         atrophy = np.arange(1.5, 8.0, 0.05)  # x_axis values ranging from 1.5 to 8.0 mm^2
         num_n = 2 * ((z_conf + z_p) ** 2) * (std ** 2)  # numerator of sample size equation
         n.append(num_n / ((atrophy) ** 2))
-        # plot
+    # plot
     ax.plot(atrophy, n[0], label='80% power')
     ax.plot(atrophy, n[1], label='90% power')
     ax.set_ylabel('number of participants per group of study \n(patients or controls) with ratio 1:1')
@@ -159,11 +158,12 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
 
     def inverse(atrophy):
         return atrophy / 100 * mean_csa_sample
-
+      
     secax = ax.secondary_xaxis('top', functions=(forward, inverse))
     secax.set_xlabel('atrophy in %')
     output_file = path_output + "/min_subj.png"
     plt.savefig(output_file, bbox_inches='tight')
+
 
 
 def std(df_a, vertlevels):
@@ -188,8 +188,10 @@ def std(df_a, vertlevels):
 
 def sample_size(df_a, conf, power, mean_control=None, mean_patient=None, atrophy=None):
     """
-    Calculate the minimum number of patients required to detect an atrophy of a given value (i.e. power analysis)
+    Calculate the minimum number of patients required to detect an atrophy of a given value (i.e. power analysis),
     ratio patients/control 1:1 and with the assumption that both samples have the same STD.
+    ref: Ard, M Colin, and Steven D Edland. “Power calculations for clinical trials in Alzheimer's disease.”
+    Journal of Alzheimer's disease : JAD vol. 26 Suppl 3,Suppl 3 (2011): 369-77. doi:10.3233/JAD-2011-0062
     Example: sample_size(df_a, 0.95, 0.8, mean_control=None, mean_patient=None, atrophy=7.7)
     :param df_a: dataframe grouped by subject containing information from add_to_dataframe
     :param conf: Confidence level. Example 0.8

@@ -2,14 +2,14 @@
 # -*- coding: utf-8
 #########################################################################################
 #
-# Rescale image by changing subject image affine ndarray
+# Rescale image by changing subject image affine ndarray,
+# rescaled image is saved with suffix _r + rescaling factor. Example: <input file name>_r0.90.nii.gz
 #
-#
-# example: python affine_rescale -i <data/sub-amu01/anat/sub-amu01_T2w.nii.gz> -r 0.9
+# Example: python affine_rescale -i <data/sub-amu01/anat/sub-amu01_T2w.nii.gz> -r 0.9
 # ---------------------------------------------------------------------------------------
 # Authors: Paul Bautin
 #
-# About the license: see the file LICENSE.TXT
+# About the license: see the file LICENSE
 #########################################################################################
 import glob, os, sys
 from numpy.random import randn
@@ -48,19 +48,21 @@ def get_parser():
 #MAIN
 ############################################################
 def main():
+    """Main function, isotropic rescale of input images according to coef_r"""
+    
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
-    # create variables
+    # fname is the name of input image
     fname = arguments.i
+    # coef_r is image rescaling coefficient
     coef_r = arguments.r
 
-    print(coef_r)
-    # iterate transformation for each subject,
-    img = nib.load(fname) # load image
+    # load image
+    img = nib.load(fname)
     data = img.get_fdata()# load data
     img.affine[:3,:3] = img.affine[:3,:3]*float(coef_r) # apply rescale
-    img_t = nib.Nifti1Image(data, img.affine) # changge affine for data
+    img_t = nib.Nifti1Image(data, img.affine) # change affine for data
 
     # save rescaled image
     fname_out = fname.split('.nii.gz')[0] + '_r'+str(coef_r)+'.nii.gz'
