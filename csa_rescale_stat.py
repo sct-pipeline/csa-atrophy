@@ -8,7 +8,7 @@
 # ---------------------------------------------------------------------------------------
 # Authors: Paul Bautin
 #
-# About the license: see the file LICENSE.TXT
+# About the license: see the file LICENSE
 #########################################################################################
 from __future__ import division
 

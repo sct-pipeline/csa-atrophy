@@ -6,20 +6,20 @@
 #
 # generate randomized transformations per subject, and freeze them in the repos,
 # so that results can be reproduced by using the frozen params in subsequent runs of the pipeline,
-# shifting ±5 voxels in each direction with 95 % certainty,
-# rotation ±10° in each direction with 95 % certainty,
+# shifting ±5 voxels in each direction,
+# rotation ±10° in each direction,
 #
 # ---------------------------------------------------------------------------------------
 # Authors: Paul Bautin
 # SCT source: spinalcordtoolbox/testing/create_test_data.py
 #
 # example python affine_transfo.py -i <sub-amu01 sub-amu02>
-# About the license: see the file LICENSE.TXT
+# About the license: see the file LICENSE
 ###################################################################
 
 import glob, os, sys
 import math
-from numpy.random import randn
+from numpy.random import rand
 import numpy as np
 import argparse
 import csv
@@ -74,19 +74,19 @@ def random_values(df, subject_name):
      :return shift_PA: value of shift along Posterior/Anterior axis
      :return shift_IS: value of shift along Inferior/Superior axis
      """
-    values = randn(6)
-    # rotation (95% of values are within ±10° in each direction),
-    std_angle = 5
-    # shifting (95% of values are within ±5 voxels in each direction)
-    std_shift = 2.5
-    angle_IS = std_angle * values[0]
-    shift_IS = std_shift * values[1]
+    values = 2 * rand(6) - 1
+    # random angle values are within ±10° around each axis,
+    angle_bound = 5
+    # random shift values are within ±5 voxels in each direction,
+    shift_bound = 2.5
+    angle_IS = angle_bound * values[0]
+    shift_IS = shift_bound * values[1]
 
-    angle_PA = std_angle * values[2]
-    shift_PA = std_shift * values[3]
+    angle_PA = angle_bound * values[2]
+    shift_PA = shift_bound * values[3]
 
-    angle_LR = std_angle * values[4]
-    shift_LR = std_shift * values[5]
+    angle_LR = angle_bound * values[4]
+    shift_LR = shift_bound * values[5]
 
     transfo_dict = {
         'subjects': subject_name,
