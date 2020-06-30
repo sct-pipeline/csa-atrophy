@@ -2,14 +2,14 @@
 # -*- coding: utf-8
 #########################################################################################
 #
-# Rescale image by changing subject image affine ndarray
+# Rescale image by changing subject image affine ndarray,
+# rescaled image is saved with suffix _r + rescaling factor. Example: <input file name>_r0.90.nii.gz
 #
-#
-# example: python affine_rescale -i <data/sub-amu01/anat/sub-amu01_T2w.nii.gz> -r 0.9
+# Example: python affine_rescale -i <data/sub-amu01/anat/sub-amu01_T2w.nii.gz> -r 0.9
 # ---------------------------------------------------------------------------------------
 # Authors: Paul Bautin
 #
-# About the license: see the file LICENSE.TXT
+# About the license: see the file LICENSE
 #########################################################################################
 import glob, os, sys
 from numpy.random import randn
@@ -47,19 +47,22 @@ def get_parser():
 
 #MAIN
 ############################################################
-def main(fname, coef_r):
-    """Main function, isotropic rescale of input images according to coef_r
-    rescaled image is saved under name <input file name>_r.nii.gz
-    new image is saved under new name
-    :param fname: input image
-    :param coef_r: rescaling coefficient
-    """
-    print(coef_r)
-    # iterate transformation for each subject,
-    img = nib.load(fname) # load image
+def main():
+    """Main function, isotropic rescale of input images according to coef_r"""
+    
+    # get parser elements
+    parser = get_parser()
+    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
+    # fname is the name of input image
+    fname = arguments.i
+    # coef_r is image rescaling coefficient
+    coef_r = arguments.r
+
+    # load image
+    img = nib.load(fname)
     data = img.get_fdata()# load data
     img.affine[:3,:3] = img.affine[:3,:3]*float(coef_r) # apply rescale
-    img_t = nib.Nifti1Image(data, img.affine) # changge affine for data
+    img_t = nib.Nifti1Image(data, img.affine) # change affine for data
 
     # save rescaled image
     fname_out = fname.split('.nii.gz')[0] + '_r'+str(coef_r)+'.nii.gz'
@@ -68,9 +71,4 @@ def main(fname, coef_r):
 #RUN
 ############################################################
 if __name__ == "__main__":
-    # get parser elements
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
-    fname = arguments.i
-    coef_r = arguments.r
-    main(fname, coef_r)
+    main()
