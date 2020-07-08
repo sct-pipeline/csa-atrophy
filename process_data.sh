@@ -24,13 +24,14 @@ set -e
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Global variables
-# Retrieve input params
 SUBJECT=$1
+# Retrieve input params from yaml file
 # set n_transfo to the desired number of transformed images of same subject for segmentation,
 # n_transfo also represents the number of iterations of the transformation, segmentation and labeling process
-n_transfo=2
+n_transfo=$(python3 yaml_parser.py -o n_transfo)
+rescaling=$(python3 yaml_parser.py -o rescaling)
 
-
+echo $R_COEFS
 
 # FUNCTIONS
 # ==============================================================================
@@ -67,29 +68,11 @@ segment_if_does_not_exist(){
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
-    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -thr -1 -qc-subject ${SUBJECT}
   fi
 }
 
-
-# SCRIPT STARTS HERE
-# ==============================================================================
-# Go to results folder, where most of the outputs will be located
-cd $PATH_RESULTS
-mkdir -p csa_data
-# Copy ###source images
-cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
-cd $SUBJECT
-rm -r dwi
-
-
-
-# T2w resampling
-#=============================================================================
-# define resampling coefficients (always keep value 1 for reference)
-R_COEFS=(0.90 0.95 1)
-# iterate rescaling and transformation on subject
-for r_coef in ${R_COEFS[@]}; do
+process (){
   if [ -d "anat_r${r_coef}" ]; then
    rm -r "anat_r${r_coef}"
    echo "anat_r${r_coef} already exists: creating folder"
@@ -99,7 +82,7 @@ for r_coef in ${R_COEFS[@]}; do
    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
  fi
   # rename anat to explicit rescaling coefficient
-  mv anat anat_r$r_coef
+  cp -R anat anat_r$r_coef
   cd anat_r${r_coef}
 
   seq_transfo=$(seq ${n_transfo})
@@ -129,7 +112,26 @@ for r_coef in ${R_COEFS[@]}; do
   done
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
-done
+}
+# SCRIPT STARTS HERE
+# ==============================================================================
+# Go to results folder, where most of the outputs will be located
+cd $PATH_RESULTS
+mkdir -p csa_data
+# Copy ###source images
+cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
+cd $SUBJECT
+rm -r dwi
+
+
+
+# T2w resampling
+#=============================================================================
+# define resampling coefficients (always keep value 1 for reference)
+R_COEFS=$(echo $rescaling | tr '[]' '()' | tr ',' ' ')
+# iterate rescaling and transformation on subject
+for r_coef in ${R_COEFS[@]}; do process &  done
+wait
 
 
 # Verify presence of output files and write log file if error

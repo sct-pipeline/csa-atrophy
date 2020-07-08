@@ -66,7 +66,7 @@ def get_parser():
 
 
 # Functions
-def get_data(path_results):
+def concatenate_csv_files(path_results):
     """Fetch and concatenate data from all csv files in results/csa_data to compute statistics with pandas
     :param path_results: path to folder containing csv files for statistics
     """
@@ -158,7 +158,7 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
 
     def inverse(atrophy):
         return atrophy / 100 * mean_csa_sample
-      
+
     secax = ax.secondary_xaxis('top', functions=(forward, inverse))
     secax.set_xlabel('atrophy in %')
     output_file = path_output + "/min_subj.png"
@@ -180,9 +180,10 @@ def std(df_a, vertlevels):
         for name, group in df_a.groupby('Rescale'):
             gt_csa = 'csa_c' + str(min_vert) + '_c' + str(i)
             std = group[gt_csa].std()
+            cov = variation(group[gt_csa])
             atrophy = set(group.reset_index().Rescale)
             print('csa std on ' + str(atrophy) + '  rescaled image c' + str(min_vert) + '/c' + str(i) + ' is ',
-                  round(std, 3), ' mm^2 ')
+                  round(std, 3), ' mm^2 and cov is ', cov)
         print('\n')
 
 
