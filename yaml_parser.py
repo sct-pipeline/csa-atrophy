@@ -17,12 +17,11 @@ import sys
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='output variable from yaml file',
+        description='Parse config.yaml file csa-atrophy pipeline parameters to be usedd in shell scripts',
         add_help=None,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
-
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-o",
@@ -43,7 +42,7 @@ def main():
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
-    # Read YAML file
+    # Read yaml file
     with open("config.yaml", 'r') as config_var:
         data_loaded = yaml.safe_load(config_var)
     # print yaml file parameters to be read by bash script

@@ -93,7 +93,7 @@ for r_coef in ${R_COEFS[@]}; do
    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
  fi
   # rename anat to explicit rescaling coefficient
-  cp -R anat anat_r$r_coef
+  mv anat anat_r$r_coef
   cd anat_r${r_coef}
 
   seq_transfo=$(seq ${n_transfo})
