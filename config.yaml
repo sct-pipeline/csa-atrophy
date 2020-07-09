@@ -1,11 +1,31 @@
-vertlevels:
-  - 2
-  - 3
-  - 4
-  - 5
-n_transfo: 5
+# csa-atrophy pipeline parameters
+
+# process_data.sh parameters
+n_transfo: 1
 rescaling:
   - 0.85
   - 0.90
   - 0.95
   - 1.00
+
+# manual_labeling_correction.sh parameters
+FILES_SEGMANUAL:
+  - "sub-amu01_T2w_r0.9_t1.nii.gz"
+  - "sub-amu01_T2w_r0.95_t1.nii.gz"
+
+# csa_atrophy_stat.py parameters
+stats:
+  sample_size:
+    atrophy_sample: 7.7
+    conf: 0.95
+    power: 0.8
+
+# affine_transfo.py parameters
+transfo:
+  bounds:
+    angle_bound: 5
+    shift_bound: 2.5
+
+
+
+

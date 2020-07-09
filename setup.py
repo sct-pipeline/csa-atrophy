@@ -32,7 +32,8 @@ setup(
     entry_points={
         'console_scripts': [
             'affine_transfo=affine_transfo:main',
-            'affine_rescale=affine_rescale:main'
+            'affine_rescale=affine_rescale:main',
+            'yaml_parser=yaml_parser:main'
         ],
     },
 )

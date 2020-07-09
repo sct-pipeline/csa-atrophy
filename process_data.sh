@@ -9,10 +9,7 @@
 #   ./process_data.sh sub-03
 #
 # Author: Julien Cohen-Adad, Paul Bautin
-
-# The following global variables are retrieved from parameters.sh but could be
-# overwritten here:
-
+###################################################
 
 # Uncomment for full verbose
 set -v
@@ -25,13 +22,14 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Global variables
 SUBJECT=$1
-# Retrieve input params from yaml file
+# The following global variables are retrieved from config.yaml file
 # set n_transfo to the desired number of transformed images of same subject for segmentation,
 # n_transfo also represents the number of iterations of the transformation, segmentation and labeling process
-n_transfo=$(python3 yaml_parser.py -o n_transfo)
-rescaling=$(python3 yaml_parser.py -o rescaling)
+n_transfo=$(yaml_parser -o n_transfo)
+# define rescaling coefficients (always keep value 1 for reference)
+rescaling=$(yaml_parser -o rescaling)
+R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 
-echo $R_COEFS
 
 # FUNCTIONS
 # ==============================================================================
@@ -68,12 +66,25 @@ segment_if_does_not_exist(){
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
-    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -thr -1 -qc-subject ${SUBJECT}
+    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -qc-subject ${SUBJECT}
   fi
 }
 
-process (){
-  if [ -d "anat_r${r_coef}" ]; then
+# SCRIPT STARTS HERE
+# ==============================================================================
+# Go to results folder, where most of the outputs will be located
+cd $PATH_RESULTS
+mkdir -p csa_data
+# Copy ###source images
+cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
+cd $SUBJECT
+rm -r dwi
+
+# T2w resampling
+#=============================================================================
+# iterate rescaling and transformation on subject
+for r_coef in ${R_COEFS[@]}; do
+    if [ -d "anat_r${r_coef}" ]; then
    rm -r "anat_r${r_coef}"
    echo "anat_r${r_coef} already exists: creating folder"
  fi
@@ -91,7 +102,7 @@ process (){
     affine_rescale -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
     # Image random transformation (rotation, translation). By default transformation values are taken from
     # "transfo_values.csv" file if it already exists
-    affine_transfo -i ${SUBJECT}_T2w_r${r_coef}.nii.gz -o _t${i_transfo} -o_file $PATH_RESULTS/transfo_values.csv
+    affine_transfo -i ${SUBJECT}_T2w_r${r_coef}.nii.gz -o _t${i_transfo} -o_file "$PATH_RESULTS"/transfo_values.csv
 
     file_t2=${SUBJECT}_T2w_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
@@ -112,26 +123,8 @@ process (){
   done
   cd ../
   cp -r $PATH_DATA/${SUBJECT}/anat .
-}
-# SCRIPT STARTS HERE
-# ==============================================================================
-# Go to results folder, where most of the outputs will be located
-cd $PATH_RESULTS
-mkdir -p csa_data
-# Copy ###source images
-cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
-cd $SUBJECT
-rm -r dwi
+done
 
-
-
-# T2w resampling
-#=============================================================================
-# define resampling coefficients (always keep value 1 for reference)
-R_COEFS=$(echo $rescaling | tr '[]' '()' | tr ',' ' ')
-# iterate rescaling and transformation on subject
-for r_coef in ${R_COEFS[@]}; do process &  done
-wait
 
 
 # Verify presence of output files and write log file if error

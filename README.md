@@ -50,7 +50,7 @@ python csa_rescale_stat.py -i csa_atrophy_results/results/csa_data -o csa_atroph
 
 # Quality Control
 
-After running the analysis, check your Quality Control (QC) report by opening the file qc/index.html. Use the “Search” feature of the QC report to quickly jump to segmentations or labeling results. If you spot issues (wrong labeling), add their filename in the variable array "FILES" of the 'manual_labeling_correction.sh' script. Then manually create labels in the cord on the posterior tip of inter-vertebral discs from C2 to C5 with command:
+After running the analysis, check your Quality Control (QC) report by opening the file qc/index.html. Use the “Search” feature of the QC report to quickly jump to segmentations or labeling results. If you spot issues (wrong labeling), add their filename in the variable array "FILES_SEGMANUAL" of the 'config.yaml' file. Then manually create labels in the cord on the posterior tip of inter-vertebral discs from C2 to C5 with command:
 ~~~
 ./manual_labeling_correction.sh
 ~~~

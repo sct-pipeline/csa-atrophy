@@ -1,4 +1,18 @@
 #!/bin/bash
+#########################################################################################
+#
+# If you spot issues (wrong labeling), add their filename in the config.yaml file.
+# Then manually create labels in the cord on the posterior tip of inter-vertebral discs from C2 to C5
+#
+# The bash script outputs all effectuated manual labellings to 'results_corrected/seg_manual'.
+# It is now possible to re-run the whole process, pointing to the manual corrections.
+#
+# ---------------------------------------------------------------------------------------
+#
+# Example: ./manual_labeling_corrections.sh
+# About the license: see the file LICENSE
+###################################################################
+
 # Local folder to output the manual labels
 PATH_ORIGINAL_RESULTS="csa_atrophy_results/results"
 PATH_DESTINATION_RESULTS="csa_atrophy_results_corrected/results"
@@ -7,9 +21,8 @@ mkdir -p ${PATH_SEGMANUAL}
 mkdir -p ${PATH_DESTINATION_RESULTS}
 cp ${PATH_ORIGINAL_RESULTS}/transfo_values.csv ${PATH_DESTINATION_RESULTS}
 # List of subjects to create manual labels
-FILES=(
-  "sub-amu01_T2w_r0.90_t1.nii.gz"
-)
+FILES_SEGMANUAL=$(yaml_parser -o FILES_SEGMANUAL)
+FILES=$(echo $FILES_SEGMANUAL | tr '[]' ' ' | tr "'" ' ' | tr ',' ' ')
 # Loop across files
 for file in ${FILES[@]}; do
   subject=${file%%_*}

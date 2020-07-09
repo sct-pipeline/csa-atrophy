@@ -6,6 +6,7 @@
 #
 # generate randomized transformations per subject, and freeze them in the repos,
 # so that results can be reproduced by using the frozen params in subsequent runs of the pipeline,
+# Example:
 # shifting ±5 voxels in each direction,
 # rotation ±10° in each direction,
 #
@@ -24,6 +25,7 @@ import numpy as np
 import argparse
 import csv
 import pandas as pd
+import yaml
 
 import nibabel as nib
 
@@ -64,7 +66,15 @@ def get_parser():
     return parser
 
 
-def random_values(df, subject_name):
+def yaml_parser(config_file):
+    """parse config.yaml file containing pipeline's parameters"""
+    print(config_file)
+    with open(config_file, 'r') as config_var:
+        config_param = yaml.safe_load(config_var)
+    return config_param
+
+
+def random_values(df, subject_name, config_param):
     """generate gaussian distribution random values to simulate subject repositioning,
     transformation values are kept in a pandas dataframe that is afterwards converted to a csv file
      :return angle_IS: angle of rotation around Inferior/Superior axis
@@ -75,10 +85,12 @@ def random_values(df, subject_name):
      :return shift_IS: value of shift along Inferior/Superior axis
      """
     values = 2 * rand(6) - 1
-    # random angle values are within ±10° around each axis,
-    angle_bound = 5
-    # random shift values are within ±5 voxels in each direction,
-    shift_bound = 2.5
+    # transformations bounds can be modified in config.yaml
+    # random angle values are within ±angle_bound° around each axis,
+    angle_bound = config_param['transfo']['bounds']['angle_bound']
+    # random shift values are within ±shift_bound voxels in each direction,
+    shift_bound = config_param['transfo']['bounds']['shift_bound']
+
     angle_IS = angle_bound * values[0]
     shift_IS = shift_bound * values[1]
 
@@ -191,14 +203,24 @@ def main():
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     suffix = arguments.o
 
+    # fetch parameters from config.yaml file
+    path_config_file = os.path.join(os.getcwd().split("csa_atrophy_results")[0], "config.yaml")
+    config_param = yaml_parser(path_config_file)
+
     # Images of selected subject chosen by user in command line instructions, are copied and transformed
     if arguments.h is None:
         # if a csv file containing transformation values does not yet exist it will be created,
         # otherwise command line input csv file is used and a new subject is added in a new row of a pandas dataframe
         if arguments.o_file is None:
-            arguments.o_file = 'transfo_values.csv'
-            transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA', 'shift_IS']
-            df = pd.DataFrame(columns=transfo_column_name)
+            arguments.o_file = os.path.join(os.getcwd().split('/sub')[0], 'transfo_values.csv')
+            if os.path.isfile(arguments.o_file):
+                df = pd.read_csv(arguments.o_file, delimiter=',')
+                print(df)
+            else:
+                transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA',
+                                       'shift_IS']
+                df = pd.DataFrame(columns=transfo_column_name)
+
         else:
             if os.path.isfile(arguments.o_file):
                 df = pd.read_csv(arguments.o_file, delimiter=',')
@@ -227,7 +249,7 @@ def main():
                 print('\n----------affine transformation subject: ' + name + '------------')
                 # check if the subject is not already in dataframe, otherwise use dataframe subject values
                 if subject not in df['subjects'].values:
-                    df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values(df, subject)
+                    df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values(df, subject, config_param)
                 else:
                     print(df.set_index('subjects').loc[subject].values)
                     angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = df.set_index('subjects').loc[
