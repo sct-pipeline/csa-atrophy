@@ -30,18 +30,15 @@ Download (or git clone) this repository:
 git clone https://github.com/sct-pipeline/csa-atrophy.git
 cd csa-atrophy
 ~~~
-Fetch dataset (2 choices):
-  - To fetch/sync dataset run command: (this file should be edited according to your needs)
+Fetch dataset:
+Suggested testing dataset must be downloaded from "Spine Generic Public Database". To download latest version of the whole multi-subject dataset run commands:
   ~~~
-  ./csa_fetch_dataset.sh
-  ~~~
-  - To fetch specific version of openneuro repository (version: 1.0.5, Files: 2501, Size: 7.9GB, Subjects: 248) follow instructions to set openeuro CLI: https://www.npmjs.com/package/openneuro-cli
-  ~~~
-  openneuro download --snapshot 1.0.5 ds001919 data
+  curl -o spinegeneric.zip -L https://github.com/spine-generic/data-multi-subject/archive/master.zip
+  unzip spinegeneric.zip
   ~~~
 Run the following script within the Dataset folder to extract CSA. This script can be run on desired subjects using flag -include and in parallel processing using flag -jobs.
 ~~~
-sct_run_batch -path-data data -path-output csa_atrophy_results process_data.sh
+sct_run_batch -path-data data-multi-subject-master -path-output csa_atrophy_results process_data.sh
 ~~~
 To output statistics, run in Dataset
 ~~~
@@ -57,5 +54,5 @@ After running the analysis, check your Quality Control (QC) report by opening th
 The bash script outputs all effectuated manual labelings to 'results_corrected/seg_manual'.
 It is now possible to re-run the whole process, pointing to the manual corrections. With the command below labeling will use the manual corrections present in 'seg_manual', otherwise labeling will be done automatically.
 ~~~
-sct_run_batch -path-data data -path-output csa_atrophy_results_corrected -path-segmanual seg_manual process_data.sh
+sct_run_batch -path-data data-multi-subject-master -path-output csa_atrophy_results_corrected -path-segmanual seg_manual process_data.sh
 ~~~
