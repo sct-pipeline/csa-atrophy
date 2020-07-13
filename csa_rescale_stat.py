@@ -166,7 +166,7 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
 
 
 
-def std(df_a, vertlevels):
+def std(df, vertlevels):
     """
     Compute STD of inter-subject mean CSA for each rescaling across different vertebrae levels
     :param df_a: dataframe grouped by subject containing information from add_to_dataframe
@@ -175,16 +175,23 @@ def std(df_a, vertlevels):
     """
     print("\n====================std==========================\n")
     # TODO: possible normalization of csa for inter-subject studies
+    df = df.reset_index().set_index('Rescale')
+    df['subject'] = list(tf.split('_T2w')[0] for tf in df['Filename'])
     min_vert = min(list(vertlevels))
     for i in vertlevels[1:]:
-        for name, group in df_a.groupby('Rescale'):
-            gt_csa = 'csa_c' + str(min_vert) + '_c' + str(i)
-            std = group[gt_csa].std()
-            cov = stats.variation(group[gt_csa])*100
+        for name, group in df.groupby('Rescale'):
+            csa_col = 'csa_c' + str(min_vert) + '_c' + str(i)
+            std = group.groupby('subject')[csa_col].mean().std()
+            cov = stats.variation(group.groupby('subject')[csa_col].mean())*100
             atrophy = set(group.reset_index().Rescale)
             print('csa std on ',atrophy,'  rescaled image c' + str(min_vert) + '/c' + str(i) + ' is ',
                 round(std, 3), ' mm^2 and cov is ', round(cov, 3),'%')
+            if group.index[0] == 1:
+                std_v = group.groupby('subject')['csa_original'].mean().std()
         print('\n')
+    return std_v
+
+
 
 
 def std_suject(df, vertlevels):
@@ -371,9 +378,9 @@ def main(vertlevels_input, path_output):
         print('For rescaling ' + str(atrophy) + ' number of subjects is ' + str(number_sub))
 
     # compute STD for different vertebrae levels
-    std(df_a, vertlevels)
+    std_v = std(df_a, vertlevels)
     std_suject(df_a, vertlevels)
-    std_v = df_a.groupby('Rescale').get_group(1)['csa_original'].std()
+
 
     # plot graph if verbose is present
     if arguments.v is not None:
