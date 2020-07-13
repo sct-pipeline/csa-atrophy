@@ -66,7 +66,7 @@ def get_parser():
 
 
 # Functions
-def get_data(path_results):
+def concatenate_csv_files(path_results):
     """Fetch and concatenate data from all csv files in results/csa_data to compute statistics with pandas
     :param path_results: path to folder containing csv files for statistics
     """
@@ -158,7 +158,7 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
 
     def inverse(atrophy):
         return atrophy / 100 * mean_csa_sample
-      
+
     secax = ax.secondary_xaxis('top', functions=(forward, inverse))
     secax.set_xlabel('atrophy in %')
     output_file = path_output + "/min_subj.png"
@@ -168,7 +168,7 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
 
 def std(df_a, vertlevels):
     """
-    Compute STD of subject mean CSA for each rescaling across different vertebrae levels
+    Compute STD of inter-subject mean CSA for each rescaling across different vertebrae levels
     :param df_a: dataframe grouped by subject containing information from add_to_dataframe
     :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae levels
     present in csv files
@@ -180,9 +180,33 @@ def std(df_a, vertlevels):
         for name, group in df_a.groupby('Rescale'):
             gt_csa = 'csa_c' + str(min_vert) + '_c' + str(i)
             std = group[gt_csa].std()
+            cov = stats.variation(group[gt_csa])*100
             atrophy = set(group.reset_index().Rescale)
-            print('csa std on ' + str(atrophy) + '  rescaled image c' + str(min_vert) + '/c' + str(i) + ' is ',
-                  round(std, 3), ' mm^2 ')
+            print('csa std on ',atrophy,'  rescaled image c' + str(min_vert) + '/c' + str(i) + ' is ',
+                round(std, 3), ' mm^2 and cov is ', round(cov, 3),'%')
+        print('\n')
+
+
+def std_suject(df, vertlevels):
+    """
+    Compute mean STD of intra-subject (with transformation) CSA for each rescaling across different vertebrae levels
+    :param df_a: dataframe grouped by subject containing information from add_to_dataframe
+    :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae levels
+    present in csv files
+    """
+    print("\n====================std_subject==========================\n")
+    df = df.reset_index().set_index('Rescale')
+    df['subject'] = list(tf.split('_T2w')[0] for tf in df['Filename'])
+    min_vert = min(list(vertlevels))
+    for i in vertlevels[1:]:
+        for name, group in df.groupby('Rescale'):
+            csa_col = 'csa_c' + str(min_vert) + '_c' + str(i)
+            mean_cov = (group.groupby('subject')[csa_col].std()/group.groupby('subject')[csa_col].mean()).mean()*100
+            mean_std = group.groupby('subject')[csa_col].agg([np.mean, np.std]).mean()
+            atrophy = set(group.reset_index().Rescale)
+            print('mean csa std with ',atrophy,'  rescaling on c' + str(min_vert) + '/c' + str(i) + ' vertebrae is '
+                    ,round(mean_std['mean'], 3), ' mm^2, std',round(mean_std['std'], 3),' cov is ', round(mean_cov, 3),'%')
+
         print('\n')
 
 
@@ -348,6 +372,7 @@ def main(vertlevels_input, path_output):
 
     # compute STD for different vertebrae levels
     std(df_a, vertlevels)
+    std_suject(df_a, vertlevels)
     std_v = df_a.groupby('Rescale').get_group(1)['csa_original'].std()
 
     # plot graph if verbose is present
