@@ -85,11 +85,13 @@ def plot_perc_err(df, columns_to_plot, path_output):
     :param columns_to_plot: perc_diff dataframe columns for plotting
     :param path_output: directory in which plot is saved
     """
+    df = df.reset_index().set_index('Rescale')
+    df['subject'] = list(tf.split('_T2w')[0] for tf in df['Filename'])
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
     df.groupby('Rescale')[columns_to_plot].mean().plot(kind='bar', ax=axes[0], grid=True)
     axes[0].set_title('mean error function of rescaling factor')
     axes[0].set_ylabel('error in %')
-    df.groupby('Rescale')[columns_to_plot].std().plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
+    df.groupby(['Rescale', 'subject']).mean().groupby('Rescale').std()[columns_to_plot].plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
     axes[1].set_title('STD of error function of rescaling factor')
     plt.xlabel('rescaling factor')
     plt.ylabel('error in %')
