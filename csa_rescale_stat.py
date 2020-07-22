@@ -39,7 +39,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        default='results',
+        default='csa_atrophy_results',
         help='Input csv file path to results. (e.g. "results")',
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -73,7 +73,7 @@ def concatenate_csv_files(path_results):
     """
     files = []
     for file in os.listdir(path_results):
-        if file.endswith(".csv"):
+        if ".csv" in file and "csa" in file:
             files.append(os.path.join(path_results, file))
     metrics = pd.concat(
         [pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
@@ -188,10 +188,10 @@ def std(df_a, vertlevels):
         for name, group in df_a.groupby('Rescale'):
             gt_csa = 'csa_c' + str(min_vert) + '_c' + str(i)
             std = group[gt_csa].std()
-            cov = variation(group[gt_csa])
+            cov = stats.variation(group[gt_csa])
             atrophy = set(group.reset_index().Rescale)
             print('csa std on ' + str(atrophy) + '  rescaled image c' + str(min_vert) + '/c' + str(i) + ' is ',
-                  round(std, 3), ' mm^2 and cov is ', cov)
+                  round(std, 3), ' mm^2 and cov is ', round(cov, 3))
         print('\n')
 
 
@@ -329,7 +329,6 @@ def main(vertlevels_input, path_output):
     # verify if vertlevels of interest were given in input by user
     if vertlevels_input is None:
         vertlevels = list(set(df['VertLevel'].values))
-        print(vertlevels)
     elif vertlevels_input is not None:
         vertlevels = list(map(int, vertlevels_input))
         if all(elem in set(list(df['VertLevel'].values)) for elem in vertlevels):

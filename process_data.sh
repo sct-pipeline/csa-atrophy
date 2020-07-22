@@ -29,6 +29,14 @@ n_transfo=$(yaml_parser -o n_transfo)
 # define rescaling coefficients (always keep value 1 for reference)
 rescaling=$(yaml_parser -o rescaling)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
+contrast=$(yaml_parser -o contrast)
+if [ $contrast == "t2" ]; then
+  contrast_str="T2w"
+fi
+if [ $contrast == "t1" ]; then
+  contrast_str="T1w"
+fi
+path_output=$(yaml_parser -o path_output)
 
 
 # FUNCTIONS
@@ -39,15 +47,16 @@ label_if_does_not_exist(){
   local file="$1"
   local file_seg="$2"
   local scale="$3"
+
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels"
   if [ -e "../../../${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ]; then
     rsync -avzh "../../../${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ${file}_labels-manual.nii.gz
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -discfile ${file}_labels-manual.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${file}_labels-manual.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
     sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   else
     # Generate labeled segmentation
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c t2 -scale-dist ${scale} -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -scale-dist ${scale} -qc ${PATH_QC} -qc-subject ${SUBJECT}
     # Create labels in the Spinal Cord
     sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   fi
@@ -66,7 +75,7 @@ segment_if_does_not_exist(){
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
-    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_deepseg_sc -i ${file}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
   fi
 }
 
@@ -74,7 +83,6 @@ segment_if_does_not_exist(){
 # ==============================================================================
 # Go to results folder, where most of the outputs will be located
 cd $PATH_RESULTS
-mkdir -p csa_data
 # Copy ###source images
 cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
 cd $SUBJECT
@@ -99,22 +107,22 @@ for r_coef in ${R_COEFS[@]}; do
   seq_transfo=$(seq ${n_transfo})
   for i_transfo in ${seq_transfo[@]}; do
     # Image homothetic rescaling
-    affine_rescale -i ${SUBJECT}_T2w.nii.gz -r ${r_coef}
+    affine_rescale -i ${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef}
     # Image random transformation (rotation, translation). By default transformation values are taken from
     # "transfo_values.csv" file if it already exists
-    affine_transfo -i ${SUBJECT}_T2w_r${r_coef}.nii.gz -o _t${i_transfo} -o_file "$PATH_RESULTS"/transfo_values.csv
+    affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $path_output -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
 
-    file_t2=${SUBJECT}_T2w_r${r_coef}_t${i_transfo}
+    file_t2=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
-    segment_if_does_not_exist $file_t2 "t2"
+    segment_if_does_not_exist ${file_t2} ${contrast}
     # name segmented file
-    file_t2_seg=$FILESEG
+    file_t2_seg=${FILESEG}
 
     # Create labels in the cord, function uses by default labels file in directory seg_manual
-    label_if_does_not_exist $file_t2 $file_t2_seg $R_COEFS
+    label_if_does_not_exist $file_t2 $file_t2_seg $R_COEFS $contrast
     file_label=$FILELABEL
     # Compute average CSA between C2 and C5 levels (append across subjects)
-    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_RESULTS/csa_data/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_DATA_PROCESSED/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_data/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"

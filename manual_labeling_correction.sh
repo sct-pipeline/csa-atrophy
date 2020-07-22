@@ -14,9 +14,9 @@
 ###################################################################
 
 # Local folder to output the manual labels
-PATH_ORIGINAL_RESULTS="csa_atrophy_results/results"
-PATH_DESTINATION_RESULTS="csa_atrophy_results_corrected/results"
-PATH_SEGMANUAL="csa_atrophy_results_corrected/seg_manual"
+PATH_ORIGINAL_RESULTS=$(yaml_parser -o PATH_ORIGINAL_RESULTS)
+PATH_DESTINATION_RESULTS=$(yaml_parser -o PATH_DESTINATION_RESULTS)
+PATH_SEGMANUAL=$(yaml_parser -o PATH_SEGMANUAL)
 mkdir -p ${PATH_SEGMANUAL}
 mkdir -p ${PATH_DESTINATION_RESULTS}
 cp ${PATH_ORIGINAL_RESULTS}/transfo_values.csv ${PATH_DESTINATION_RESULTS}

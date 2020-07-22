@@ -47,6 +47,12 @@ def get_parser():
         help="Input nifti images for transformation",
         nargs="*"
     )
+    mandatory.add_argument(
+        "-i_dir",
+        required=True,
+        help="path to results file",
+        nargs="*"
+    )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-h',
@@ -202,9 +208,10 @@ def main():
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     suffix = arguments.o
+    path_results = arguments.i_dir[0]
 
     # fetch parameters from config.yaml file
-    path_config_file = os.path.join(os.getcwd().split("csa_atrophy_results")[0], "config.yaml")
+    path_config_file = os.path.join(os.getcwd().split(path_results)[0], "config.yaml")
     config_param = yaml_parser(path_config_file)
 
     # Images of selected subject chosen by user in command line instructions, are copied and transformed
