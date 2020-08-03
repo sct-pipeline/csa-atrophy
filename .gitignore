@@ -1,5 +1,6 @@
 data/
-results/
+csa_atrophy_results/
+csa_atrophy_results_corrected/
 log/
 qc/
 *.csv
