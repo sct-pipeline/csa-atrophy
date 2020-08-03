@@ -1,0 +1,5 @@
+# config file for sct_run_batch
+path_data   : "data"
+path_output : "csa_atrophy_results_t2"
+script      : "process_data.sh"
+jobs        : -1

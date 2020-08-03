@@ -28,6 +28,11 @@ def get_parser():
         required=True,
         help="parameters to output from config.yaml",
     )
+    mandatory.add_argument(
+        "-i",
+        required=True,
+        help="input path to configuration of file",
+    )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-h',
@@ -43,7 +48,7 @@ def main():
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     # Read yaml file
-    with open("config.yaml", 'r') as config_var:
+    with open(arguments.i, 'r') as config_var:
         data_loaded = yaml.safe_load(config_var)
     # print yaml file parameters to be read by bash script
     print(data_loaded[arguments.o])
