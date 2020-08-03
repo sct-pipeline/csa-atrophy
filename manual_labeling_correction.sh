@@ -15,11 +15,12 @@
 
 # Local folder to output the manual labels
 PATH_ORIGINAL_RESULTS=$(yaml_parser -o PATH_ORIGINAL_RESULTS)
+PATH_ORIGINAL_CSV=$(yaml_parser -o PATH_ORIGINAL_CSV)
 PATH_DESTINATION_RESULTS=$(yaml_parser -o PATH_DESTINATION_RESULTS)
 PATH_SEGMANUAL=$(yaml_parser -o PATH_SEGMANUAL)
 mkdir -p ${PATH_SEGMANUAL}
 mkdir -p ${PATH_DESTINATION_RESULTS}
-cp ${PATH_ORIGINAL_RESULTS}/transfo_values.csv ${PATH_DESTINATION_RESULTS}
+cp ${PATH_ORIGINAL_CSV}/transfo_values.csv ${PATH_DESTINATION_RESULTS}
 # List of subjects to create manual labels
 FILES_SEGMANUAL=$(yaml_parser -o FILES_SEGMANUAL)
 FILES=$(echo $FILES_SEGMANUAL | tr '[]' ' ' | tr "'" ' ' | tr ',' ' ')
