@@ -37,6 +37,8 @@ Suggested testing dataset must be downloaded from "Spine Generic Public Database
   curl -o spinegeneric_r20200801.zip -L https://github.com/spine-generic/data-multi-subject/archive/r20200801.zip
   unzip spinegeneric_r20200801.zip
   ~~~
+To run csa-atrophy pipeline on a sub-dataset of spine-generic there are 2 options: either create a new folder with a sub-dataset (make sure to update config file path_data) or use flag -include in sct_run_batch to select one subject at a time.
+
 Run the following script within the Dataset folder to extract CSA. This script can be run on desired subjects using flag -include and in parallel processing using flag -jobs.
 ~~~
 sct_run_batch -path-data spinegeneric_r20200801 -path-output csa_atrophy_results process_data.sh
