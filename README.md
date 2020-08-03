@@ -19,21 +19,22 @@ Dataset/
  └── results
 
 ~~~
-# Installation
-csa-atrophy requires specific python packages for computing statistics and processing images. If not already present on the computer's python environment such packages will automatically be installed by running pip command:
-~~~
-pip install -e .
-~~~
+
 # How to run
 Download (or git clone) this repository:
 ~~~
 git clone https://github.com/sct-pipeline/csa-atrophy.git
 cd csa-atrophy
 ~~~
+Installation:
+csa-atrophy requires specific python packages for computing statistics and processing images. If not already present on the computer's python environment such packages will automatically be installed by running pip command:
+~~~
+pip install -e .
+~~~
 Fetch dataset:
 Suggested testing dataset must be downloaded from "Spine Generic Public Database". To download latest version of the whole multi-subject dataset run commands:
   ~~~
-  curl -o spinegeneric.zip -L https://github.com/spine-generic/data-multi-subject/archive/master.zip
+  curl -o spinegeneric.zip -L https://github.com/spine-generic/data-multi-subject/archive/r20200801.zip
   unzip spinegeneric.zip
   ~~~
 Run the following script within the Dataset folder to extract CSA. This script can be run on desired subjects using flag -include and in parallel processing using flag -jobs.
