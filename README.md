@@ -34,12 +34,12 @@ pip install -e .
 Fetch dataset:
 Suggested testing dataset must be downloaded from "Spine Generic Public Database". To download latest version of the whole multi-subject dataset run commands:
   ~~~
-  curl -o spinegeneric.zip -L https://github.com/spine-generic/data-multi-subject/archive/r20200801.zip
-  unzip spinegeneric.zip
+  curl -o spinegeneric_r20200801.zip -L https://github.com/spine-generic/data-multi-subject/archive/r20200801.zip
+  unzip spinegeneric_r20200801.zip
   ~~~
 Run the following script within the Dataset folder to extract CSA. This script can be run on desired subjects using flag -include and in parallel processing using flag -jobs.
 ~~~
-sct_run_batch -path-data data-multi-subject-master -path-output csa_atrophy_results process_data.sh
+sct_run_batch -path-data spinegeneric_r20200801 -path-output csa_atrophy_results process_data.sh
 ~~~
 To output statistics, run in Dataset
 ~~~
@@ -55,5 +55,5 @@ After running the analysis, check your Quality Control (QC) report by opening th
 The bash script outputs all effectuated manual labelings to 'results_corrected/seg_manual'.
 It is now possible to re-run the whole process, pointing to the manual corrections. With the command below labeling will use the manual corrections present in 'seg_manual', otherwise labeling will be done automatically.
 ~~~
-sct_run_batch -path-data data-multi-subject-master -path-output csa_atrophy_results_corrected -path-segmanual seg_manual process_data.sh
+sct_run_batch -path-data spinegeneric_r20200801 -path-output csa_atrophy_results_corrected -path-segmanual seg_manual process_data.sh
 ~~~
