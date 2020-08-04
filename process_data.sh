@@ -25,11 +25,11 @@ SUBJECT=$1
 # The following global variables are retrieved from config.yaml file
 # set n_transfo to the desired number of transformed images of same subject for segmentation,
 # n_transfo also represents the number of iterations of the transformation, segmentation and labeling process
-n_transfo=$(yaml_parser -o n_transfo -i config.yaml)
+n_transfo=$(yaml_parser -o n_transfo -i config_script.yml)
 # define rescaling coefficients (always keep value 1 for reference)
-rescaling=$(yaml_parser -o rescaling -i config.yaml)
+rescaling=$(yaml_parser -o rescaling -i config_script.yml)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
-contrast=$(yaml_parser -o contrast -i config.yaml)
+contrast=$(yaml_parser -o contrast -i config_script.yml)
 if [ $contrast == "t2" ]; then
   contrast_str="T2w"
 fi

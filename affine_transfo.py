@@ -211,7 +211,7 @@ def main():
     path_results = arguments.i_dir[0]
 
     # fetch parameters from config.yaml file
-    path_config_file = os.path.join(os.getcwd().split(path_results)[0], "config.yaml")
+    path_config_file = os.path.join(os.getcwd().split(path_results)[0], "config_script.yml")
     config_param = yaml_parser(path_config_file)
 
     # Images of selected subject chosen by user in command line instructions, are copied and transformed

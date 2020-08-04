@@ -14,7 +14,7 @@ FILES_SEGMANUAL:
 PATH_ORIGINAL_RESULTS: "csa_atrophy_results_t2/results"
 PATH_ORIGINAL_CSV: "csa_atrophy_results_t2/data_processed"
 PATH_DESTINATION_RESULTS: "csa_atrophy_results_corrected2/results"
-PATH_SEGMANUAL: "csa_atrophy_results_corrected2/derivatives"
+PATH_SEGMANUAL: "csa_atrophy_results_corrected/derivatives"
 
 # csa_atrophy_stat.py parameters
 stats:
@@ -28,9 +28,3 @@ transfo:
   bounds:
     angle_bound: 5
     shift_bound: 2.5
-
-# config file for sct_run_batch
-#path_data   : "data"
-#path_output : "csa_atrophy_results_t2"
-#script      : "process_data.sh"
-#jobs        : -1

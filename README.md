@@ -45,7 +45,7 @@ sct_run_batch -config sct_run_batch.yml
 ~~~
 To output statistics, run in Dataset
 ~~~
-python csa_rescale_stat.py -i csa_atrophy_results/results/csa_data -o csa_atrophy_results -v
+python csa_rescale_stat.py -i csa_atrophy_results/data_processed -o csa_atrophy_results -v
 ~~~
 
 # Quality Control
@@ -57,5 +57,5 @@ After running the analysis, check your Quality Control (QC) report by opening th
 The bash script outputs all effectuated manual labelings to 'results_corrected/seg_manual'.
 It is now possible to re-run the whole process, pointing to the manual corrections. With the command below labeling will use the manual corrections present in 'seg_manual', otherwise labeling will be done automatically.
 ~~~
-sct_run_batch -path-data data -path-output csa_atrophy_results_corrected -path-segmanual seg_manual process_data.sh
+sct_run_batch -path-data spinegeneric_r20200801 -path-output csa_atrophy_results_corrected -path-segmanual seg_manual -script process_data.sh
 ~~~
