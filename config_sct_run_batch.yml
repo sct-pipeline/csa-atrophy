@@ -1,5 +1,6 @@
 # config file for sct_run_batch
-path_data   : "spinegeneric_r20200801/data-multi-subject-r20200801"
+path_data : "data"
+#path_data   : "spinegeneric_r20200801/data-multi-subject-r20200801"
 path_output : "csa_atrophy_results"
 script      : "process_data.sh"
 jobs        : -1

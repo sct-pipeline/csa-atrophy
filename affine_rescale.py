@@ -49,7 +49,7 @@ def get_parser():
 ############################################################
 def main():
     """Main function, isotropic rescale of input images according to coef_r"""
-    
+
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
@@ -57,6 +57,9 @@ def main():
     fname = arguments.i
     # coef_r is image rescaling coefficient
     coef_r = arguments.r
+    name_coef = arguments.r
+    if coef_r == "gt":
+        coef_r = 1
 
     # load image
     img = nib.load(fname)
@@ -65,7 +68,7 @@ def main():
     img_t = nib.Nifti1Image(data, img.affine) # change affine for data
 
     # save rescaled image
-    fname_out = fname.split('.nii.gz')[0] + '_r'+str(coef_r)+'.nii.gz'
+    fname_out = fname.split('.nii.gz')[0] + '_r'+str(name_coef)+'.nii.gz'
     nib.save(img_t, fname_out)
 
 #RUN

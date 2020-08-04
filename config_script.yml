@@ -1,20 +1,22 @@
 # csa-atrophy pipeline parameters
 
 # process_data.sh parameters
-n_transfo: 2
+n_transfo: 3
 rescaling:
   - 0.95
-  - 1.00
-contrast: "t2"
+# always keep values 1 and gt
+  - 1
+  - "gt"
+contrast: "t1"
 
 # manual_labeling_correction.sh parameters
 FILES_SEGMANUAL:
 #  - "sub-amu01_T2w_r0.9_t1.nii.gz"
-  - "sub-amu01_T2w_r0.95_t2.nii.gz"
-PATH_ORIGINAL_RESULTS: "csa_atrophy_results_t2/results"
-PATH_ORIGINAL_CSV: "csa_atrophy_results_t2/data_processed"
-PATH_DESTINATION_RESULTS: "csa_atrophy_results_corrected2/results"
-PATH_SEGMANUAL: "csa_atrophy_results_corrected/derivatives"
+  - "sub-amu02_T1w_r0.95_t1.nii.gz"
+PATH_ORIGINAL_RESULTS: "csa_atrophy_results/results"
+PATH_ORIGINAL_CSV: "csa_atrophy_results/data_processed"
+PATH_DESTINATION_RESULTS: "csa_atrophy_results_corrected/results"
+PATH_SEGMANUAL: "csa_atrophy_results_corrected/derivatives/labels"
 
 # csa_atrophy_stat.py parameters
 stats:
