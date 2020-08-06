@@ -211,7 +211,8 @@ def std_suject(df, vertlevels):
     """
     print("\n====================std_subject==========================\n")
     df = df.reset_index().set_index('Rescale')
-    df['subject'] = list(tf.split('_T2w')[0] for tf in df['Filename'])
+    df['subject'] = list(tf.split('_T')[0] for tf in df['Filename'])
+    print(df)
     min_vert = min(list(vertlevels))
     for i in vertlevels[1:]:
         for name, group in df.groupby('Rescale'):
