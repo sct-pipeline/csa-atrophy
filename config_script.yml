@@ -10,13 +10,10 @@ rescaling:
 contrast: "t1"
 
 # manual_labeling_correction.sh parameters
-FILES_SEGMANUAL:
-#  - "sub-amu01_T2w_r0.9_t1.nii.gz"
-  - "sub-amu02_T1w_r0.95_t1.nii.gz"
 PATH_ORIGINAL_RESULTS: "csa_atrophy_results/results"
 PATH_ORIGINAL_CSV: "csa_atrophy_results/data_processed"
 PATH_DESTINATION_RESULTS: "csa_atrophy_results_corrected/results"
-PATH_SEGMANUAL: "csa_atrophy_results_corrected/derivatives/labels"
+PATH_SEGMANUAL: "data/derivatives/labels"
 
 # csa_atrophy_stat.py parameters
 stats:

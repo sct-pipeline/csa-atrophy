@@ -1,6 +1,22 @@
 # config file for sct_run_batch
-path_data : "data"
-#path_data   : "spinegeneric_r20200801/data-multi-subject-r20200801"
-path_output : "csa_atrophy_results"
-script      : "process_data.sh"
+path_data: data
+path_output: csa_atrophy_results
+path_segmanual: data/derivatives/labels
+script: process_data.sh
+
+
 jobs        : -1
+batch_log: sct_run_batch_log.txt
+config: null
+continue_on_error: 1
+email_from: null
+email_host: smtp.gmail.com:587
+email_to: null
+exclude: null
+exclude_list: null
+include: null
+include_list: null
+itk_threads: 1
+script_args: ''
+subject_prefix: sub-
+zip: false

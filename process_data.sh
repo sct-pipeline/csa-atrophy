@@ -50,8 +50,10 @@ label_if_does_not_exist(){
 
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels"
-  if [ -e "../../../${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ]; then
-    rsync -avzh "../../../${PATH_SEGMANUAL}/${file}_labels-manual.nii.gz" ${file}_labels-manual.nii.gz
+  FILELABELMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILELABEL}-manual.nii.gz"
+  if [ -e "$FILELABELMANUAL" ]; then
+    echo "manual labeled file was found: $FILELABELMANUAL"
+    rsync -avzh $FILELABELMANUAL ${FILELABEL}.nii.gz
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${file}_labels-manual.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
     sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   else
@@ -69,9 +71,10 @@ segment_if_does_not_exist(){
   local contrast="$2"
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
-  if [ -e "${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz" ]; then
-    echo "Found manual segmentation: ${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz"
-    rsync -avzh "${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz" ${FILESEG}.nii.gz
+  echo "hhhhhhhhhhhhhhhhhhh"${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz
+  if [ -e "${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz" ]; then
+    echo "Found manual segmentation: ${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz"
+    rsync -avzh "${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz" ${FILESEG}.nii.gz
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
@@ -111,22 +114,20 @@ for r_coef in ${R_COEFS[@]}; do
     # Image random transformation (rotation, translation). By default transformation values are taken from
     # "transfo_values.csv" file if it already exists
     affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $path_output -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
-
-    file_t2=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
+    file_c=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
-    segment_if_does_not_exist ${file_t2} ${contrast}
+    segment_if_does_not_exist ${file_c} ${contrast}
     # name segmented file
-    file_t2_seg=${FILESEG}
-
+    file_c_seg=${FILESEG}
     # Create labels in the cord, function uses by default labels file in directory seg_manual
-    label_if_does_not_exist $file_t2 $file_t2_seg $R_COEFS $contrast
+    label_if_does_not_exist $file_c $file_c_seg $R_COEFS $contrast
     file_label=$FILELABEL
     # Compute average CSA between C2 and C5 levels (append across subjects)
-    sct_process_segmentation -i $file_t2_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_t2_seg}_labeled.nii.gz -o $PATH_DATA_PROCESSED/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_c_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_c_seg}_labeled.nii.gz -o $PATH_DATA_PROCESSED/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_data/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
-    "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_t2_seg}.nii.gz"
+    "$PATH_RESULTS/${SUBJECT}/anat_r${r_coef}/${file_c_seg}.nii.gz"
     )
   done
   cd ../
