@@ -20,6 +20,7 @@ from scipy import stats
 import matplotlib
 import matplotlib.pyplot as plt
 from math import ceil
+import yaml
 
 
 # Parser
@@ -38,7 +39,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        default='results',
+        default='csa_atrophy_results',
         help='Input csv file path to results. (e.g. "results")',
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -72,11 +73,19 @@ def concatenate_csv_files(path_results):
     """
     files = []
     for file in os.listdir(path_results):
-        if file.endswith(".csv"):
+        if ".csv" in file and "csa" in file:
             files.append(os.path.join(path_results, file))
     metrics = pd.concat(
         [pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
     metrics.to_csv("csa.csv")
+
+
+def yaml_parser(config_file):
+    """parse config.yaml file containing pipeline's parameters"""
+    with open(config_file, 'r') as config_var:
+        config_param = yaml.safe_load(config_var)
+    return config_param
+
 
 def plot_perc_err(df, columns_to_plot, path_output):
     """plot percentage difference between simulated atrophy and ground truth atrophy
@@ -219,7 +228,7 @@ def std_suject(df, vertlevels):
         print('\n')
 
 
-def sample_size(df_a, conf, power, mean_control=None, mean_patient=None, atrophy=None):
+def sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None):
     """
     Calculate the minimum number of patients required to detect an atrophy of a given value (i.e. power analysis),
     ratio patients/control 1:1 and with the assumption that both samples have the same STD.
@@ -342,6 +351,9 @@ def main(vertlevels_input, path_output):
     df = pd.DataFrame(data2)
     pd.set_option('display.max_rows', None)
 
+    # fetch parameters from config.yaml file
+    config_param = yaml_parser("config.yaml")
+
     # Change dataframe['Filename'] to basename and remove rescale suffix
     df['Filename'] = list(
         (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
@@ -350,7 +362,6 @@ def main(vertlevels_input, path_output):
     # verify if vertlevels of interest were given in input by user
     if vertlevels_input is None:
         vertlevels = list(set(df['VertLevel'].values))
-        print(vertlevels)
     elif vertlevels_input is not None:
         vertlevels = list(map(int, vertlevels_input))
         if all(elem in set(list(df['VertLevel'].values)) for elem in vertlevels):
@@ -367,9 +378,13 @@ def main(vertlevels_input, path_output):
     print(" mean csa: " + str(mean_csa))
 
     # compute sample size
+    # configuration parameters can be modified in config.yaml file
+    atrophy = config_param['stats']['sample_size']['atrophy_sample']
     # conf = confidence level
+    conf = config_param['stats']['sample_size']['conf']
     # power = power level
-    sample_size(df_a, conf=0.95, power=0.8, mean_control=None, mean_patient=None, atrophy=7.7)
+    power = config_param['stats']['sample_size']['power']
+    sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None)
 
     # ground truth atrophy
     atrophies = sorted(set(df['Rescale'].values))
