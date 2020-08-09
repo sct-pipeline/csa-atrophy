@@ -3,8 +3,9 @@
 # process_data.sh parameters
 n_transfo: 2
 rescaling:
-  - 0.95
-  - 1.00
+  #- 0.95
+  #- 1.00
+  - "gt"
 contrast: "t2"
 
 # manual_labeling_correction.sh parameters
@@ -28,7 +29,7 @@ transfo:
   bounds:
     angle_bound: 5
     shift_bound: 2.5
-    
+
 # config file for sct_run_batch
 path_data   : "data"
 path_output : "csa_atrophy_results_t2"

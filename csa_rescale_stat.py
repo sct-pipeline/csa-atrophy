@@ -63,6 +63,10 @@ def get_parser():
         help='Help',
         nargs="*"
     )
+    optional.add_argument(
+        '-config',
+        help='path to config file',
+    )
     return parser
 
 
@@ -187,7 +191,7 @@ def std(df, vertlevels):
     print("\n====================std==========================\n")
     # TODO: possible normalization of csa for inter-subject studies
     df = df.reset_index().set_index('Rescale')
-    df['subject'] = list(tf.split('_T2w')[0] for tf in df['Filename'])
+    df['subject'] = list(tf.split('_T')[0] for tf in df['Filename'])
     min_vert = min(list(vertlevels))
     for i in vertlevels[1:]:
         for name, group in df.groupby('Rescale'):
@@ -197,7 +201,7 @@ def std(df, vertlevels):
             atrophy = set(group.reset_index().Rescale)
             print('csa std on ',atrophy,'  rescaled image c' + str(min_vert) + '/c' + str(i) + ' is ',
                 round(std, 3), ' mm^2 and cov is ', round(cov, 3),'%')
-            if group.index[0] == 1:
+            if group.index[0] == "gt":
                 std_v = group.groupby('subject')['csa_original'].mean().std()
         print('\n')
     return std_v
@@ -248,7 +252,7 @@ def sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None
 
     df_sample = pd.DataFrame(z_score_dict)
     df_sample = df_sample.set_index('confidence_Level')
-    std_sample = df_a.groupby('Rescale').get_group(1)['csa_original'].std()
+    std_sample = df_a.groupby('Rescale').get_group("gt")['csa_original'].std()
     print('std: ' + str(std_sample))
     num_n = 2 * ((df_sample.at[conf, 'z_value'] + df_sample.at[power, 'z_value']) ** 2) * (std_sample ** 2)
     if atrophy:
@@ -286,15 +290,19 @@ def add_to_dataframe(df, vertlevels):
         df_gt2 = pd.DataFrame()
         # get GT values
         if i == max_vert:
-            group_csa_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=diff_vert).groupby(
+            group_csa_gt = df1.groupby('Rescale').get_group("gt").set_index('VertLevel').drop(index=diff_vert).groupby(
                 ['Filename']).mean().csa_original
         else:
             n.append(i + 1)
-            group_csa_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=n).groupby(
+            group_csa_gt = df1.groupby('Rescale').get_group("gt").set_index('VertLevel').drop(index=n).groupby(
                 ['Filename']).mean().csa_original
         # iterate across Rescale groupby
         for name, group in df.groupby('Rescale'):
-            atrophy = group['Rescale'].values
+            atrophy_name = group['Rescale'].values
+            if atrophy_name[0] == "gt":
+                atrophy = "1.0"
+            else:
+                atrophy = atrophy_name[0]
             # mean CSA values for each subject
             group2 = group.groupby(['Filename']).mean().reset_index()
             # Put Filename as index to easily locate subjects
@@ -303,9 +311,8 @@ def add_to_dataframe(df, vertlevels):
             for subject_j in set(group2['Filename'].values):
                 # if dataframe subject exist in GT (without rescaling)
                 if subject_j in group_csa_gt.index.values:
-                    group3.at[subject_j, 'gt_csa_c' + str(min_vert) + '_c' + str(i)] = group_csa_gt.loc[subject_j] * (
-                                atrophy[0] ** 2)
-            df_gt = df.groupby('Rescale').get_group(atrophy[0]).groupby('Filename').mean()
+                    group3.at[subject_j, 'gt_csa_c' + str(min_vert) + '_c' + str(i)] = group_csa_gt.loc[subject_j] * (float(atrophy) ** 2)
+            df_gt = df.groupby('Rescale').get_group(atrophy_name[0]).groupby('Filename').mean()
             df_gt['gt_csa_c' + str(min_vert) + '_c' + str(i)] = (
                 group3['gt_csa_c' + str(min_vert) + '_c' + str(i)].values)
             df_gt2 = pd.concat([df_gt2, df_gt])
@@ -352,7 +359,7 @@ def main(vertlevels_input, path_output):
     pd.set_option('display.max_rows', None)
 
     # fetch parameters from config.yaml file
-    config_param = yaml_parser("config.yaml")
+    config_param = yaml_parser(arguments.config)
 
     # Change dataframe['Filename'] to basename and remove rescale suffix
     df['Filename'] = list(
@@ -374,7 +381,7 @@ def main(vertlevels_input, path_output):
 
     # print mean CSA without rescaling
     print("\n====================mean==========================\n")
-    mean_csa = df.groupby('Rescale').get_group(1)['csa_original'].mean()
+    mean_csa = df.groupby('Rescale').get_group("gt")['csa_original'].mean()
     print(" mean csa: " + str(mean_csa))
 
     # compute sample size
