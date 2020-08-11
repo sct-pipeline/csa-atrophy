@@ -22,11 +22,8 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Global variables
 SUBJECT=$1
-# The following global variables are retrieved from config.yaml file
-# set n_transfo to the desired number of transformed images of same subject for segmentation,
-# n_transfo also represents the number of iterations of the transformation, segmentation and labeling process
+# The following global variables are retrieved from config_script.yml file
 n_transfo=$(yaml_parser -o n_transfo -i config_script.yml)
-# define rescaling coefficients (always keep value 1 for reference)
 rescaling=$(yaml_parser -o rescaling -i config_script.yml)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 contrast=$(yaml_parser -o contrast -i config_script.yml)
@@ -36,6 +33,7 @@ fi
 if [ $contrast == "t1" ]; then
   contrast_str="T1w"
 fi
+# TODO: the line below is broken (hard-coded yml)
 results_directory=$(yaml_parser -o path_output -i config_sct_run_batch.yml)
 
 # FUNCTIONS
@@ -45,6 +43,7 @@ results_directory=$(yaml_parser -o path_output -i config_sct_run_batch.yml)
 label_if_does_not_exist(){
   local file="$1"
   local file_seg="$2"
+  # TODO: this function should ONLY be applied for the scale=1 stage.
   local scale="$3"
   if [ $scale == "gt" ]; then
     local scale=1.0
@@ -55,7 +54,9 @@ label_if_does_not_exist(){
   if [ -e "$FILELABELMANUAL" ]; then
     echo "manual labeled file was found: $FILELABELMANUAL"
     rsync -avzh $FILELABELMANUAL ${FILELABEL}.nii.gz
+    # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${file}_labels-manual.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
+
     sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   else
     # Generate labeled segmentation
@@ -72,9 +73,10 @@ segment_if_does_not_exist(){
   local contrast="$2"
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
-  if [ -e "${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz" ]; then
-    echo "Found manual segmentation: ${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz"
-    rsync -avzh "${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz" ${FILESEG}.nii.gz
+  FILESEGMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILESEG}-manual.nii.gz"
+  if [ -e $FILESEGMANUAL ]; then
+    echo "Found! Using manual segmentation."
+    rsync -avzh $FILESEGMANUAL ${FILESEG}.nii.gz
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
