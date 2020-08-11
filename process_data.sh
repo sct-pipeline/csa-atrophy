@@ -27,7 +27,7 @@ SUBJECT=$1
 # n_transfo also represents the number of iterations of the transformation, segmentation and labeling process
 n_transfo=$(yaml_parser -o n_transfo)
 # define rescaling coefficients (always keep value 1 for reference)
-rescaling=$(yaml_parser -o rescaling -i config_script.yml)
+rescaling=$(yaml_parser -o rescaling)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 contrast=$(yaml_parser -o contrast)
 if [ $contrast == "t2" ]; then
@@ -37,7 +37,6 @@ if [ $contrast == "t1" ]; then
   contrast_str="T1w"
 fi
 path_output=$(yaml_parser -o path_output)
-
 
 
 # FUNCTIONS
