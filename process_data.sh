@@ -3,7 +3,7 @@
 # Process data. This script should be run within the dataset folder.
 #
 # Usage:
-#   ./process_data.sh <SUBJECT> <FILEPARAM>
+#   ./process_data.sh <SUBJECT>
 #
 # Example:
 #   ./process_data.sh sub-03

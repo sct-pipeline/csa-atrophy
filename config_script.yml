@@ -1,28 +1,34 @@
 # csa-atrophy pipeline parameters
 
-# process_data.sh parameters
+# process_data.sh
+# ---------------
+# Number of transformations to apply to each subject
 n_transfo: 3
+# Rescaling factor to apply to each subject. Note: values '1' and 'gt' should always be present.
+# TODO: clarify this gt
 rescaling:
   - 0.95
-# always keep values 1 and gt
   - 1
   - "gt"
+# Contrasts on which to perform the analysis. Available values are: 't1', 't2'
 contrast: "t1"
 
-# manual_labeling_correction.sh parameters
+# manual_labeling_correction.sh
+# -----------------------------
 PATH_ORIGINAL_RESULTS: "csa_atrophy_results/results"
 PATH_ORIGINAL_CSV: "csa_atrophy_results/data_processed"
 PATH_DESTINATION_RESULTS: "csa_atrophy_results_corrected/results"
-PATH_SEGMANUAL: "data/derivatives/labels"
 
-# csa_atrophy_stat.py parameters
+# csa_atrophy_stat.py
+# -------------------
 stats:
   sample_size:
     atrophy_sample: 7.7
     conf: 0.95
     power: 0.8
 
-# affine_transfo.py parameters
+# affine_transfo.py
+# -----------------
 transfo:
   bounds:
     angle_bound: 5
