@@ -1,7 +1,0 @@
-FILES_LABEL:
-  - "sub-amu03_T2w_r0.95_t1.nii.gz"
-  - "sub-amu03_T2w_r0.95_t2.nii.gz"
-
-FILES_SEG:
-
-FILES_GMSEG:
