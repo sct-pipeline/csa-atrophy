@@ -57,5 +57,5 @@ manual_correction -config config_correction.yml -path-in csa_atrophy_results/res
 The bash script outputs all effectuated manual corrections to 'data/derivatives/labels'.
 It is now possible to re-run the whole process, pointing to the manual corrections. With the command below labeling will use the manual corrections present in 'data/derivatives/labels', otherwise labeling will be done automatically.
 ~~~
-sct_run_batch -path-data data -path-output csa_atrophy_results_corrected -path-segmanual data/derivatives/labels -script process_data.sh
+sct_run_batch -path-data data -path-output csa_atrophy_results_corrected -script process_data.sh
 ~~~
