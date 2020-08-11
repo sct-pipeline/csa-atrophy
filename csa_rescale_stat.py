@@ -63,6 +63,10 @@ def get_parser():
         help='Help',
         nargs="*"
     )
+    optional.add_argument(
+        '-config',
+        help='path to config file',
+    )
     return parser
 
 
@@ -351,7 +355,7 @@ def main(vertlevels_input, path_output):
     pd.set_option('display.max_rows', None)
 
     # fetch parameters from config.yaml file
-    config_param = yaml_parser("config_script.yml")
+    config_param = yaml_parser(arguments.config)
 
     # Change dataframe['Filename'] to basename and remove rescale suffix
     df['Filename'] = list(

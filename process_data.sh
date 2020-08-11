@@ -47,7 +47,9 @@ label_if_does_not_exist(){
   local file="$1"
   local file_seg="$2"
   local scale="$3"
-
+  if [ $scale == "gt" ]; then
+    local scale=1.0
+  fi
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels"
   FILELABELMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILELABEL}-manual.nii.gz"
@@ -71,7 +73,6 @@ segment_if_does_not_exist(){
   local contrast="$2"
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
-  echo "hhhhhhhhhhhhhhhhhhh"${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz
   if [ -e "${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz" ]; then
     echo "Found manual segmentation: ${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz"
     rsync -avzh "${PATH_SEGMANUAL}/$SUBJECT/anat/${FILESEG}-manual.nii.gz" ${FILESEG}.nii.gz
