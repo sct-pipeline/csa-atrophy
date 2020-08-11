@@ -1,26 +1,11 @@
 # csa-atrophy
+
 Evaluate the sensitivity of atrophy detection with SCT
 
-# Data
-~~~
-Dataset/
-└── csa_rescale_stat.py
-└── process_data.sh
-└── csa_fetch_dataset.sh
-└── data
-    └── sub-subj01
-        └── anat
-            └── sub-subj01_T2w.nii.gz
-            └── sub-subj01_T2w.json
-     └── sub-subj02
-         └── anat
-            └── sub-subj02_T2w.nii.gz
-            └── sub-subj02_T2w.json
- └── results
-
-~~~
-
 # How to run
+
+This code has been tested using Python 3.7.
+
 Download (or git clone) this repository:
 ~~~
 git clone https://github.com/sct-pipeline/csa-atrophy.git
@@ -37,7 +22,9 @@ Suggested testing dataset must be downloaded from "Spine Generic Public Database
 curl -o spinegeneric_r20200801.zip -L https://github.com/spine-generic/data-multi-subject/archive/r20200801.zip
 unzip spinegeneric_r20200801.zip
 ~~~
-To run csa-atrophy pipeline on a sub-dataset of spine-generic there are 2 options: either create a new folder with a sub-dataset (make sure to update config file path_data) or use flag -include in sct_run_batch to select one subject at a time.
+To run csa-atrophy pipeline on a sub-dataset of spine-generic there are 2 options: 
+1. Create a new folder with a sub-dataset (make sure to update config file path_data);
+2. Use flag -include in `sct_run_batch` to select one subject at a time.
 
 Run the following script within the Dataset folder to extract CSA. This script can be run on desired subjects using flag -include and in parallel processing using flag -jobs.
 ~~~
