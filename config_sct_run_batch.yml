@@ -1,5 +1,5 @@
 # config file for sct_run_batch
-path_data: data
+path_data: spinegeneric_r20200801
 path_output: csa_atrophy_results
 path_segmanual: data/derivatives/labels
 script: process_data.sh
