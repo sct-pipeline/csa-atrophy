@@ -34,6 +34,8 @@ if [ $contrast == "t1" ]; then
   contrast_str="T1w"
 fi
 # TODO: the line below is broken (hard-coded yml)
+# TODO: use PATH_RESULTS for the thing below, and PATH_DATA_PROCESSED instead of the PATH_RESULTS
+#  as presently used in the code.
 results_directory=$(yaml_parser -o path_output -i config_sct_run_batch.yml)
 
 # FUNCTIONS
@@ -84,38 +86,47 @@ segment_if_does_not_exist(){
   fi
 }
 
+
 # SCRIPT STARTS HERE
 # ==============================================================================
+# Display useful info for the log, such as SCT version, RAM and CPU cores available
+sct_check_dependencies -short
+
 # Go to results folder, where most of the outputs will be located
+#TODO: replace PATH_RESULTS by $PATH_DATA_PROCESSED
 cd $PATH_RESULTS
 # Copy ###source images
 cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
 cd $SUBJECT
 rm -r dwi
 
-# T2w resampling
+# Image resampling
 #=============================================================================
-# iterate rescaling and transformation on subject
+# iterate across rescaling
 for r_coef in ${R_COEFS[@]}; do
+  # if data already exists, remove it
   if [ -d "anat_r${r_coef}" ]; then
+    echo "anat_r${r_coef} already exists: removing folder..."
     rm -r "anat_r${r_coef}"
-    echo "anat_r${r_coef} already exists: creating folder"
   fi
   if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
+    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: remove it..."
     rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
-    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
   fi
-  # rename anat to explicit rescaling coefficient
+  # copy anat to anat_X, X being the rescaling factor
+  # TODO: should be copied-- not moved
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
 
+  # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
   for i_transfo in ${seq_transfo[@]}; do
-    # Image homothetic rescaling
+    # Rescale header of nifti file
     affine_rescale -i ${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef}
     # Image random transformation (rotation, translation). By default transformation values are taken from
-    # "transfo_values.csv" file if it already exists
-    #${PATH_RESULTS%%/results}
+    # "transfo_values.csv" file if it already exists.
+    # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
+    # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
     affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $results_directory -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
     file_c=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
@@ -123,6 +134,8 @@ for r_coef in ${R_COEFS[@]}; do
     # name segmented file
     file_c_seg=${FILESEG}
     # Create labels in the cord, function uses by default labels file in directory seg_manual
+    # TODO: do this labeling only once, at scale=1, and the apply the rescaling and transfo to the
+    #  label.
     label_if_does_not_exist $file_c $file_c_seg $R_COEFS $contrast
     file_label=$FILELABEL
     # Compute average CSA between C2 and C5 levels (append across subjects)
