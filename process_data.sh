@@ -95,14 +95,14 @@ rm -r dwi
 #=============================================================================
 # iterate rescaling and transformation on subject
 for r_coef in ${R_COEFS[@]}; do
-    if [ -d "anat_r${r_coef}" ]; then
-   rm -r "anat_r${r_coef}"
-   echo "anat_r${r_coef} already exists: creating folder"
- fi
- if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
-   rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
-   echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
- fi
+  if [ -d "anat_r${r_coef}" ]; then
+    rm -r "anat_r${r_coef}"
+    echo "anat_r${r_coef} already exists: creating folder"
+  fi
+  if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
+    rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
+    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: overwriting current csv file"
+  fi
   # rename anat to explicit rescaling coefficient
   mv anat anat_r$r_coef
   cd anat_r${r_coef}
