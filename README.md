@@ -41,7 +41,7 @@ Fetch dataset (2 choices):
   ~~~
 Run the following script within the Dataset folder to extract CSA. This script can be run on desired subjects using flag -include and in parallel processing using flag -jobs.
 ~~~
-sct_run_batch -path-data data -path-output csa_atrophy_results process_data.sh
+sct_run_batch -config_sct_run_batch.yml
 ~~~
 To output statistics, run in Dataset
 ~~~
@@ -50,12 +50,12 @@ python csa_rescale_stat.py -i csa_atrophy_results/results/csa_data -o csa_atroph
 
 # Quality Control
 
-After running the analysis, check your Quality Control (QC) report by opening the file qc/index.html. Use the “Search” feature of the QC report to quickly jump to segmentations or labeling results. If you spot issues (wrong labeling), add their filename in the variable array "FILES_SEGMANUAL" of the 'config.yaml' file. Then manually create labels in the cord on the posterior tip of inter-vertebral discs from C2 to C5 with command:
+After running the analysis, check your Quality Control (QC) report by opening the file qc/index.html. Use the “Search” feature of the QC report to quickly jump to segmentations or labeling results. If you spot issues (wrong labeling), add their filename in the 'config_correction.yml' file (see https://spine-generic.readthedocs.io/en/latest/analysis_pipeline.html for further indications). Then manually create labels in the cord on the posterior tip of inter-vertebral discs from C2 to C5 with command:
 ~~~
-./manual_labeling_correction.sh
+manual_correction -config config_correction.yml -path-in csa_atrophy_results/results -path-out data
 ~~~
-The bash script outputs all effectuated manual labelings to 'results_corrected/seg_manual'.
-It is now possible to re-run the whole process, pointing to the manual corrections. With the command below labeling will use the manual corrections present in 'seg_manual', otherwise labeling will be done automatically.
+The bash script outputs all effectuated manual corrections to 'data/derivatives/labels'.
+It is now possible to re-run the whole process, pointing to the manual corrections. With the command below labeling will use the manual corrections present in 'data/derivatives/labels', otherwise labeling will be done automatically.
 ~~~
-sct_run_batch -path-data data -path-output csa_atrophy_results_corrected -path-segmanual seg_manual process_data.sh
+sct_run_batch -path-data data -path-output csa_atrophy_results_corrected -path-segmanual data/derivatives/labels -script process_data.sh
 ~~~
