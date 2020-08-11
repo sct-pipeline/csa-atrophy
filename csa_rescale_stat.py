@@ -30,7 +30,7 @@ def get_parser():
     """parser function"""
     parser = argparse.ArgumentParser(
         description="Compute statistics based on the csv files containing the CSA metrics:",
-        add_help=None,
+        add_help=True,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
@@ -57,11 +57,6 @@ def get_parser():
         '-o',
         help='Path to output plots, default is csa-atrophy dataset directory',
         default=""
-    )
-    optional.add_argument(
-        '-h',
-        help='Help',
-        nargs="*"
     )
     optional.add_argument(
         '-config',
@@ -423,6 +418,7 @@ def main(vertlevels_input, path_output):
 #########################################################################################
 if __name__ == "__main__":
     # get parser elements
+    # TODO: move this inside the main
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     if arguments.h is None:

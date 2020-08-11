@@ -36,7 +36,7 @@ Run the analysis:
 sct_run_batch -config config_sct_run_batch.yml
 ~~~
 
-:note: **desired subjects using flag -include and in parallel processing using flag -jobs. 
+:note: **desired subjects using flag -include and in parallel processing using flag -jobs.**
 
 To output statistics, run in Dataset
 ~~~
