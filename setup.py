@@ -33,7 +33,8 @@ setup(
         'console_scripts': [
             'affine_transfo=affine_transfo:main',
             'affine_rescale=affine_rescale:main',
-            'yaml_parser=yaml_parser:main'
+            'yaml_parser=yaml_parser:main',
+            'manual_correction=manual_correction:main'
         ],
     },
 )
