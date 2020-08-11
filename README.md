@@ -16,20 +16,28 @@ csa-atrophy requires specific python packages for computing statistics and proce
 ~~~
 pip install -e .
 ~~~
+
 Fetch dataset:
 Suggested testing dataset must be downloaded from "Spine Generic Public Database". To download latest version of the whole multi-subject dataset run commands:
 ~~~
 curl -o spinegeneric_r20200801.zip -L https://github.com/spine-generic/data-multi-subject/archive/r20200801.zip
 unzip spinegeneric_r20200801.zip
 ~~~
-To run csa-atrophy pipeline on a sub-dataset of spine-generic there are 2 options: 
-1. Create a new folder with a sub-dataset (make sure to update config file path_data);
-2. Use flag -include in `sct_run_batch` to select one subject at a time.
 
-Run the following script within the Dataset folder to extract CSA. This script can be run on desired subjects using flag -include and in parallel processing using flag -jobs.
+Edit the file `config_sct_run_batch.yml` according to your setup. Notable flags include:
+- `path_data`: If you downloaded the spine-generic data at another location, make sure to update the path;
+- `include_list`: If you only want to run the script in a few subjects, list them here. Example: 
+  `include_list: ['sub-unf04', 'sub-unf05']`
+
+See `sct_run_batch -h` to look at the available options.
+
+Run the analysis:
 ~~~
 sct_run_batch -config config_sct_run_batch.yml
 ~~~
+
+:note: **desired subjects using flag -include and in parallel processing using flag -jobs. 
+
 To output statistics, run in Dataset
 ~~~
 python csa_rescale_stat.py -i csa_atrophy_results/data_processed -o csa_atrophy_results -config config_script.yml -v
