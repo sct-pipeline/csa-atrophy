@@ -36,7 +36,6 @@ fi
 if [ $contrast == "t1" ]; then
   contrast_str="T1w"
 fi
-path_output=$(yaml_parser -o path_output -i config_sct_run_batch.yml)
 
 
 # FUNCTIONS
@@ -114,7 +113,7 @@ for r_coef in ${R_COEFS[@]}; do
     affine_rescale -i ${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef}
     # Image random transformation (rotation, translation). By default transformation values are taken from
     # "transfo_values.csv" file if it already exists
-    affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $path_output -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
+    affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $PATH_RESULTS -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
     file_c=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist ${file_c} ${contrast}
