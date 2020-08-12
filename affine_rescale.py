@@ -29,7 +29,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help='path to T2w MRI data',
+        help='path to nifti image',
     )
     mandatory.add_argument(
         "-r",
