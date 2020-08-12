@@ -36,6 +36,11 @@ def get_parser():
         required=True,
         help='rescaling coefficient',
     )
+    mandatory.add_argument(
+        "-o",
+        required=False,
+        help='name of rescaled nifti',
+    )
     return parser
 
 
@@ -60,7 +65,10 @@ def main():
     img_t = nib.Nifti1Image(data, img.affine) # change affine for data
 
     # save rescaled image
-    fname_out = fname.split('.nii.gz')[0] + '_r'+str(name_coef)+'.nii.gz'
+    if arguments.o is None:
+        fname_out = fname.split('.nii.gz')[0] + '_r'+str(name_coef)+'.nii.gz'
+    else:
+        fname_out = arguments.o
     nib.save(img_t, fname_out)
 
 

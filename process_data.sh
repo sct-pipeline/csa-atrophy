@@ -115,11 +115,11 @@ for r_coef in ${R_COEFS[@]}; do
     rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
   fi
 
-  cp -r anat anat_r$r_coef
+  mkdir anat_r$r_coef
   cd anat_r${r_coef}
 
   # Rescale header of nifti file
-  affine_rescale -i ${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef}
+  affine_rescale -i ../anat/${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef} -o ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
