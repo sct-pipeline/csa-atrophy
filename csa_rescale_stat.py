@@ -335,7 +335,7 @@ def add_to_dataframe(df, vertlevels):
     return df_a
 
 
-def main(vertlevels_input, path_output):
+def main():
     """
     main function, gather stats and call plots
     :param vertlevels_input: vertebrae levels of interest, arguments of flag -l
