@@ -7,11 +7,11 @@ n_transfo: 3
 # Rescaling factor to apply to each subject. Note: values '1' and 'gt' should always be present.
 # TODO: clarify this gt
 rescaling:
-  - 0.95
-  - 1
   - "gt"
+  - 1
+  - 0.95
 # Contrasts on which to perform the analysis. Available values are: 't1', 't2'
-contrast: "t1"
+contrast: "t2"
 
 # manual_labeling_correction.sh
 # -----------------------------

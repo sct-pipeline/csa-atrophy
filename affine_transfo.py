@@ -208,10 +208,10 @@ def main():
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     suffix = arguments.o
-    path_results = arguments.i_dir[0]
+    results_dir = os.path.dirname(os.path.dirname(arguments.i_dir[0]))
 
     # fetch parameters from config.yaml file
-    path_config_file = os.path.join(os.getcwd().split(path_results)[0], "config_script.yml")
+    path_config_file = os.path.join(results_dir, "config_script.yml")
     config_param = yaml_parser(path_config_file)
 
     # Images of selected subject chosen by user in command line instructions, are copied and transformed

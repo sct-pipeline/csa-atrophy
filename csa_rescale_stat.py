@@ -335,95 +335,98 @@ def add_to_dataframe(df, vertlevels):
     return df_a
 
 
-def main(vertlevels_input, path_output):
+def main():
     """
     main function, gather stats and call plots
     :param vertlevels_input: vertebrae levels of interest, arguments of flag -l
     """
-    # read data
-    data = pd.read_csv("csa.csv", decimal=".")
-    data2 = {'Filename': data['Filename'],
-             'VertLevel': data['VertLevel'],
-             'csa_original': data['MEAN(area)'],
-             'Rescale': data['rescale'], }
-    df = pd.DataFrame(data2)
-    pd.set_option('display.max_rows', None)
-
-    # fetch parameters from config.yaml file
-    config_param = yaml_parser(arguments.config)
-
-    # Change dataframe['Filename'] to basename and remove rescale suffix
-    df['Filename'] = list(
-        (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
-        path in data['Filename'])
-
-    # verify if vertlevels of interest were given in input by user
-    if vertlevels_input is None:
-        vertlevels = list(set(df['VertLevel'].values))
-    elif vertlevels_input is not None:
-        vertlevels = list(map(int, vertlevels_input))
-        if all(elem in set(list(df['VertLevel'].values)) for elem in vertlevels):
-            pass
-        else:
-            print('error: Input vertebrae levels ', vertlevels, ' do not exist in csv files')
-            exit()
-    # dataframe column additions gt, diff, perc_diff for different vertebrae levels
-    df_a = add_to_dataframe(df, vertlevels)
-
-    # print mean CSA without rescaling
-    print("\n====================mean==========================\n")
-    mean_csa = df.groupby('Rescale').get_group("gt")['csa_original'].mean()
-    print(" mean csa: " + str(mean_csa))
-
-    # compute sample size
-    # configuration parameters can be modified in config.yaml file
-    atrophy = config_param['stats']['sample_size']['atrophy_sample']
-    # conf = confidence level
-    conf = config_param['stats']['sample_size']['conf']
-    # power = power level
-    power = config_param['stats']['sample_size']['power']
-    sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None)
-
-    # ground truth atrophy
-    atrophies = sorted(set(df['Rescale'].values))
-    # display number of subjects in test (multiple transformations of the same subjects are considered different)
-    print("\n====================number subjects==========================\n")
-    for atrophy in atrophies:
-        number_sub = df.groupby('Filename')['csa_original'].mean().count()
-        print('For rescaling ' + str(atrophy) + ' number of subjects is ' + str(number_sub))
-
-    # compute STD for different vertebrae levels
-    std_v = std(df_a, vertlevels)
-    std_suject(df_a, vertlevels)
-    df_plot = df_a.drop("gt")
-
-    # plot graph if verbose is present
-    if arguments.v is not None:
-        columns_to_plot = [i for i in df_a.columns if 'perc_diff' in i]
-        plot_perc_err(df_plot, columns_to_plot, path_output)
-        boxplot_csa(df_plot, path_output)
-        max_vert = max(vertlevels)
-        min_vert = min(vertlevels)
-        min_max_vert = ['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)]
-        boxplot_perc_err(df_plot, min_max_vert, path_output)
-        # z_conf = z_score for confidence level,
-        # z_power = z_score for power level,
-        # std_v = STD of subjects without rescaling CSA values
-        # mean_csa =  mean CSA value of subjects without rescaling
-        plot_sample_size(z_conf=1.96, z_power=(0.84, 1.282), std=std_v, mean_csa=mean_csa, path_output=path_output)
-        print('\nfigures have been plotted in dataset')
-
-
-# Run
-#########################################################################################
-if __name__ == "__main__":
     # get parser elements
-    # TODO: move this inside the main
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
     if arguments.h is None:
         path_results = os.path.join(os.getcwd(), arguments.i)
         concatenate_csv_files(path_results)
-        main(vertlevels_input = arguments.l, path_output = arguments.o)
+        vertlevels_input = arguments.l
+        path_output = arguments.o
+        # read data
+        data = pd.read_csv("csa.csv", decimal=".")
+        data2 = {'Filename': data['Filename'],
+                 'VertLevel': data['VertLevel'],
+                 'csa_original': data['MEAN(area)'],
+                 'Rescale': data['rescale'], }
+        df = pd.DataFrame(data2)
+        pd.set_option('display.max_rows', None)
+
+        # fetch parameters from config.yaml file
+        config_param = yaml_parser(arguments.config)
+
+        # Change dataframe['Filename'] to basename and remove rescale suffix
+        df['Filename'] = list(
+            (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
+            path in data['Filename'])
+
+        # verify if vertlevels of interest were given in input by user
+        if vertlevels_input is None:
+            vertlevels = list(set(df['VertLevel'].values))
+        elif vertlevels_input is not None:
+            vertlevels = list(map(int, vertlevels_input))
+            if all(elem in set(list(df['VertLevel'].values)) for elem in vertlevels):
+                pass
+            else:
+                print('error: Input vertebrae levels ', vertlevels, ' do not exist in csv files')
+                exit()
+        # dataframe column additions gt, diff, perc_diff for different vertebrae levels
+        df_a = add_to_dataframe(df, vertlevels)
+
+        # print mean CSA without rescaling
+        print("\n====================mean==========================\n")
+        mean_csa = df.groupby('Rescale').get_group("gt")['csa_original'].mean()
+        print(" mean csa: " + str(mean_csa))
+
+        # compute sample size
+        # configuration parameters can be modified in config.yaml file
+        atrophy = config_param['stats']['sample_size']['atrophy_sample']
+        # conf = confidence level
+        conf = config_param['stats']['sample_size']['conf']
+        # power = power level
+        power = config_param['stats']['sample_size']['power']
+        sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None)
+
+        # ground truth atrophy
+        atrophies = sorted(set(df['Rescale'].values))
+        # display number of subjects in test (multiple transformations of the same subjects are considered different)
+        print("\n====================number subjects==========================\n")
+        for atrophy in atrophies:
+            number_sub = df.groupby('Filename')['csa_original'].mean().count()
+            print('For rescaling ' + str(atrophy) + ' number of subjects is ' + str(number_sub))
+
+        # compute STD for different vertebrae levels
+        std_v = std(df_a, vertlevels)
+        std_suject(df_a, vertlevels)
+        df_plot = df_a.drop("gt")
+
+        # plot graph if verbose is present
+        if arguments.v is not None:
+            columns_to_plot = [i for i in df_a.columns if 'perc_diff' in i]
+            plot_perc_err(df_plot, columns_to_plot, path_output)
+            boxplot_csa(df_plot, path_output)
+            max_vert = max(vertlevels)
+            min_vert = min(vertlevels)
+            min_max_vert = ['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)]
+            boxplot_perc_err(df_plot, min_max_vert, path_output)
+            # z_conf = z_score for confidence level,
+            # z_power = z_score for power level,
+            # std_v = STD of subjects without rescaling CSA values
+            # mean_csa =  mean CSA value of subjects without rescaling
+            plot_sample_size(z_conf=1.96, z_power=(0.84, 1.282), std=std_v, mean_csa=mean_csa, path_output=path_output)
+            print('\nfigures have been plotted in dataset')
     else:
         parser.print_help()
+
+
+
+# Run
+#########################################################################################
+if __name__ == "__main__":
+        # TODO: move this inside the main
+    main()
