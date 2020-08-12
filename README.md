@@ -1,6 +1,23 @@
 # csa-atrophy
 
-Evaluate the sensitivity of atrophy detection with SCT
+Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as follows:
+- Consider subject I --> sI
+- Applies a rescaling on the native image (e.g. 1, 0.95, 0.8) --> rX
+- Applies random affine transformation --> tY
+- Segment the cord
+- Compute CSA --> CSA(sI, rX, tY)
+
+After everything is done, compute stats:
+- intra-subject STD: STD[CSA(sI, rX, :)] --> STD_intrasub(sI, rX)
+- inter-subject STD: STD_intrasub(:, rX) --> STD_intersub(rX)
+- intra-subject error MEAN: MEAN[CSA(sI, rX, :)] - MEAN[CSA(sI, 1, :)] (for rX included in list of rX with rX=1 excluded)
+  --> MEAN(sI, rX)
+- inter-subject error STD: STD[MEAN(:, rX)]
+- TODO: sample size
+
+Plot results:
+- STD_intersub
+- TODO: sample size
 
 # How to run
 

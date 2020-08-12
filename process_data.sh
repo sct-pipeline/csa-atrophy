@@ -89,14 +89,20 @@ sct_check_dependencies -short
 
 # Go to results folder, where most of the outputs will be located
 #TODO: replace PATH_RESULTS by $PATH_DATA_PROCESSED
-cd $PATH_RESULTS
-# Copy ###source images
-cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
+cd $PATH_DATA_PROCESSED
+# Copy source images
+cp -r $PATH_DATA/${SUBJECT} .
 cd $SUBJECT
+# we don't need dwi data, so let's remove it
 rm -r dwi
 
 # Image analysis
 #=============================================================================
+# seg cord on anat
+# TODO
+# label cord on anat
+# TODO
+
 # iterate across rescaling
 for r_coef in ${R_COEFS[@]}; do
   # if data already exists, remove it
@@ -122,15 +128,16 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $PATH_RESULTS -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
+    affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $PATH_RESULTS -o _t${i_transfo} -o_file "$PATH_RESULTS"/transfo_values.csv
     file_c=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist ${file_c} ${contrast}
     # name segmented file
     file_c_seg=${FILESEG}
-    # Create labels in the cord, function uses by default labels file in directory seg_manual
-    # TODO: do this labeling only once, at scale=1, and the apply the rescaling and transfo to the
-    #  label.
+    # Rescale and apply transformation on the reference label under anat/
+    # TODO
+
+    # TODO: remove gt
     if [ $r_coef == "gt" ] && [ ${i_transfo} == 1 ];then
       label_if_does_not_exist $file_c $file_c_seg $contrast $contrast_str
       cp ${file_c_seg}_labeled.nii.gz ${PATH_RESULTS}/${SUBJECT}

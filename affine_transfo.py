@@ -18,6 +18,9 @@
 # About the license: see the file LICENSE
 ###################################################################
 
+# TODO: add feature to re-use transformation if csv file exists
+# TODO: clarify what i_dir is.
+
 import glob, os, sys
 import math
 from numpy.random import rand
@@ -44,7 +47,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help="Input nifti images for transformation",
+        help="Input nifti image to apply the transformation on.",
         nargs="*"
     )
     mandatory.add_argument(
