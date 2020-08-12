@@ -21,7 +21,7 @@ import nibabel as nib
 def get_parser():
     parser = argparse.ArgumentParser(
         description='apply isotropic rescaling to image:',
-        add_help=None,
+        add_help=True,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
 
@@ -36,23 +36,17 @@ def get_parser():
         required=True,
         help='rescaling coefficient',
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        '-h',
-        help='Help',
-        nargs="*"
-    )
     return parser
 
 
-#MAIN
-############################################################
 def main():
     """Main function, isotropic rescale of input images according to coef_r"""
 
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
+    if arguments.h is not None:
+        parser.print_help()
     # fname is the name of input image
     fname = arguments.i
     # coef_r is image rescaling coefficient
@@ -71,7 +65,6 @@ def main():
     fname_out = fname.split('.nii.gz')[0] + '_r'+str(name_coef)+'.nii.gz'
     nib.save(img_t, fname_out)
 
-#RUN
-############################################################
+
 if __name__ == "__main__":
     main()
