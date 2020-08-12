@@ -20,8 +20,8 @@ import nibabel as nib
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='apply isotropic rescaling to image:',
-        add_help=True,
+        description='Apply isotropic rescaling on the image header. Note: this function does not affect the data, '
+                    'only the header. The output data has the suffix "_rX", with X the rescaling factor.',
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
 
@@ -44,9 +44,7 @@ def main():
 
     # get parser elements
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
-    if arguments.h is not None:
-        parser.print_help()
+    arguments = parser.parse_args()
     # fname is the name of input image
     fname = arguments.i
     # coef_r is image rescaling coefficient

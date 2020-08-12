@@ -38,7 +38,6 @@ from scipy.ndimage import affine_transform
 def get_parser():
     parser = argparse.ArgumentParser(
         description='apply random rotation and translation with values following a gaussian distribution:',
-        add_help=True,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
@@ -204,9 +203,7 @@ def main():
     """Main function, transform and save image"""
     # get parser elements
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
-    if arguments.h is not None:
-        parser.print_help()
+    arguments = parser.parse_args()
 
     suffix = arguments.o
     results_dir = os.path.dirname(os.path.dirname(arguments.i_dir[0]))
