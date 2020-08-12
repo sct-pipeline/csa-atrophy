@@ -33,10 +33,7 @@ fi
 if [ $contrast == "t1" ]; then
   contrast_str="T1w"
 fi
-# TODO: the line below is broken (hard-coded yml)
-# TODO: use PATH_RESULTS for the thing below, and PATH_DATA_PROCESSED instead of the PATH_RESULTS
-#  as presently used in the code.
-results_directory=$(yaml_parser -o path_output -i config_sct_run_batch.yml)
+
 
 # FUNCTIONS
 # ==============================================================================
@@ -46,10 +43,8 @@ label_if_does_not_exist(){
   local file="$1"
   local file_seg="$2"
   # TODO: this function should ONLY be applied for the scale=1 stage.
-  local scale="$3"
-  if [ $scale == "gt" ]; then
-    local scale=1.0
-  fi
+  local contrast="$3"
+  local contrast_str="$4"
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels"
   FILELABELMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILELABEL}-manual.nii.gz"
@@ -62,9 +57,9 @@ label_if_does_not_exist(){
     sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   else
     # Generate labeled segmentation
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -scale-dist ${scale} -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
     # Create labels in the Spinal Cord
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
+    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
   fi
 }
 
@@ -100,7 +95,7 @@ cp -r $PATH_DATA/${SUBJECT} $PATH_RESULTS
 cd $SUBJECT
 rm -r dwi
 
-# Image resampling
+# Image analysis
 #=============================================================================
 # iterate across rescaling
 for r_coef in ${R_COEFS[@]}; do
@@ -113,21 +108,21 @@ for r_coef in ${R_COEFS[@]}; do
     echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: remove it..."
     rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
   fi
-  # copy anat to anat_X, X being the rescaling factor
-  # TODO: should be copied-- not moved
-  mv anat anat_r$r_coef
+
+  cp -r anat anat_r$r_coef
   cd anat_r${r_coef}
+
+  # Rescale header of nifti file
+  affine_rescale -i ${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef}
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
   for i_transfo in ${seq_transfo[@]}; do
-    # Rescale header of nifti file
-    affine_rescale -i ${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef}
     # Image random transformation (rotation, translation). By default transformation values are taken from
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $results_directory -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
+    affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $PATH_RESULTS -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
     file_c=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist ${file_c} ${contrast}
@@ -136,8 +131,19 @@ for r_coef in ${R_COEFS[@]}; do
     # Create labels in the cord, function uses by default labels file in directory seg_manual
     # TODO: do this labeling only once, at scale=1, and the apply the rescaling and transfo to the
     #  label.
-    label_if_does_not_exist $file_c $file_c_seg $R_COEFS $contrast
-    file_label=$FILELABEL
+    if [ $r_coef == "gt" ] && [ ${i_transfo} == 1 ];then
+      label_if_does_not_exist $file_c $file_c_seg $contrast $contrast_str
+      cp ${file_c_seg}_labeled.nii.gz ${PATH_RESULTS}/${SUBJECT}
+      mv ${PATH_RESULTS}/${SUBJECT}/${file_c_seg}_labeled.nii.gz ${PATH_RESULTS}/${SUBJECT}/${file_c_seg%%_rgt*}.nii.gz
+      path_label=${PATH_RESULTS}/${SUBJECT}/${file_c_seg%%_rgt*}
+    else
+      echo "---------------------"$path_label
+      affine_rescale -i ${path_label}.nii.gz -r ${r_coef}
+      affine_transfo -i ${path_label}_r${r_coef}.nii.gz -i_dir $PATH_RESULTS -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
+      mv ${path_label}_r${r_coef}_t${i_transfo}.nii.gz ${path_label}_r${r_coef}_t${i_transfo}_seg_labeled.nii.gz
+      cp ${path_label}_r${r_coef}_t${i_transfo}_seg_labeled.nii.gz ${PATH_RESULTS}/${SUBJECT}/anat_r${r_coef}/${file_c_seg}_labeled.nii.gz
+    fi
+
     # Compute average CSA between C2 and C5 levels (append across subjects)
     sct_process_segmentation -i $file_c_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_c_seg}_labeled.nii.gz -o $PATH_DATA_PROCESSED/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
