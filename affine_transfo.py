@@ -55,6 +55,11 @@ def get_parser():
         help="path to results file",
         nargs="*"
     )
+    mandatory.add_argument(
+        "-config",
+        required=True,
+        help="Path to yml config file that includes parameters for the transformation.",
+    )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-o',
@@ -62,9 +67,9 @@ def get_parser():
         default='_t',
     )
     optional.add_argument(
-        '-o_file',
-        help="Create csv file to keep a trace of the applied random transformations, this file can be reused in "
-             "subsequent studies and code testing",
+        '-transfo',
+        help="Path to csv file that contains the transformation. If the transformation for the specific subject already "
+             "exists, it will read the transformation instead of creating a new random one.",
     )
     return parser
 
@@ -209,16 +214,16 @@ def main():
     results_dir = os.path.dirname(os.path.dirname(arguments.i_dir[0]))
 
     # fetch parameters from config.yaml file
-    path_config_file = os.path.join(results_dir, "config_script.yml")
+    path_config_file = arguments.config
     config_param = yaml_parser(path_config_file)
 
     # Images of selected subject chosen by user in command line instructions, are copied and transformed
     # if a csv file containing transformation values does not yet exist it will be created,
     # otherwise command line input csv file is used and a new subject is added in a new row of a pandas dataframe
-    if arguments.o_file is None:
-        arguments.o_file = os.path.join(os.getcwd().split('/sub')[0], 'transfo_values.csv')
-        if os.path.isfile(arguments.o_file):
-            df = pd.read_csv(arguments.o_file, delimiter=',')
+    if arguments.transfo is None:
+        arguments.transfo = os.path.join(os.getcwd().split('/sub')[0], 'transfo_values.csv')
+        if os.path.isfile(arguments.transfo):
+            df = pd.read_csv(arguments.transfo, delimiter=',')
             print(df)
         else:
             transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA',
@@ -226,12 +231,12 @@ def main():
             df = pd.DataFrame(columns=transfo_column_name)
 
     else:
-        if os.path.isfile(arguments.o_file):
-            df = pd.read_csv(arguments.o_file, delimiter=',')
+        if os.path.isfile(arguments.transfo):
+            df = pd.read_csv(arguments.transfo, delimiter=',')
             print(df)
         else:
-            print('error', arguments.o_file, ' is not present in current directory')
-            print('creating new file named ', arguments.o_file)
+            print('error', arguments.transfo, ' is not present in current directory')
+            print('creating new file named ', arguments.transfo)
             transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA',
                                    'shift_IS']
             df = pd.DataFrame(columns=transfo_column_name)
@@ -270,7 +275,7 @@ def main():
             # raise output error if the subject does not exist
         else:
             print('error: ' + fname_path + ' is not a valid subject')
-    df.set_index('subjects').to_csv(arguments.o_file)
+    df.set_index('subjects').to_csv(arguments.transfo)
 
 
 if __name__ == "__main__":

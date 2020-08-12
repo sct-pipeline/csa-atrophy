@@ -119,6 +119,7 @@ for r_coef in ${R_COEFS[@]}; do
   cd anat_r${r_coef}
 
   # Rescale header of nifti file
+  # TODO: pass variable to point to -config yml file
   affine_rescale -i ../anat/${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef} -o ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
