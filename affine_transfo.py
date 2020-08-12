@@ -35,7 +35,7 @@ from scipy.ndimage import affine_transform
 def get_parser():
     parser = argparse.ArgumentParser(
         description='apply random rotation and translation with values following a gaussian distribution:',
-        add_help=None,
+        add_help=True,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
@@ -54,11 +54,6 @@ def get_parser():
         nargs="*"
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        '-h',
-        help='Help',
-        nargs="*"
-    )
     optional.add_argument(
         '-o',
         help="Suffix for output file name.\nExample: '-i MYFILE.nii -o _t' would output MYFILE_t.nii",
