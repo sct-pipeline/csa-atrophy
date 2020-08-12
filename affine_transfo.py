@@ -20,6 +20,9 @@
 
 # TODO: add feature to re-use transformation if csv file exists
 # TODO: clarify what i_dir is.
+# TODO: save image as FLOAT32
+# TODO: add flag interp to apply transfo to seg-labeled data --> in that case, interp=0 (nearestneighbor)
+# TODO (less priority): check padding (seems unecessary)
 
 import glob, os, sys
 import math
@@ -199,6 +202,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
     # offset to shift the center of the old grid to the center of the new grid + random shift
     shift = c_in.dot(affine_arr_rotIS_rotPA_rotLR) - c_in - np.array([shift_LR, shift_PA, shift_IS])
     # resampling data
+    # TODO; check if order=3 is much faster
     data_shift_rot = affine_transform(data, affine_arr_rotIS_rotPA_rotLR, offset=shift, order=5)
 
     return data_shift_rot
@@ -220,6 +224,7 @@ def main():
     # Images of selected subject chosen by user in command line instructions, are copied and transformed
     # if a csv file containing transformation values does not yet exist it will be created,
     # otherwise command line input csv file is used and a new subject is added in a new row of a pandas dataframe
+    # TODO: always require this flag
     if arguments.transfo is None:
         arguments.transfo = os.path.join(os.getcwd().split('/sub')[0], 'transfo_values.csv')
         if os.path.isfile(arguments.transfo):
