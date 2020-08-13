@@ -277,6 +277,7 @@ def add_to_dataframe(df, vertlevels):
     diff_vert = np.setdiff1d(list(set(df['VertLevel'].values)), list(vertlevels))
     # iterate across different vertebrae levels and add ground truth values to each subject in dataframe
     for i in range(max_vert, min_vert, -1):
+        # df_gt2 is used as an intermediary dataframe to store values from df_gt
         df_gt2 = pd.DataFrame()
         # get GT values
         if i == max_vert:
@@ -296,33 +297,41 @@ def add_to_dataframe(df, vertlevels):
                 # if dataframe subject exist in GT (without rescaling)
                 if subject_j in group_csa_gt.index.values:
                     group2.at[subject_j, 'gt_csa_c' + str(min_vert) + '_c' + str(i)] = group_csa_gt.loc[subject_j] * (atrophy ** 2)
+            # df_gt is used to store values from group2 if present in GT
             df_gt = df.groupby('Rescale').get_group(atrophy).groupby('Filename').mean()
             df_gt['gt_csa_c' + str(min_vert) + '_c' + str(i)] = (
                 group2['gt_csa_c' + str(min_vert) + '_c' + str(i)].values)
             df_gt2 = pd.concat([df_gt2, df_gt])
+        # add column ground truth to final dataframe
         df_a['gt_csa_c' + str(min_vert) + '_c' + str(i)] = df_gt2['gt_csa_c' + str(min_vert) + '_c' + str(i)].values
 
-    # add csa, diff and perc_diff values for vertebrae levels of interest for each subject
+    # add columns csa, diff and perc_diff values for vertebrae levels of interest for each subject
     m = []
-    l = []
     max_vert2 = max(list(vertlevels))
     min_vert2 = min(list(vertlevels))
     # iterate across different vertebrae levels
     for j in range(max_vert2, min_vert2, -1):
         if j == max_vert2:
+            # add column csa
             df_a['csa_c' + str(min_vert2) + '_c' + str(max_vert2)] = df2.set_index('VertLevel').drop(
                 index=diff_vert).groupby(['Rescale', 'Filename']).mean().values
+            # add column diff
             df_a['diff_c' + str(min_vert2) + '_c' + str(j)] = df_a['csa_c' + str(min_vert2) + '_c' + str(j)].sub(
                 df_a['gt_csa_c' + str(min_vert2) + '_c' + str(j)]).abs()
+            # add column perc_diff
             df_a['perc_diff_c' + str(min_vert2) + '_c' + str(j)] = 100 * df_a[
                 'diff_c' + str(min_vert2) + '_c' + str(j)].div(df_a['gt_csa_c' + str(min_vert2) + '_c' + str(j)])
         else:
             m.append(j + 1)
+            # If a subject or transformation is present in GT but not rescaled fill value with nan
             df_a['csa_c' + str(min_vert2) + '_c' + str(j)] = np.nan
+            # add column csa
             df_a['csa_c' + str(min_vert2) + '_c' + str(j)] = df2.set_index('VertLevel').drop(index=m).groupby(
                 ['Rescale', 'Filename']).mean().values
+            # add column diff
             df_a['diff_c' + str(min_vert2) + '_c' + str(j)] = df_a['csa_c' + str(min_vert2) + '_c' + str(j)].sub(
                 df_a['gt_csa_c' + str(min_vert2) + '_c' + str(j)]).abs()
+            # add column perc_diff
             df_a['perc_diff_c' + str(min_vert2) + '_c' + str(j)] = 100 * df_a[
                 'diff_c' + str(min_vert2) + '_c' + str(j)].div(df_a['gt_csa_c' + str(min_vert2) + '_c' + str(j)])
     return df_a

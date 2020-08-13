@@ -89,7 +89,6 @@ segment_if_does_not_exist(){
 sct_check_dependencies -short
 
 # Go to results folder, where most of the outputs will be located
-#TODO: replace PATH_RESULTS by $PATH_DATA_PROCESSED
 cd $PATH_DATA_PROCESSED
 # Copy source images
 cp -r $PATH_DATA/${SUBJECT} .
@@ -116,9 +115,7 @@ for r_coef in ${R_COEFS[@]}; do
   mkdir anat_r$r_coef
   cd anat_r${r_coef}
 
-  # Rescale header of nifti file
-  # TODO: pass variable to point to -config yml file
-  # rescale nifti native image
+  # Rescale header of native nifti file
   affine_rescale -i ../anat/${file_c}.nii.gz -r ${r_coef} -o ${file_c}_r${r_coef}.nii.gz
   file_c_r=${file_c}_r${r_coef}
   #rescale nifti segmented and labled image

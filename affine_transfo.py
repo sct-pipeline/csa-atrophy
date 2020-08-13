@@ -18,7 +18,7 @@
 # About the license: see the file LICENSE
 ###################################################################
 
-# TODO: add feature to re-use transformation if csv file exists
+# TODO: add feature to re-use transformation if csv file exists v
 # TODO: clarify what i_dir is. v
 # TODO: save image as FLOAT32 v
 # TODO: add flag interp to apply transfo to seg-labeled data --> in that case, interp=0 (nearestneighbor) v
@@ -202,9 +202,8 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, in
     # offset to shift the center of the old grid to the center of the new grid + random shift
     shift = c_in.dot(affine_arr_rotIS_rotPA_rotLR) - c_in - np.array([shift_LR, shift_PA, shift_IS])
     # resampling data
-    # TODO; check if order=3 is much faster
+    # TODO; check if order=3 is much faster (order 3 is twice as fast as order 5)
     data_shift_rot = affine_transform(data, affine_arr_rotIS_rotPA_rotLR, offset=shift, order=interpolation)
-
     return data_shift_rot
 
 
