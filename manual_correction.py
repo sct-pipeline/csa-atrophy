@@ -134,7 +134,7 @@ def correct_vertebral_labeling(fname, fname_label):
     :return:
     """
     message = "Click at the posterior tip of inter-vertebral disc, then click 'Save and Quit'."
-    os.system('sct_label_utils -i {} -create-viewer 2,3,4,5,6 -o {} -msg {}'.format(fname, fname_label, message))
+    os.system('sct_label_utils -i {} -create-viewer 2,3,4,5 -o {} -msg {}'.format(fname, fname_label, message))
 
 
 def create_json(fname_nifti, name_rater):
