@@ -21,7 +21,7 @@
 # TODO: add feature to re-use transformation if csv file exists
 # TODO: clarify what i_dir is. v
 # TODO: save image as FLOAT32 v
-# TODO: add flag interp to apply transfo to seg-labeled data --> in that case, interp=0 (nearestneighbor)
+# TODO: add flag interp to apply transfo to seg-labeled data --> in that case, interp=0 (nearestneighbor) v
 # TODO (less priority): check padding (seems unecessary)
 
 import glob, os, sys
@@ -236,8 +236,8 @@ def main():
     fname = os.path.basename(fname_path)
     if fname_path:
         # create new path to save data
-        path_tf = fname_path.split('.nii.gz')[0] + str(suffix) + '.nii.gz'
-        subject = os.path.basename(path_tf).split('.nii.gz')[0]
+        path_tf = fname_path.split('.nii.gz')[0].split('_seg')[0] + str(suffix) + '.nii.gz'
+        subject = os.path.basename(path_tf).split('.nii.gz')[0].split('_seg')[0]
         # if path to transformed file already exists overwrite
         if os.path.isfile(path_tf):
             os.remove(path_tf)

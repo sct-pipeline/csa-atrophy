@@ -34,6 +34,7 @@ fi
 if [ $contrast == "t1" ]; then
   contrast_str="T1w"
 fi
+transfo_file=$(yaml_parser -o transfo -i $config_script)
 
 
 # FUNCTIONS
@@ -131,10 +132,11 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${file_c_r}.nii.gz -transfo $PATH_RESULTS/transfo_values.csv -config ../../../../$config_script -o _t${i_transfo}
-    file_c_r_t=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
-    affine_transfo -i ${file_label_c_r}.nii.gz -transfo $PATH_RESULTS/transfo_values.csv -config ../../../../$config_script -o _t${i_transfo} -interpolation 0
-    file_label_c_r_t=${file_label_c_r}_t${i_transfo}
+    affine_transfo -i ${file_c_r}.nii.gz -transfo ../../../../$transfo_file -config ../../../../$config_script -o _t${i_transfo}
+    file_c_r_t=${file_c_r}_t${i_transfo}
+    # transform the labeling with same transfo values
+    affine_transfo -i ${file_label_c_r}.nii.gz -transfo ../../../../$transfo_file -config ../../../../$config_script -o _t${i_transfo}_seg_labeled -interpolation 0
+    file_label_c_r_t=${file_c_r}_t${i_transfo}_seg_labeled
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist ${file_c_r_t} ${contrast}
     # name segmented file
