@@ -54,9 +54,6 @@ def main():
     fname = arguments.i
     # coef_r is image rescaling coefficient
     coef_r = arguments.r
-    name_coef = arguments.r
-    if coef_r == "gt":
-        coef_r = 1
 
     # load image
     img = nib.load(fname)
@@ -66,7 +63,7 @@ def main():
 
     # save rescaled image
     if arguments.o is None:
-        fname_out = fname.split('.nii.gz')[0] + '_r'+str(name_coef)+'.nii.gz'
+        fname_out = fname.split('.nii.gz')[0] + '_r'+str(coef_r)+'.nii.gz'
     else:
         fname_out = arguments.o
     nib.save(img_t, fname_out)
