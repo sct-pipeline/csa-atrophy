@@ -19,8 +19,8 @@
 ###################################################################
 
 # TODO: add feature to re-use transformation if csv file exists
-# TODO: clarify what i_dir is.
-# TODO: save image as FLOAT32
+# TODO: clarify what i_dir is. v
+# TODO: save image as FLOAT32 v
 # TODO: add flag interp to apply transfo to seg-labeled data --> in that case, interp=0 (nearestneighbor)
 # TODO (less priority): check padding (seems unecessary)
 
@@ -138,6 +138,7 @@ def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
      """
     # upload and pad image to avoid edge overflow during transformation
     data = img.get_fdata()
+    data = data.astype(np.int32)
     max_shift = np.max(np.abs((shift_LR, shift_PA, shift_IS)))
     max_axes = np.max(data.shape)
     max_angle = np.deg2rad(np.max(np.abs((angle_IS, angle_PA, angle_LR))))
@@ -221,7 +222,6 @@ def main():
     # Images of selected subject chosen by user in command line instructions, are copied and transformed
     # if a csv file containing transformation values does not yet exist it will be created,
     # otherwise command line input csv file is used and a new subject is added in a new row of a pandas dataframe
-    # TODO: always require this flag
     if os.path.isfile(arguments.transfo):
         df = pd.read_csv(arguments.transfo, delimiter=',')
         print(df)
