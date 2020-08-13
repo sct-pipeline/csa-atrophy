@@ -13,11 +13,14 @@ After everything is done, compute stats:
 - intra-subject error MEAN: MEAN[CSA(sI, rX, :)] - rX^2*MEAN[CSA(sI, 1, :)] (for rX included in list of rX with rX=1 excluded)
   --> MEAN(sI, rX)
 - inter-subject error STD: STD[MEAN(:, rX)]
-- TODO: sample size
+- sample size: [(z(uncertainty) + z(power))^2 * (2 * STD[MEAN(:, rX)])^2] / [MEAN[CSA(sI, 1, :)] - MEAN[CSA(sI, rX, :)]] 
 
 Plot results:
 - STD_intersub
-- TODO: sample size
+- Mean and STD inter-subject error percentage in function of rescaling
+- sample size: minimum number of patients to detect an atrophy of X with Y% power and Z% uncertainty
+- CSA values boxplot in function of rescaling
+- Error values boxplot in function of rescaling
 
 # How to run
 
