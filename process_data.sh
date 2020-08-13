@@ -34,7 +34,7 @@ fi
 if [ $contrast == "t1" ]; then
   contrast_str="T1w"
 fi
-transfo_file=$(yaml_parser -o transfo -i $config_script)
+transfo_file=$(yaml_parser -o transfo_file -i $config_script)
 
 
 # FUNCTIONS

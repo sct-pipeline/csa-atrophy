@@ -10,7 +10,7 @@ rescaling:
   - 0.95
 # Contrasts on which to perform the analysis. Available values are: 't1', 't2'
 contrast: "t1"
-transfo: transfo_values.csv
+transfo_file: transfo_values.csv
 
 # manual_labeling_correction.sh
 # -----------------------------
