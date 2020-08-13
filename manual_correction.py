@@ -156,7 +156,12 @@ def get_rescaling(file):
     :param file:
     :return: rescaling
     """
-    return file.split('_')[2]
+    if "_r" in file:
+        rescale = "_"+file.split('_')[2]
+        return rescale
+    else:
+        rescale = ""
+        return rescale
 
 
 def check_files_exist(dict_files, path_data):
@@ -170,7 +175,7 @@ def check_files_exist(dict_files, path_data):
     for task, files in dict_files.items():
         if files is not None:
             for file in files:
-                fname = os.path.join(path_data, sg.bids.get_subject(file), sg.bids.get_contrast(file) + "_" + get_rescaling(file) , file)
+                fname = os.path.join(path_data, sg.bids.get_subject(file), sg.bids.get_contrast(file) + get_rescaling(file) , file)
                 if not os.path.exists(fname):
                     missing_files.append(fname)
     if missing_files:
@@ -230,7 +235,7 @@ def main():
                 # build file names
                 subject = sg.bids.get_subject(file)
                 contrast = sg.bids.get_contrast(file)
-                fname = os.path.join(args.path_in, subject, contrast + "_" + get_rescaling(file), file)
+                fname = os.path.join(args.path_in, subject, contrast + get_rescaling(file), file)
                 fname_label = os.path.join(
                     path_out_deriv, subject, contrast, sg.utils.add_suffix(file, get_suffix(task, '-manual')))
                 os.makedirs(os.path.join(path_out_deriv, subject, contrast), exist_ok=True)
