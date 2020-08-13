@@ -10,7 +10,7 @@ Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as f
 After everything is done, compute stats:
 - intra-subject STD: STD[CSA(sI, rX, :)] --> STD_intrasub(sI, rX)
 - inter-subject STD: STD_intrasub(:, rX) --> STD_intersub(rX)
-- intra-subject error MEAN: MEAN[CSA(sI, rX, :)] - MEAN[CSA(sI, 1, :)] (for rX included in list of rX with rX=1 excluded)
+- intra-subject error MEAN: MEAN[CSA(sI, rX, :)] - rX^2*MEAN[CSA(sI, 1, :)] (for rX included in list of rX with rX=1 excluded)
   --> MEAN(sI, rX)
 - inter-subject error STD: STD[MEAN(:, rX)]
 - TODO: sample size
@@ -57,7 +57,7 @@ sct_run_batch -config config_sct_run_batch.yml
 
 To output statistics, run in Dataset
 ~~~
-csa_rescale_stat -i csa_atrophy_results/data_processed -o csa_atrophy_results -config config_script.yml -v
+csa_rescale_stat -i csa_atrophy_results/results -o csa_atrophy_results -config config_script.yml -v
 ~~~
 
 # Quality Control
