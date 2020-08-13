@@ -389,15 +389,21 @@ def main():
     atrophies = sorted(set(df['Rescale'].values))
     # display number of subjects in test (multiple transformations of the same subjects are considered different)
     print("\n=================number subjects=======================\n")
+    df['subject'] = list(tf.split('_T')[0] for tf in df['Filename'])
     for atrophy in atrophies:
-        number_sub = df.groupby('Filename')['csa_original'].mean().count()
-        print('For rescaling ' + str(atrophy) + ' number of subjects is ' + str(number_sub))
+        number_sub = df.groupby('subject')['csa_original'].mean().count()
+        number_tf = df.groupby(['Filename', 'subject'])['csa_original'].mean().count()
+        print('For rescaling ' + str(atrophy) + ' number of subjects is ' + str(number_sub) +
+        ' and number of transformations per subject ' + str(number_tf))
+
 
     # compute STD for different vertebrae levels
     print("\n=======================std============================\n")
     std_v = std(df_a, vertlevels)
     print("\n===================std_subject=========================\n")
     std_suject(df_a, vertlevels)
+    print("\n===================original_csa========================\n")
+    print(df_a['csa_original'])
 
     # plot graph if verbose is present
     if arguments.v is not None:
