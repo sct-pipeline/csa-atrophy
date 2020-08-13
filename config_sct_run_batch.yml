@@ -2,6 +2,7 @@
 path_data: spinegeneric_r20200801
 path_output: csa_atrophy_results
 script: process_data.sh
+script_args: --config config_script.yml
 jobs: -1
 batch_log: sct_run_batch_log.txt
 continue_on_error: 1
