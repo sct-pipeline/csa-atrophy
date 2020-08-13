@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+1#!/usr/bin/env python
 # -*- coding: utf-8
 #########################################################################################
 #
@@ -195,7 +195,7 @@ def std(df, vertlevels):
             atrophy = set(group.reset_index().Rescale)
             print('csa std on ',atrophy,'  rescaled image c' + str(min_vert) + '/c' + str(i) + ' is ',
                 round(std, 3), ' mm^2 and cov is ', round(cov, 3),'%')
-            if group.index[0] == "gt":
+            if group.index[0] == 1:
                 std_v = group.groupby('subject')['csa_original'].mean().std()
         print('\n')
     return std_v
@@ -243,7 +243,7 @@ def sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None
 
     df_sample = pd.DataFrame(z_score_dict)
     df_sample = df_sample.set_index('confidence_Level')
-    std_sample = df_a.groupby('Rescale').get_group("gt")['csa_original'].std()
+    std_sample = df_a.groupby('Rescale').get_group(1)['csa_original'].std()
     print('std: ' + str(std_sample))
     num_n = 2 * ((df_sample.at[conf, 'z_value'] + df_sample.at[power, 'z_value']) ** 2) * (std_sample ** 2)
     if atrophy:
@@ -281,16 +281,16 @@ def add_to_dataframe(df, vertlevels):
         df_gt2 = pd.DataFrame()
         # get GT values
         if i == max_vert:
-            group_csa_gt = df1.groupby('Rescale').get_group("gt").set_index('VertLevel').drop(index=diff_vert).groupby(
+            group_csa_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=diff_vert).groupby(
                 ['Filename']).mean().csa_original
         else:
             n.append(i + 1)
-            group_csa_gt = df1.groupby('Rescale').get_group("gt").set_index('VertLevel').drop(index=n).groupby(
+            group_csa_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=n).groupby(
                 ['Filename']).mean().csa_original
         # iterate across Rescale groupby
         for name, group in df.groupby('Rescale'):
             atrophy_name = group['Rescale'].values
-            if atrophy_name[0] == "gt":
+            if atrophy_name[0] == 1:
                 atrophy = "1.0"
             else:
                 atrophy = atrophy_name[0]
@@ -381,7 +381,7 @@ def main():
 
         # print mean CSA without rescaling
         print("\n====================mean==========================\n")
-        mean_csa = df.groupby('Rescale').get_group("gt")['csa_original'].mean()
+        mean_csa = df.groupby('Rescale').get_group(1)['csa_original'].mean()
         print(" mean csa: " + str(mean_csa))
 
         # compute sample size
@@ -404,17 +404,16 @@ def main():
         # compute STD for different vertebrae levels
         std_v = std(df_a, vertlevels)
         std_suject(df_a, vertlevels)
-        df_plot = df_a.drop("gt")
 
         # plot graph if verbose is present
         if arguments.v is not None:
             columns_to_plot = [i for i in df_a.columns if 'perc_diff' in i]
-            plot_perc_err(df_plot, columns_to_plot, path_output)
-            boxplot_csa(df_plot, path_output)
+            plot_perc_err(df_a, columns_to_plot, path_output)
+            boxplot_csa(df_a, path_output)
             max_vert = max(vertlevels)
             min_vert = min(vertlevels)
             min_max_vert = ['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)]
-            boxplot_perc_err(df_plot, min_max_vert, path_output)
+            boxplot_perc_err(df_a, min_max_vert, path_output)
             # z_conf = z_score for confidence level,
             # z_power = z_score for power level,
             # std_v = STD of subjects without rescaling CSA values
