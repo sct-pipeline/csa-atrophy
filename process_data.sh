@@ -22,11 +22,12 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Global variables
 SUBJECT=$1
+config_script=$3
 # The following global variables are retrieved from config_script.yml file
-n_transfo=$(yaml_parser -o n_transfo -i config_script.yml)
-rescaling=$(yaml_parser -o rescaling -i config_script.yml)
+n_transfo=$(yaml_parser -o n_transfo -i $config_script)
+rescaling=$(yaml_parser -o rescaling -i $config_script)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
-contrast=$(yaml_parser -o contrast -i config_script.yml)
+contrast=$(yaml_parser -o contrast -i $config_script)
 if [ $contrast == "t2" ]; then
   contrast_str="T2w"
 fi
@@ -42,7 +43,6 @@ fi
 label_if_does_not_exist(){
   local file="$1"
   local file_seg="$2"
-  # TODO: this function should ONLY be applied for the scale=1 stage.
   local contrast="$3"
   local contrast_str="$4"
   # Update global variable with segmentation file name
@@ -95,32 +95,34 @@ cp -r $PATH_DATA/${SUBJECT} .
 cd $SUBJECT
 # we don't need dwi data, so let's remove it
 rm -r dwi
-
 # Image analysis
-#=============================================================================
-# seg cord on anat
-# TODO
-# label cord on anat
-# TODO
+#=======================================================================
+# Segment spinal cord (only if it does not exist) in dir anat
+cd anat
+echo ${SUBJECT}_${contrast_str}
+echo $contrast
+file_c=${SUBJECT}_${contrast_str}
+segment_if_does_not_exist $file_c ${contrast}
+# name segmented file
+file_c_seg=${FILESEG}
+# Label spinal cord (only if it does not exist) in dir anat
+label_if_does_not_exist $file_c $file_c_seg $contrast $contrast_str
+file_label=${file_c_seg}_labeled
+cd ../
 
 # iterate across rescaling
 for r_coef in ${R_COEFS[@]}; do
-  # if data already exists, remove it
-  if [ -d "anat_r${r_coef}" ]; then
-    echo "anat_r${r_coef} already exists: removing folder..."
-    rm -r "anat_r${r_coef}"
-  fi
-  if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
-    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: remove it..."
-    rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
-  fi
-
   mkdir anat_r$r_coef
   cd anat_r${r_coef}
 
   # Rescale header of nifti file
   # TODO: pass variable to point to -config yml file
-  affine_rescale -i ../anat/${SUBJECT}_${contrast_str}.nii.gz -r ${r_coef} -o ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz
+  # rescale nifti native image
+  affine_rescale -i ../anat/${file_c}.nii.gz -r ${r_coef} -o ${file_c}_r${r_coef}.nii.gz
+  file_c_r=${file_c}_r${r_coef}
+  #rescale nifti segmented and labled image
+  affine_rescale -i ../anat/${file_label}.nii.gz -r ${r_coef} -o ${SUBJECT}_${contrast_str}_r${r_coef}_seg_labeled.nii.gz
+  file_label_c_r=${SUBJECT}_${contrast_str}_r${r_coef}_seg_labeled
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
@@ -129,31 +131,16 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${SUBJECT}_${contrast_str}_r${r_coef}.nii.gz -i_dir $PATH_RESULTS -o _t${i_transfo} -o_file "$PATH_RESULTS"/transfo_values.csv
-    file_c=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
+    affine_transfo -i ${file_c_r}.nii.gz -transfo $PATH_RESULTS/transfo_values.csv -config ../../../../$config_script -o _t${i_transfo}
+    file_c_r_t=${SUBJECT}_${contrast_str}_r${r_coef}_t${i_transfo}
+    affine_transfo -i ${file_label_c_r}.nii.gz -transfo $PATH_RESULTS/transfo_values.csv -config ../../../../$config_script -o _t${i_transfo} -interpolation 0
+    file_label_c_r_t=${file_label_c_r}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
-    segment_if_does_not_exist ${file_c} ${contrast}
+    segment_if_does_not_exist ${file_c_r_t} ${contrast}
     # name segmented file
-    file_c_seg=${FILESEG}
-    # Rescale and apply transformation on the reference label under anat/
-    # TODO
-
-    # TODO: remove gt
-    if [ $r_coef == "gt" ] && [ ${i_transfo} == 1 ];then
-      label_if_does_not_exist $file_c $file_c_seg $contrast $contrast_str
-      cp ${file_c_seg}_labeled.nii.gz ${PATH_RESULTS}/${SUBJECT}
-      mv ${PATH_RESULTS}/${SUBJECT}/${file_c_seg}_labeled.nii.gz ${PATH_RESULTS}/${SUBJECT}/${file_c_seg%%_rgt*}.nii.gz
-      path_label=${PATH_RESULTS}/${SUBJECT}/${file_c_seg%%_rgt*}
-    else
-      echo "---------------------"$path_label
-      affine_rescale -i ${path_label}.nii.gz -r ${r_coef}
-      affine_transfo -i ${path_label}_r${r_coef}.nii.gz -i_dir $PATH_RESULTS -o _t${i_transfo} -o_file "$PATH_DATA_PROCESSED"/transfo_values.csv
-      mv ${path_label}_r${r_coef}_t${i_transfo}.nii.gz ${path_label}_r${r_coef}_t${i_transfo}_seg_labeled.nii.gz
-      cp ${path_label}_r${r_coef}_t${i_transfo}_seg_labeled.nii.gz ${PATH_RESULTS}/${SUBJECT}/anat_r${r_coef}/${file_c_seg}_labeled.nii.gz
-    fi
-
+    file_c_r_t_seg=${FILESEG}
     # Compute average CSA between C2 and C5 levels (append across subjects)
-    sct_process_segmentation -i $file_c_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile ${file_c_seg}_labeled.nii.gz -o $PATH_DATA_PROCESSED/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_c_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_label_c_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_data/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
@@ -161,7 +148,6 @@ for r_coef in ${R_COEFS[@]}; do
     )
   done
   cd ../
-  cp -r $PATH_DATA/${SUBJECT}/anat .
 done
 
 
