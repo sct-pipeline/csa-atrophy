@@ -1,3 +1,6 @@
+.DS_Store
+.idea/
+__pycache__/
 data/
 csa_atrophy_results/
 csa_atrophy_results_corrected/
