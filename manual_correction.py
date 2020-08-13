@@ -159,8 +159,6 @@ def get_rescaling(file):
     return file.split('_')[2]
 
 
-
-
 def check_files_exist(dict_files, path_data):
     """
     Check if all files listed in the input dictionary exist
@@ -178,7 +176,6 @@ def check_files_exist(dict_files, path_data):
     if missing_files:
         logging.error("The following files are missing: \n{}. \nPlease check that the files listed "
                       "in the yaml file and the input path are correct.".format(missing_files))
-
 
 
 def main():
