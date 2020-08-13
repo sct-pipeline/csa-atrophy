@@ -13,7 +13,7 @@ After everything is done, compute stats:
 - intra-subject error MEAN: MEAN[CSA(sI, rX, :)] - rX^2*MEAN[CSA(sI, 1, :)] (for rX included in list of rX with rX=1 excluded)
   --> MEAN(sI, rX)
 - inter-subject error STD: STD[MEAN(:, rX)]
-- sample size: [(z(uncertainty) + z(power))^2 * (2 * STD[MEAN(:, rX)])^2] / [MEAN[CSA(sI, 1, :)] - MEAN[CSA(sI, rX, :)]] 
+- sample size: [(z(uncertainty) + z(power))^2 * (2 * STD[MEAN(:, rX)]^2)] / [MEAN[CSA(sI, 1, :)] - MEAN[CSA(sI, rX, :)]] 
 
 Plot results:
 - STD_intersub
