@@ -73,6 +73,8 @@ def concatenate_csv_files(path_results):
     for file in os.listdir(path_results):
         if ".csv" in file and "csa" in file:
             files.append(os.path.join(path_results, file))
+    if not files:
+        raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
     metrics = pd.concat(
         [pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
     metrics.to_csv("csa.csv")
