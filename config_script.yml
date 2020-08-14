@@ -1,0 +1,36 @@
+# csa-atrophy pipeline parameters
+
+# process_data.sh
+# ---------------
+# Number of transformations to apply to each subject
+n_transfo: 3
+# Rescaling factor to apply to each subject. Note: value '1' should always be present.
+rescaling:
+  - 1
+  - 0.95
+  - 0.8
+# Contrasts on which to perform the analysis. Available values are: 't1', 't2'
+contrast: "t1"
+transfo_file: transfo_values.csv
+
+# manual_labeling_correction.sh
+# -----------------------------
+# TODO: fetch path_output from yml config input to sct_run_batch
+PATH_ORIGINAL_RESULTS: "csa_atrophy_results/results"
+PATH_ORIGINAL_CSV: "csa_atrophy_results/data_processed"
+PATH_DESTINATION_RESULTS: "csa_atrophy_results_corrected/results"
+
+# csa_atrophy_stat.py
+# -------------------
+stats:
+  sample_size:
+    atrophy_sample: 7.7
+    conf: 0.95
+    power: 0.8
+
+# affine_transfo.py
+# -----------------
+transfo:
+  bounds:
+    angle_bound: 5
+    shift_bound: 2.5

@@ -20,8 +20,8 @@ import nibabel as nib
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='apply isotropic rescaling to image:',
-        add_help=None,
+        description='Apply isotropic rescaling on the image header. Note: this function does not affect the data, '
+                    'only the header. The output data has the suffix "_rX", with X the rescaling factor.',
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py"))
 
@@ -29,30 +29,27 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help='path to T2w MRI data',
+        help='path to nifti image',
     )
     mandatory.add_argument(
         "-r",
         required=True,
         help='rescaling coefficient',
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        '-h',
-        help='Help',
-        nargs="*"
+    mandatory.add_argument(
+        "-o",
+        required=False,
+        help='name of rescaled nifti',
     )
     return parser
 
 
-#MAIN
-############################################################
 def main():
     """Main function, isotropic rescale of input images according to coef_r"""
-    
+
     # get parser elements
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
+    arguments = parser.parse_args()
     # fname is the name of input image
     fname = arguments.i
     # coef_r is image rescaling coefficient
@@ -65,10 +62,12 @@ def main():
     img_t = nib.Nifti1Image(data, img.affine) # change affine for data
 
     # save rescaled image
-    fname_out = fname.split('.nii.gz')[0] + '_r'+str(coef_r)+'.nii.gz'
+    if arguments.o is None:
+        fname_out = fname.split('.nii.gz')[0] + '_r'+str(coef_r)+'.nii.gz'
+    else:
+        fname_out = arguments.o
     nib.save(img_t, fname_out)
 
-#RUN
-############################################################
+
 if __name__ == "__main__":
     main()

@@ -18,6 +18,12 @@
 # About the license: see the file LICENSE
 ###################################################################
 
+# TODO: add feature to re-use transformation if csv file exists v
+# TODO: clarify what i_dir is. v
+# TODO: save image as FLOAT32 v
+# TODO: add flag interp to apply transfo to seg-labeled data --> in that case, interp=0 (nearestneighbor) v
+# TODO (less priority): check padding (seems unecessary)
+
 import glob, os, sys
 import math
 from numpy.random import rand
@@ -35,7 +41,6 @@ from scipy.ndimage import affine_transform
 def get_parser():
     parser = argparse.ArgumentParser(
         description='apply random rotation and translation with values following a gaussian distribution:',
-        add_help=None,
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
@@ -44,30 +49,29 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help="Input nifti images for transformation",
-        nargs="*"
+        help="Input nifti image to apply the transformation on.",
     )
     mandatory.add_argument(
-        "-i_dir",
+        "-config",
         required=True,
-        help="path to results file",
-        nargs="*"
+        help="Path to yml config file that includes parameters for the transformation.",
+    )
+    mandatory.add_argument(
+        '-transfo',
+        help="Path to csv file that contains the transformation. If the transformation for the specific subject already "
+             "exists, it will read the transformation instead of creating a new random one.",
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        '-h',
-        help='Help',
-        nargs="*"
-    )
     optional.add_argument(
         '-o',
         help="Suffix for output file name.\nExample: '-i MYFILE.nii -o _t' would output MYFILE_t.nii",
         default='_t',
     )
     optional.add_argument(
-        '-o_file',
-        help="Create csv file to keep a trace of the applied random transformations, this file can be reused in "
-             "subsequent studies and code testing",
+        '-interpolation',
+        help="Transformation spline interpolation order. Order must be in the range 0-5",
+        default=5,
+        type=int
     )
     return parser
 
@@ -91,7 +95,7 @@ def random_values(df, subject_name, config_param):
      :return shift_IS: value of shift along Inferior/Superior axis
      """
     values = 2 * rand(6) - 1
-    # transformations bounds can be modified in config.yaml
+    # transformations bounds can be modified in config_script.yml
     # random angle values are within ±angle_bound° around each axis,
     angle_bound = config_param['transfo']['bounds']['angle_bound']
     # random shift values are within ±shift_bound voxels in each direction,
@@ -134,6 +138,7 @@ def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
      """
     # upload and pad image to avoid edge overflow during transformation
     data = img.get_fdata()
+    data = data.astype(np.int32)
     max_shift = np.max(np.abs((shift_LR, shift_PA, shift_IS)))
     max_axes = np.max(data.shape)
     max_angle = np.deg2rad(np.max(np.abs((angle_IS, angle_PA, angle_LR))))
@@ -148,7 +153,7 @@ def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
     return data, min_pad
 
 
-def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
+def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, interpolation):
     """apply rotation and translation on image
      :param angle_IS: angle of rotation around Inferior/Superior axis
      :param angle_PA: angle of rotation around Posterior/Anterior axis
@@ -197,8 +202,8 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data):
     # offset to shift the center of the old grid to the center of the new grid + random shift
     shift = c_in.dot(affine_arr_rotIS_rotPA_rotLR) - c_in - np.array([shift_LR, shift_PA, shift_IS])
     # resampling data
-    data_shift_rot = affine_transform(data, affine_arr_rotIS_rotPA_rotLR, offset=shift, order=5)
-
+    # TODO; check if order=3 is much faster (order 3 is twice as fast as order 5)
+    data_shift_rot = affine_transform(data, affine_arr_rotIS_rotPA_rotLR, offset=shift, order=interpolation)
     return data_shift_rot
 
 
@@ -206,76 +211,58 @@ def main():
     """Main function, transform and save image"""
     # get parser elements
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[0:] else ['--help'])
+    arguments = parser.parse_args()
     suffix = arguments.o
-    path_results = arguments.i_dir[0]
-
-    # fetch parameters from config.yaml file
-    path_config_file = os.path.join(os.getcwd().split(path_results)[0], "config.yaml")
+    interpolation = arguments.interpolation
+    # fetch parameters from config_script.yml file
+    path_config_file = arguments.config
     config_param = yaml_parser(path_config_file)
 
     # Images of selected subject chosen by user in command line instructions, are copied and transformed
-    if arguments.h is None:
-        # if a csv file containing transformation values does not yet exist it will be created,
-        # otherwise command line input csv file is used and a new subject is added in a new row of a pandas dataframe
-        if arguments.o_file is None:
-            arguments.o_file = os.path.join(os.getcwd().split('/sub')[0], 'transfo_values.csv')
-            if os.path.isfile(arguments.o_file):
-                df = pd.read_csv(arguments.o_file, delimiter=',')
-                print(df)
-            else:
-                transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA',
-                                       'shift_IS']
-                df = pd.DataFrame(columns=transfo_column_name)
-
-        else:
-            if os.path.isfile(arguments.o_file):
-                df = pd.read_csv(arguments.o_file, delimiter=',')
-                print(df)
-            else:
-                print('error', arguments.o_file, ' is not present in current directory')
-                print('creating new file named ', arguments.o_file)
-                transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA',
-                                       'shift_IS']
-                df = pd.DataFrame(columns=transfo_column_name)
-
-        # transformations are applied for each selected subject
-        for fname in arguments.i:
-            fname_path = os.path.abspath(fname)
-            if fname_path:
-                name = os.path.basename(fname_path).split(fname_path)[0]
-                # get file path
-                path = os.path.join(os.getcwd(), fname_path)
-                # create new path to save data
-                path_tf = os.path.join(path, path.split('.nii.gz')[0] + str(suffix) + '.nii.gz')
-                subject = os.path.basename(path_tf).split('.nii.gz')[0]
-                if os.path.isfile(path_tf):
-                    os.remove(path_tf)
-                # load image
-                img = nib.load(fname_path)
-                print('\n----------affine transformation subject: ' + name + '------------')
-                # check if the subject is not already in dataframe, otherwise use dataframe subject values
-                if subject not in df['subjects'].values:
-                    df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values(df, subject, config_param)
-                else:
-                    print(df.set_index('subjects').loc[subject].values)
-                    angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = df.set_index('subjects').loc[
-                        subject].values
-
-                # nibabel data follows the RAS+ convention (Right, Anterior, Superior in the ascending direction)
-                data, min_pad = get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS)
-                data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data)
-                # load data back to nifti format
-                img_t = nib.Nifti1Image(data_shift_rot, img.affine)
-                print('new image shape: ', img_t.shape)
-                print('new image path: ' + path_tf)
-                img_t.to_filename(path_tf)
-                # raise output error if the subject does not exist
-            else:
-                print('error: ' + fname_path + ' is not a valid subject')
-        df.set_index('subjects').to_csv(arguments.o_file)
+    # if a csv file containing transformation values does not yet exist it will be created,
+    # otherwise command line input csv file is used and a new subject is added in a new row of a pandas dataframe
+    if os.path.isfile(arguments.transfo):
+        df = pd.read_csv(arguments.transfo, delimiter=',')
+        print(df)
     else:
-        parser.print_help()
+        print('error', arguments.transfo, ' is not present in current directory')
+        print('creating new file named ', arguments.transfo)
+        transfo_column_name = ['subjects', 'angle_IS', 'angle_PA', 'angle_LR', 'shift_LR', 'shift_PA', 'shift_IS']
+        df = pd.DataFrame(columns=transfo_column_name)
+
+    # transformations are applied on selected subject
+    fname_path = arguments.i
+    fname = os.path.basename(fname_path)
+    if fname_path:
+        # create new path to save data
+        path_tf = fname_path.split('.nii.gz')[0] + str(suffix) + '.nii.gz'
+        subject = os.path.basename(path_tf).split('.nii.gz')[0].replace('_seg_labeled', '')
+        # if path to transformed file already exists overwrite
+        if os.path.isfile(path_tf):
+            os.remove(path_tf)
+        # load image
+        img = nib.load(fname_path)
+        print('\n----------affine transformation subject: ' + fname + '------------')
+        # check if the subject is not already in dataframe, otherwise use dataframe subject values
+        if subject not in df['subjects'].values:
+            df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = random_values(df, subject, config_param)
+        else:
+            print(df.set_index('subjects').loc[subject].values)
+            angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS = df.set_index('subjects').loc[
+                subject].values
+
+        # nibabel data follows the RAS+ convention (Right, Anterior, Superior in the ascending direction)
+        data, min_pad = get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS)
+        data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, interpolation)
+        # load data back to nifti format
+        img_t = nib.Nifti1Image(data_shift_rot, img.affine)
+        print('new image shape: ', img_t.shape)
+        print('new image path: ' + path_tf)
+        img_t.to_filename(path_tf)
+        # raise output error if the subject does not exist
+    else:
+        print('error: ' + fname_path + ' is not a valid subject')
+    df.set_index('subjects').to_csv(arguments.transfo)
 
 
 if __name__ == "__main__":
