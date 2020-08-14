@@ -235,8 +235,8 @@ def main():
     fname = os.path.basename(fname_path)
     if fname_path:
         # create new path to save data
-        path_tf = fname_path.split('.nii.gz')[0].split('_seg')[0] + str(suffix) + '.nii.gz'
-        subject = os.path.basename(path_tf).split('.nii.gz')[0].split('_seg')[0]
+        path_tf = fname_path.split('.nii.gz')[0] + str(suffix) + '.nii.gz'
+        subject = os.path.basename(path_tf).split('.nii.gz')[0].replace('_seg_labeled', '')
         # if path to transformed file already exists overwrite
         if os.path.isfile(path_tf):
             os.remove(path_tf)
