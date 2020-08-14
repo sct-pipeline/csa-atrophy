@@ -372,7 +372,7 @@ def main():
     # verify if vertlevels of interest were given in input by user
     if vertlevels_input is None:
         vertlevels = list(set(df['VertLevel'].values))
-    elif vertlevels_input is not None:
+    elif vertlevels_input:
         vertlevels = list(map(int, vertlevels_input))
         if all(elem in set(list(df['VertLevel'].values)) for elem in vertlevels):
             pass
