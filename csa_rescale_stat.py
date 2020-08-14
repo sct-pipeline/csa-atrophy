@@ -48,9 +48,9 @@ def get_parser():
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
-        '-v',
-        help='Verbose, plotting figures',
-        nargs="*"
+        '-fig',
+        help='Generate figures',
+        action='store_true'
     )
     optional.add_argument(
         '-l',
@@ -78,6 +78,7 @@ def concatenate_csv_files(path_results):
         raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
     metrics = pd.concat(
         [pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
+    # TODO: output in the directory that already contains all the csv, and call this one csa_all.csv (more intutive)
     metrics.to_csv("csa.csv")
 
 
@@ -354,6 +355,7 @@ def main():
     path_output = arguments.o
     # read data
     data = pd.read_csv("csa.csv", decimal=".")
+    # TODO: do not create yet another DF, just use the 'big' one
     data2 = {'Filename': data['Filename'],
              'VertLevel': data['VertLevel'],
              'csa_original': data['MEAN(area)'],
@@ -365,7 +367,8 @@ def main():
     config_param = yaml_parser(arguments.config)
 
     # Change dataframe['Filename'] to basename and remove rescale suffix
-    df['basename'] = list(
+    # TODO: create new column 'basename' instead of overwriting the column 'Filename'
+    df['Filename'] = list(
         (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
         path in data['Filename'])
 
@@ -399,10 +402,10 @@ def main():
     atrophies = sorted(set(df['Rescale'].values))
     # display number of subjects in test (multiple transformations of the same subjects are considered different)
     print("\n=================number subjects=======================\n")
-    df['subject'] = list(tf.split('_T')[0] for tf in df['basename'])
+    df['subject'] = list(tf.split('_T')[0] for tf in df['Filename'])
     for atrophy in atrophies:
         number_sub = df.groupby('subject')['csa_original'].mean().count()
-        number_tf = df.groupby(['basename', 'subject'])['csa_original'].mean().count()
+        number_tf = df.groupby(['Filename', 'subject'])['csa_original'].mean().count()
         print('For rescaling ' + str(atrophy) + ' number of subjects is ' + str(number_sub) +
         ' and number of transformations per subject ' + str(number_tf))
 
@@ -416,7 +419,9 @@ def main():
     print(df_a['csa_original'])
 
     # plot graph if verbose is present
-    if arguments.v is not None:
+    if arguments.fig:
+        if not os.path.isdir(arguments.o):
+            os.makedirs(arguments.o)
         columns_to_plot = [i for i in df_a.columns if 'perc_diff' in i]
         plot_perc_err(df_a, columns_to_plot, path_output)
         boxplot_csa(df_a, path_output)
