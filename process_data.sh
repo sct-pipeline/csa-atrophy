@@ -152,7 +152,7 @@ for r_coef in ${R_COEFS[@]}; do
     affine_transfo -i ${file_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo}
     file_c_r_t=${file_c_r}_t${i_transfo}
     # transform the labeled segmentation with same transfo values
-    affine_transfo -i ${file_label_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo}_seg_labeled -interpolation 0
+    affine_transfo -i ${file_label_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo} -interpolation 0
     file_label_c_r_t=${file_label_c_r}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist ${file_c_r_t} ${contrast}
