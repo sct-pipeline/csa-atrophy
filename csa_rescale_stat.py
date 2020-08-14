@@ -39,7 +39,7 @@ def get_parser():
         "-i",
         required=True,
         default='csa_atrophy_results',
-        help='Input csv file path to results. (e.g. "results")',
+        help='Path to folder that contains output csv files (e.g. "csa_atrophy_results/results")',
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -49,17 +49,17 @@ def get_parser():
     )
     optional.add_argument(
         '-l',
-        help='Indicate vertebrae levels of interest. \nExample: python csa_rescale_stat.py -i <results> -l 2 3 4 5 ',
+        help='Vertebrae levels on which to compute the statistics. \nExample: -l 2 3 4 5',
         nargs="*",
     )
     optional.add_argument(
         '-o',
-        help='Path to output plots, default is csa-atrophy dataset directory',
+        help='Path where figures will be saved. By default, they will be saved in the current directory.',
         default=""
     )
     optional.add_argument(
         '-config',
-        help='path to config file',
+        help='Path to config file, which contains parameters for the statistics and figures.',
     )
     return parser
 
