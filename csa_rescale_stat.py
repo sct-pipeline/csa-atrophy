@@ -374,15 +374,13 @@ def main():
         vertlevels = list(set(df['VertLevel'].values))
     elif vertlevels_input:
         vertlevels = list(map(int, vertlevels_input))
-        if all(elem in set(list(df['VertLevel'].values)) for elem in vertlevels):
-            pass
-        else:
-            print('error: Input vertebrae levels ', vertlevels, ' do not exist in csv files')
-            exit()
-    # dataframe column additions gt, diff, perc_diff for different vertebrae levels
+        if not all(elem in set(list(df['VertLevel'].values)) for elem in vertlevels):
+            raise ValueError("Input vertebral levels '{}' do not exist in csv files".format(vertlevels))
+
+    # Dataframe column additions gt, diff, perc_diff for different vertebrae levels
     df_a = add_to_dataframe(df, vertlevels)
 
-    # print mean CSA without rescaling
+    # Print mean CSA without rescaling
     print("\n====================mean==========================\n")
     mean_csa = df.groupby('Rescale').get_group(1)['csa_original'].mean()
     print(" mean csa: " + str(mean_csa))
