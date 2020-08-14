@@ -41,6 +41,11 @@ def get_parser():
         default='csa_atrophy_results',
         help='Path to folder that contains output csv files (e.g. "csa_atrophy_results/results")',
     )
+    mandatory.add_argument(
+        '-config',
+        required=True,
+        help='Path to config file, which contains parameters for the statistics and figures.',
+    )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-v',
@@ -56,10 +61,6 @@ def get_parser():
         '-o',
         help='Path where figures will be saved. By default, they will be saved in the current directory.',
         default=""
-    )
-    optional.add_argument(
-        '-config',
-        help='Path to config file, which contains parameters for the statistics and figures.',
     )
     return parser
 
@@ -364,7 +365,7 @@ def main():
     config_param = yaml_parser(arguments.config)
 
     # Change dataframe['Filename'] to basename and remove rescale suffix
-    df['Filename'] = list(
+    df['basename'] = list(
         (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
         path in data['Filename'])
 
@@ -400,10 +401,10 @@ def main():
     atrophies = sorted(set(df['Rescale'].values))
     # display number of subjects in test (multiple transformations of the same subjects are considered different)
     print("\n=================number subjects=======================\n")
-    df['subject'] = list(tf.split('_T')[0] for tf in df['Filename'])
+    df['subject'] = list(tf.split('_T')[0] for tf in df['basename'])
     for atrophy in atrophies:
         number_sub = df.groupby('subject')['csa_original'].mean().count()
-        number_tf = df.groupby(['Filename', 'subject'])['csa_original'].mean().count()
+        number_tf = df.groupby(['basename', 'subject'])['csa_original'].mean().count()
         print('For rescaling ' + str(atrophy) + ' number of subjects is ' + str(number_sub) +
         ' and number of transformations per subject ' + str(number_tf))
 
