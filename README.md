@@ -8,11 +8,19 @@ Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as f
 - Compute CSA --> CSA(sI, rX, tY)
 
 After everything is done, compute stats:
-- intra-subject STD: STD[CSA(sI, rX, :)] --> STD_intrasub(sI, rX)
-- inter-subject STD: STD_intrasub(:, rX) --> STD_intersub(rX)
-- intra-subject error MEAN: MEAN[CSA(sI, rX, :)] - rX^2*MEAN[CSA(sI, 1, :)] (for rX included in list of rX with rX=1 excluded)
-  --> MEAN(sI, rX)
-- inter-subject error STD: STD[MEAN(:, rX)]
+- intra-subject MEAN: MEAN[CSA(sI, rX, :)] --> MEAN_intra(sI, rX)
+- intra-subject STD (per subject): STD[CSA(sI, rX, :)] --> STD_intra_sub(sI, rX)
+- intra-subject COV (per subject): STD[CSA(sI, rX, :)] / MEAN[CSA(sI, rX, :)] --> COV_intra_sub(sI, rX)
+- intra-subject STD: MEAN[STD_intra_sub(:, rX)] --> STD_intra(rX)
+- intra-subject COV: MEAN[COV_intra_sub(:, rX)] --> COV_intra(rX)
+- inter-subject STD: STD[MEAN_intra(:, rX)] --> STD_inter(rX)
+
+- rescale_estimated_subject MEAN: MEAN[CSA(sI, rX, :)] / MEAN[CSA(sI, 1, :)] --> MEAN_rescale_estimated_subject(sI, rX)
+- rescale_estimated (across subjects) MEAN: MEAN[MEAN_rescale_estimated_subject(:, rX)] --> MEAN_rescale_estimated(rX)
+- rescale_estimated (across subjects) STD: STD[MEAN_rescale_estimated_subject(:, rX)] --> STD_rescale_estimated(rX)
+
+- error (across subjects) MEAN: MEAN[MEAN_error_intra(:, rX)]
+- error (across subjects) STD: STD[MEAN_error_intra(:, rX)]
 - sample size: [(z(uncertainty) + z(power))^2 * (2 * STD[MEAN(:, rX)]^2)] / [MEAN[CSA(sI, 1, :)] - MEAN[CSA(sI, rX, :)]] 
 
 Plot results:

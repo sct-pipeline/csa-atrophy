@@ -11,6 +11,8 @@
 # Author: Julien Cohen-Adad, Paul Bautin
 ###################################################
 
+# TODO: crop data to save computation time
+
 # Uncomment for full verbose
 set -x
 
