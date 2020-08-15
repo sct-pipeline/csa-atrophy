@@ -163,7 +163,9 @@ for r_coef in ${R_COEFS[@]}; do
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_seg}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_r_t}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_r_t_seg}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_label_c_r_t}.nii.gz"
     )
   done
   cd ../
