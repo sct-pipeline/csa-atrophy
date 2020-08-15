@@ -72,14 +72,14 @@ def concatenate_csv_files(path_results):
     """
     files = []
     for file in os.listdir(path_results):
-        if ".csv" in file and "csa" in file:
+        if ".csv" in file and "csa" and "sub" in file:
             files.append(os.path.join(path_results, file))
     if not files:
         raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
     metrics = pd.concat(
         [pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
-    # TODO: output in the directory that already contains all the csv, and call this one csa_all.csv (more intutive)
-    metrics.to_csv("csa.csv")
+    # output csv file in PATH_RESULTS
+    metrics.to_csv(os.path.join(path_results, r'csa_all.csv'))
 
 
 def yaml_parser(config_file):
@@ -96,13 +96,13 @@ def plot_perc_err(df, columns_to_plot, path_output):
     :param columns_to_plot: perc_diff dataframe columns for plotting
     :param path_output: directory in which plot is saved
     """
-    df = df.reset_index().set_index('Rescale')
+    df = df.reset_index().set_index('rescale')
     df['subject'] = list(tf.split('_T2w')[0] for tf in df['Filename'])
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
-    df.groupby('Rescale')[columns_to_plot].mean().plot(kind='bar', ax=axes[0], grid=True)
+    df.groupby('rescale')[columns_to_plot].mean().plot(kind='bar', ax=axes[0], grid=True)
     axes[0].set_title('mean error function of rescaling factor')
     axes[0].set_ylabel('error in %')
-    df.groupby(['Rescale', 'subject']).mean().groupby('Rescale').std()[columns_to_plot].plot(kind='bar', ax=axes[1],
+    df.groupby(['rescale', 'subject']).mean().groupby('rescale').std()[columns_to_plot].plot(kind='bar', ax=axes[1],
                                                                                              sharex=True, sharey=True,
                                                                                              legend=False)
     axes[1].set_title('STD of error function of rescaling factor')
@@ -120,7 +120,7 @@ def boxplot_csa(df, path_output):
     :param path_output: directory in which plot is saved
     """
     fig2 = plt.figure()
-    df.boxplot(column=['csa_original'], by='Rescale')
+    df.boxplot(column=['MEAN(area)'], by='rescale')
     plt.ylabel('csa in mm^2')
     output_file = path_output + "/csa_boxplot.png"
     plt.savefig(output_file)
@@ -133,7 +133,7 @@ def boxplot_perc_err(df, min_max_vertlevels, path_output):
     :param path_output: directory in which plot is saved
     """
     fig3 = plt.figure()
-    df.boxplot(column=min_max_vertlevels, by='Rescale')
+    df.boxplot(column=min_max_vertlevels, by='rescale')
     plt.ylabel('error in %')
     output_file = path_output + "/err_boxplot.png"
     plt.savefig(output_file)
@@ -188,19 +188,19 @@ def std(df, vertlevels):
     present in csv files
     """
     # TODO: possible normalization of csa for inter-subject studies
-    df = df.reset_index().set_index('Rescale')
+    df = df.reset_index().set_index('rescale')
     df['subject'] = list(tf.split('_T')[0] for tf in df['Filename'])
     min_vert = min(list(vertlevels))
     for i in vertlevels[1:]:
-        for name, group in df.groupby('Rescale'):
+        for name, group in df.groupby('rescale'):
             csa_col = 'csa_c' + str(min_vert) + '_c' + str(i)
             std = group.groupby('subject')[csa_col].mean().std()
             cov = stats.variation(group.groupby('subject')[csa_col].mean()) * 100
-            atrophy = set(group.reset_index().Rescale)
+            atrophy = set(group.reset_index().rescale)
             print('csa std on ', atrophy, '  rescaled image c' + str(min_vert) + '/c' + str(i) + ' is ',
                   round(std, 3), ' mm^2 and cov is ', round(cov, 3), '%')
             if group.index[0] == 1:
-                std_v = group.groupby('subject')['csa_original'].mean().std()
+                std_v = group.groupby('subject')['MEAN(area)'].mean().std()
         print('\n')
     return std_v
 
@@ -212,15 +212,15 @@ def std_suject(df, vertlevels):
     :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae levels
     present in csv files
     """
-    df = df.reset_index().set_index('Rescale')
+    df = df.reset_index().set_index('rescale')
     df['subject'] = list(tf.split('_T')[0] for tf in df['Filename'])
     min_vert = min(list(vertlevels))
     for i in vertlevels[1:]:
-        for name, group in df.groupby('Rescale'):
+        for name, group in df.groupby('rescale'):
             csa_col = 'csa_c' + str(min_vert) + '_c' + str(i)
             mean_cov = (group.groupby('subject')[csa_col].std() / group.groupby('subject')[csa_col].mean()).mean() * 100
             mean_std = group.groupby('subject')[csa_col].agg([np.mean, np.std]).mean()
-            atrophy = set(group.reset_index().Rescale)
+            atrophy = set(group.reset_index().rescale)
             print('mean csa std with ', atrophy, 'rescaling on c' + str(min_vert) + '/c' + str(i) + ' vertebrae is ',
                   round(mean_std['mean'], 3), ' mm^2, std', round(mean_std['std'], 3), ' cov is ', round(mean_cov, 3),
                   '%')
@@ -246,7 +246,7 @@ def sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None
 
     df_sample = pd.DataFrame(z_score_dict)
     df_sample = df_sample.set_index('confidence_Level')
-    std_sample = df_a.groupby('Rescale').get_group(1)['csa_original'].std()
+    std_sample = df_a.groupby('rescale').get_group(1)['MEAN(area)'].std()
     print('std: ' + str(std_sample))
     num_n = 2 * ((df_sample.at[conf, 'z_value'] + df_sample.at[power, 'z_value']) ** 2) * (std_sample ** 2)
     if atrophy:
@@ -274,7 +274,7 @@ def add_to_dataframe(df, vertlevels):
     df2 = df.copy()
 
     # variables for iteration
-    df_a = df.groupby(['Rescale', 'Filename']).mean()
+    df_a = df.groupby(['rescale', 'Filename']).mean()
     n = []
     max_vert = max(vertlevels)
     min_vert = min(vertlevels)
@@ -285,15 +285,15 @@ def add_to_dataframe(df, vertlevels):
         df_gt2 = pd.DataFrame()
         # get GT values
         if i == max_vert:
-            group_csa_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=diff_vert).groupby(
-                ['Filename']).mean().csa_original
+            group_csa_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').drop(index=diff_vert).groupby(
+                ['Filename']).mean()['MEAN(area)']
         else:
             n.append(i + 1)
-            group_csa_gt = df1.groupby('Rescale').get_group(1).set_index('VertLevel').drop(index=n).groupby(
-                ['Filename']).mean().csa_original
-        # iterate across Rescale groupby
-        for name, group in df.groupby('Rescale'):
-            atrophy = group['Rescale'].values[0]
+            group_csa_gt = df1.groupby('rescale').get_group(1).set_index('VertLevel').drop(index=n).groupby(
+                ['Filename']).mean()['MEAN(area)']
+        # iterate across rescale groupby
+        for name, group in df.groupby('rescale'):
+            atrophy = group['rescale'].values[0]
             # mean CSA values across vertebrae for each transformaion and subject
             group2 = group.groupby(['Filename']).mean()
             # iterate across dataframe subjects
@@ -302,7 +302,7 @@ def add_to_dataframe(df, vertlevels):
                 if subject_j in group_csa_gt.index.values:
                     group2.at[subject_j, 'gt_csa_c' + str(min_vert) + '_c' + str(i)] = group_csa_gt.loc[subject_j] * (atrophy ** 2)
             # df_gt is used to store values from group2 if present in GT
-            df_gt = df.groupby('Rescale').get_group(atrophy).groupby('Filename').mean()
+            df_gt = df.groupby('rescale').get_group(atrophy).groupby('Filename').mean()
             df_gt['gt_csa_c' + str(min_vert) + '_c' + str(i)] = (
                 group2['gt_csa_c' + str(min_vert) + '_c' + str(i)].values)
             df_gt2 = pd.concat([df_gt2, df_gt])
@@ -318,7 +318,7 @@ def add_to_dataframe(df, vertlevels):
         if j == max_vert2:
             # add column csa
             df_a['csa_c' + str(min_vert2) + '_c' + str(max_vert2)] = df2.set_index('VertLevel').drop(
-                index=diff_vert).groupby(['Rescale', 'Filename']).mean().values
+                index=diff_vert).groupby(['rescale', 'Filename']).mean().values
             # add column diff
             df_a['diff_c' + str(min_vert2) + '_c' + str(j)] = df_a['csa_c' + str(min_vert2) + '_c' + str(j)].sub(
                 df_a['gt_csa_c' + str(min_vert2) + '_c' + str(j)]).abs()
@@ -331,7 +331,7 @@ def add_to_dataframe(df, vertlevels):
             df_a['csa_c' + str(min_vert2) + '_c' + str(j)] = np.nan
             # add column csa
             df_a['csa_c' + str(min_vert2) + '_c' + str(j)] = df2.set_index('VertLevel').drop(index=m).groupby(
-                ['Rescale', 'Filename']).mean().values
+                ['rescale', 'Filename']).mean().values
             # add column diff
             df_a['diff_c' + str(min_vert2) + '_c' + str(j)] = df_a['csa_c' + str(min_vert2) + '_c' + str(j)].sub(
                 df_a['gt_csa_c' + str(min_vert2) + '_c' + str(j)]).abs()
@@ -354,12 +354,8 @@ def main():
     vertlevels_input = arguments.l
     path_output = arguments.o
     # read data
-    data = pd.read_csv("csa.csv", decimal=".")
-    # TODO: do not create yet another DF, just use the 'big' one
-    data2 = {'Filename': data['Filename'],
-             'VertLevel': data['VertLevel'],
-             'csa_original': data['MEAN(area)'],
-             'Rescale': data['rescale'], }
+    data = pd.read_csv(os.path.join(path_results, r'csa_all.csv'), decimal=".")
+    # create a 'big' dataframe
     df = pd.DataFrame(data2)
     pd.set_option('display.max_rows', None)
 
@@ -385,7 +381,7 @@ def main():
 
     # Print mean CSA without rescaling
     print("\n====================mean==========================\n")
-    mean_csa = df.groupby('Rescale').get_group(1)['csa_original'].mean()
+    mean_csa = df.groupby('rescale').get_group(1)['MEAN(area)'].mean()
     print(" mean csa: " + str(mean_csa))
 
     # compute sample size
@@ -399,13 +395,13 @@ def main():
     sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None)
 
     # ground truth atrophy
-    atrophies = sorted(set(df['Rescale'].values))
+    atrophies = sorted(set(df['rescale'].values))
     # display number of subjects in test (multiple transformations of the same subjects are considered different)
     print("\n=================number subjects=======================\n")
     df['subject'] = list(tf.split('_T')[0] for tf in df['Filename'])
     for atrophy in atrophies:
-        number_sub = df.groupby('subject')['csa_original'].mean().count()
-        number_tf = df.groupby(['Filename', 'subject'])['csa_original'].mean().count()
+        number_sub = df.groupby('subject')['MEAN(area)'].mean().count()
+        number_tf = df.groupby(['Filename', 'subject'])['MEAN(area)'].mean().count()
         print('For rescaling ' + str(atrophy) + ' number of subjects is ' + str(number_sub) +
         ' and number of transformations per subject ' + str(number_tf))
 
@@ -416,7 +412,7 @@ def main():
     print("\n===================std_subject=========================\n")
     std_suject(df_a, vertlevels)
     print("\n===================original_csa========================\n")
-    print(df_a['csa_original'])
+    print(df_a['MEAN(area)'])
 
     # plot graph if verbose is present
     if arguments.fig:

@@ -1,0 +1,6 @@
+FILES_SEG:
+- sub-amu01_T1w.nii.gz
+FILES_GMSEG:
+
+FILES_LABEL:
+- sub-amu01_T1w.nii.gz
