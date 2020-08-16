@@ -183,7 +183,7 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
 def inter_subject_mean(df, df_results):
     """
     Compute inter-subject CSA average for each rescaling
-    :param df: dataframe grouped by subject containing information from add_to_dataframe
+    :param df: dataframe with csv files data
     :param df_results: results dataframe
     """
     df = df.reset_index()
@@ -199,7 +199,7 @@ def inter_subject_mean(df, df_results):
 def inter_subject_std(df, df_results):
     """
     Compute inter-subject CSA STD for each rescaling
-    :param df: dataframe grouped by subject containing information from add_to_dataframe
+    :param df: dataframe with csv files data
     :param df_results: results dataframe
     """
     # TODO: possible normalization of csa for inter-subject studies
@@ -218,7 +218,7 @@ def inter_subject_std(df, df_results):
 def intra_subject_std(df, df_results):
     """
     Compute intra-subject CSA STD for each rescaling
-    :param df: dataframe grouped by subject containing information from add_to_dataframe
+    :param df: dataframe with csv files data
     :param df_results: results dataframe
     """
     df = df.reset_index()
@@ -234,28 +234,28 @@ def intra_subject_std(df, df_results):
 
 
 
-def sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None):
+def sample_size(df, atrophy, conf, power, mean_control=None, mean_patient=None):
     """
     Calculate the minimum number of patients required to detect an atrophy of a given value (i.e. power analysis),
     ratio patients/control 1:1 and with the assumption that both samples have the same STD.
     ref: Ard, M Colin, and Steven D Edland. “Power calculations for clinical trials in Alzheimer's disease.”
     Journal of Alzheimer's disease : JAD vol. 26 Suppl 3,Suppl 3 (2011): 369-77. doi:10.3233/JAD-2011-0062
     Example: sample_size(df_a, 0.95, 0.8, mean_control=None, mean_patient=None, atrophy=7.7)
-    :param df_a: dataframe grouped by subject containing information from add_to_dataframe
+    :param df: dataframe with csv files data
+    :param atrophy: expected atrophy in mm^2. Example atrophy=7.7
     :param conf: Confidence level. Example 0.8
     :param power: Power level. Example 0.9
     :param mean_control: mean CSA value of control group
     :param mean_patient: mean csa value of patient group
-    :param atrophy: expected atrophy in mm^2. Example atrophy=7.7
     """
     z_score_dict = {'confidence_Level': [0.60, 0.70, 0.8, 0.85, 0.90, 0.95],
                     'z_value': [0.842, 1.04, 1.28, 1.44, 1.64, 1.96], }
 
-    df_sample = pd.DataFrame(z_score_dict)
-    df_sample = df_sample.set_index('confidence_Level')
-    std_sample = df_a.groupby('rescale').get_group(1)['MEAN(area)'].std()
-    print('std: ' + str(std_sample))
-    num_n = 2 * ((df_sample.at[conf, 'z_value'] + df_sample.at[power, 'z_value']) ** 2) * (std_sample ** 2)
+    df_z = pd.DataFrame(z_score_dict)
+    df_z = df_z.set_index('confidence_Level')
+    std_sample = df.groupby('rescale').get_group(1).groupby('subject')['MEAN(area)'].mean().std()
+    num_n = 2 * ((df_z.at[conf, 'z_value'] + df_z.at[power, 'z_value']) ** 2) * (std_sample ** 2)
+    # Check if user input atrophy percentage or mean_control and mean_patient
     if atrophy:
         atrophy = atrophy
     elif mean_control is not None & mean_patient is not None:
@@ -264,14 +264,13 @@ def sample_size(df_a, atrophy, conf, power, mean_control=None, mean_patient=None
         print('input error: either input mean_control and mean_patient or atrophy in mm^2')
     deno_n = (abs(atrophy)) ** 2
     sample = ceil(num_n / deno_n)
-    print('with ' + str(power * 100) + '% power, at ' + str(
-        conf * 100) + '% significance, ratio 1:1 (patients/controls):')
-    print('minimum sample size to detect mean ' + str(atrophy) + ' mm² atrophy: ' + str(sample))
+    print("Minimum sample size to detect an atrophy of {} mm² is: {}".format(atrophy, sample))
+    print("With parameters: \n - STD: {} \n - power: {} %\n - significance: {} %\n - ratio 1:1 (patients/controls)".format(std_sample, power*100, conf*100))
 
 
 def add_gt_to_dataframe(df, max_vert, min_vert):
     """  Add theoretic CSA values (rx^2 * MEAN(area)) to dataframe
-    :param df: original dataframe with csv file data
+    :param df: dataframe with csv files data
     :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae
     levels present in csv files
     :return df_a: modified dataframe with added gt_csa, diff_csa, perc_diff_csa for different vertebrae levels
@@ -313,7 +312,6 @@ def add_stat_to_dataframe(df, max_vert, min_vert):
 def main():
     """
     main function, gather stats and call plots
-    :param vertlevels_input: vertebrae levels of interest, arguments of flag -l
     """
     # get parser elements
     parser = get_parser()
@@ -402,8 +400,6 @@ def main():
         columns_to_plot = [i for i in df.columns if 'perc_diff' in i]
         plot_perc_err(df, columns_to_plot, path_output)
         boxplot_csa(df, path_output)
-        max_vert = max(vertlevels)
-        min_vert = min(vertlevels)
         min_max_vert = ['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)]
         boxplot_perc_err(df, min_max_vert, path_output)
         # z_conf = z_score for confidence level,
