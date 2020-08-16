@@ -63,7 +63,7 @@ sct_run_batch -config config_sct_run_batch.yml
 
 To output statistics, run in Dataset
 ~~~
-csa_rescale_stat -i csa_atrophy_results/results -o csa_atrophy_results -config config_script.yml -v
+csa_rescale_stat -i csa_atrophy_results/results -o csa_atrophy_results -config config_script.yml -fig
 ~~~
 
 # Quality Control
