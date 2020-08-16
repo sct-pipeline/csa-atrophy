@@ -89,7 +89,7 @@ def yaml_parser(config_file):
     return config_param
 
 
-def plot_perc_err(df, columns_to_plot, path_output):
+def plot_perc_err(df, columns_to_plot, df_results, path_output):
     """plot percentage difference between simulated atrophy and ground truth atrophy
     for different vertebrae levels
     :param df: dataframe for first plot
@@ -97,15 +97,12 @@ def plot_perc_err(df, columns_to_plot, path_output):
     :param path_output: directory in which plot is saved
     """
     df = df.reset_index().set_index('rescale')
-    df['subject'] = list(tf.split('_T')[0] for tf in df['basename'])
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
     df.groupby('rescale')[columns_to_plot].mean().plot(kind='bar', ax=axes[0], grid=True)
     axes[0].set_title('mean error function of rescaling factor')
     axes[0].set_ylabel('error in %')
-    df.groupby(['rescale', 'subject']).mean().groupby('rescale').std()[columns_to_plot].plot(kind='bar', ax=axes[1],
-                                                                                             sharex=True, sharey=True,
-                                                                                             legend=False)
-    axes[1].set_title('STD of error function of rescaling factor')
+    df_results['inter_sub_cov'].plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
+    axes[1].set_title('COV of CSA in function of rescaling factor')
     plt.xlabel('rescaling factor')
     plt.ylabel('error in %')
     plt.grid()
@@ -135,8 +132,9 @@ def boxplot_perc_err(df, column_ratio, path_output):
     """
     fig3 = plt.figure()
     df.boxplot(column=column_ratio, by='rescale_in_percent')
+    plt.title('boxplot of measured atrophy in function of theoretic atrophy')
     plt.ylabel('measured atrophy in %')
-    plt.xlabel('theoric atrophy in %')
+    plt.xlabel('theoretic atrophy in %')
     output_file = path_output + "/err_boxplot.png"
     plt.savefig(output_file)
 
@@ -280,7 +278,7 @@ def add_gt_to_dataframe(df, max_vert, min_vert):
     # iterate across different vertebrae levels and add ground truth values to each subject in dataframe
     # get CSA values without rescale
     csa_without_rescale = df.groupby('rescale').get_group(1).groupby(['basename']).mean()['MEAN(area)']
-    df['theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)] = np.nan
+    df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)] = np.nan
     # iterate across rescaling coefficients
     for name, group in df.groupby('rescale'):
         # get group rescale value
@@ -288,10 +286,10 @@ def add_gt_to_dataframe(df, max_vert, min_vert):
         atrophy = group['rescale'].values[0]
         # iterate across dataframe subjects
         for subject in group.index.values:
-            # if dataframe subject exist in csa_without_rescale register theoric csa value in th_csa_cX_cY
+            # if dataframe subject exist in csa_without_rescale register theoretic csa value in th_csa_cX_cY
             if subject in csa_without_rescale.index.values:
-                group.loc[subject, 'theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)] = csa_without_rescale.loc[subject] * (atrophy ** 2)
-        df.loc[atrophy, 'theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)] = group['theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)].values
+                group.loc[subject, 'theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)] = csa_without_rescale.loc[subject] * (atrophy ** 2)
+        df.loc[atrophy, 'theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)] = group['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)].values
     return df
 
 
@@ -304,12 +302,12 @@ def add_stat_to_dataframe(df, max_vert, min_vert):
         """
     # add column diff
     df['diff_c' + str(min_vert) + '_c' + str(max_vert)] = df['MEAN(area)'].sub(
-        df['theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)]).abs()
+        df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)]).abs()
     # add column perc_diff
     df['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df[
-        'diff_c' + str(min_vert) + '_c' + str(max_vert)].div(df['theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)])
+        'diff_c' + str(min_vert) + '_c' + str(max_vert)].div(df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)])
     # add column ratio
-    df['ratio_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df['MEAN(area)'].div(df['theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)])
+    df['ratio_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df['MEAN(area)'].div(df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)])
     return df
 
 
@@ -407,7 +405,7 @@ def main():
 
         # plot percentage difference between simulated atrophy and ground truth atrophy
         column_perc_diff = [i for i in df.columns if 'perc_diff' in i]
-        plot_perc_err(df, column_perc_diff, path_output)
+        plot_perc_err(df, column_perc_diff, df_results, path_output)
 
         # boxplot CSA across different rescaling values
         boxplot_csa(df, path_output)
