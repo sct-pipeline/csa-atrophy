@@ -116,25 +116,27 @@ def plot_perc_err(df, columns_to_plot, path_output):
 
 def boxplot_csa(df, path_output):
     """boxplot CSA for different rescaling values
-    :param df: dataframe for second plot
+    :param df: dataframe with csv files data
     :param path_output: directory in which plot is saved
     """
     fig2 = plt.figure()
     df.boxplot(column=['MEAN(area)'], by='rescale')
+    plt.title('Boxplot of CSA in function of rescaling')
     plt.ylabel('csa in mm^2')
     output_file = path_output + "/csa_boxplot.png"
     plt.savefig(output_file)
 
 
-def boxplot_perc_err(df, min_max_vertlevels, path_output):
-    """boxplot percentage of error over different rescaling values
-    :param df: dataframe for third plot
+def boxplot_perc_err(df, column_ratio, path_output):
+    """boxplot error for different rescaling values
+    :param df: dataframe with csv files data
     :param min_max_vertlevels: uses dataframe column with most distant vertebrae levels. Example: perc_diff_c2_c5
     :param path_output: directory in which plot is saved
     """
     fig3 = plt.figure()
-    df.boxplot(column=min_max_vertlevels, by='rescale')
-    plt.ylabel('error in %')
+    df.boxplot(column=column_ratio, by='rescale_in_percent')
+    plt.ylabel('measured atrophy in %')
+    plt.xlabel('theoric atrophy in %')
     output_file = path_output + "/err_boxplot.png"
     plt.savefig(output_file)
 
@@ -306,6 +308,8 @@ def add_stat_to_dataframe(df, max_vert, min_vert):
     # add column perc_diff
     df['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df[
         'diff_c' + str(min_vert) + '_c' + str(max_vert)].div(df['theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)])
+    # add column ratio
+    df['ratio_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df['MEAN(area)'].div(df['theoric_csa_c' + str(min_vert) + '_c' + str(max_vert)])
     return df
 
 
@@ -320,8 +324,10 @@ def main():
     concatenate_csv_files(path_results)
     vertlevels_input = arguments.l
     path_output = arguments.o
+
     # read data
     data = pd.read_csv(os.path.join(path_results, r'csa_all.csv'), decimal=".")
+
     # create a dataframe from the csv files
     df_vert = pd.DataFrame(data)
     pd.set_option('display.max_rows', None)
@@ -329,7 +335,7 @@ def main():
     # fetch parameters from config.yaml file
     config_param = yaml_parser(arguments.config)
 
-    # create new dataframe columns 'basename' and 'subject'
+    # add column 'basename' to dataframe
     df_vert['basename'] = list(
         (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
         path in df_vert['Filename'])
@@ -352,6 +358,7 @@ def main():
     df = add_gt_to_dataframe(df, max_vert, min_vert)
     # Dataframe column additions diff, perc_diff for different vertebrae levels
     df = add_stat_to_dataframe(df, max_vert, min_vert)
+    # add column 'subject' to dataframe
     df['subject'] = list(tf.split('_T')[0] for tf in df.reset_index()['basename'])
 
     # Create results dataframe
@@ -397,11 +404,20 @@ def main():
     if arguments.fig:
         if not os.path.isdir(arguments.o):
             os.makedirs(arguments.o)
-        columns_to_plot = [i for i in df.columns if 'perc_diff' in i]
-        plot_perc_err(df, columns_to_plot, path_output)
+
+        # plot percentage difference between simulated atrophy and ground truth atrophy
+        column_perc_diff = [i for i in df.columns if 'perc_diff' in i]
+        plot_perc_err(df, column_perc_diff, path_output)
+
+        # boxplot CSA across different rescaling values
         boxplot_csa(df, path_output)
-        min_max_vert = ['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)]
-        boxplot_perc_err(df, min_max_vert, path_output)
+
+        # boxplot error across different rescaling values
+        column_ratio = [i for i in df.columns if 'ratio' in i]
+        df['rescale_in_percent'] = df.reset_index()['rescale'].values * 100
+        boxplot_perc_err(df, column_ratio, path_output)
+
+        # plot minimum number of patients required to detect an atrophy of a given value
         # z_conf = z_score for confidence level,
         # z_power = z_score for power level,
         # std = STD of subjects without rescaling CSA values
