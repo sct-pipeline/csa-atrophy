@@ -121,22 +121,22 @@ def boxplot_csa(df, path_output):
     df.boxplot(column=['MEAN(area)'], by='rescale')
     plt.title('Boxplot of CSA in function of rescaling')
     plt.ylabel('csa in mm^2')
-    output_file = path_output + "/csa_boxplot.png"
+    output_file = path_output + "/boxplot_csa.png"
     plt.savefig(output_file)
 
 
-def boxplot_perc_err(df, column_ratio, path_output):
+def boxplot_atrophy(df, column_ratio, path_output):
     """boxplot error for different rescaling values
     :param df: dataframe with csv files data
     :param min_max_vertlevels: uses dataframe column with most distant vertebrae levels. Example: perc_diff_c2_c5
     :param path_output: directory in which plot is saved
     """
     fig3 = plt.figure()
-    df.boxplot(column=column_ratio, by='rescale', showmeans=True, meanline=True)
+    df.boxplot(column=column_ratio, by='rescale_in_percent', showmeans=True, meanline=True)
     plt.title('boxplot of measured atrophy in function of theoretic atrophy')
     plt.ylabel('measured atrophy in %')
     plt.xlabel('theoretic atrophy in %')
-    output_file = path_output + "/err_boxplot.png"
+    output_file = path_output + "/boxplot_atrophy.png"
     plt.savefig(output_file)
 
 
@@ -308,7 +308,10 @@ def add_stat_to_dataframe(df, max_vert, min_vert):
     df['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df[
         'diff_c' + str(min_vert) + '_c' + str(max_vert)].div(df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)])
     # add column ratio
-    df['ratio_c' + str(min_vert) + '_c' + str(max_vert)] = 100 - 100 * df['MEAN(area)'].div(df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)])
+    for name, group in df.reset_index().groupby('rescale'):
+        atrophy = group['rescale'].values[0]
+        df.loc[atrophy, 'csa_without_rescale'] = df.groupby('rescale').get_group(1)['MEAN(area)'].values
+    df['ratio_c' + str(min_vert) + '_c' + str(max_vert)] = 100 - 100 * df['MEAN(area)'].div(df['csa_without_rescale'])
     return df
 
 
@@ -359,6 +362,7 @@ def main():
     df = add_stat_to_dataframe(df, max_vert, min_vert)
     # add column 'subject' to dataframe
     df['subject'] = list(tf.split('_T')[0] for tf in df.reset_index()['basename'])
+    df['rescale_in_percent'] = 100 - (df.reset_index()['rescale'] ** 2).values * 100
 
     # Create results dataframe
     rescaling = sorted(set(df.reset_index()['rescale'].values))
@@ -411,10 +415,9 @@ def main():
         # boxplot CSA across different rescaling values
         boxplot_csa(df, path_output)
 
-        # boxplot error across different rescaling values
+        # boxplot of atrophy across different rescaling values
         column_ratio = [j for j in df.columns if 'ratio' in j]
-        df['rescale_in_percent'] = 100 - df.reset_index()['rescale'].values * 100
-        boxplot_perc_err(df, column_ratio, path_output)
+        boxplot_atrophy(df, column_ratio, path_output)
 
         # plot minimum number of patients required to detect an atrophy of a given value
         # z_conf = z_score for confidence level,
