@@ -20,7 +20,7 @@ import argparse
 from scipy import stats
 import matplotlib.pyplot as plt
 from math import ceil
-import yaml
+from ruamel.yaml import YAML
 
 
 # Parser
@@ -85,7 +85,8 @@ def concatenate_csv_files(path_results):
 def yaml_parser(config_file):
     """parse config_script.yml file containing pipeline's parameters"""
     with open(config_file, 'r') as config_var:
-        config_param = yaml.safe_load(config_var)
+        yaml = YAML(typ='safe')
+        config_param = yaml.load(config_var)
     return config_param
 
 
@@ -104,7 +105,7 @@ def plot_perc_err(df, columns_to_plot, df_results, path_output):
     df_results['inter_sub_cov'].plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
     axes[1].set_title('COV of CSA in function of rescaling factor')
     plt.xlabel('rescaling factor')
-    plt.ylabel('error in %')
+    plt.ylabel('COV in %')
     plt.grid()
     plt.tight_layout()
     output_file = path_output + "/err_plot.png"
@@ -269,7 +270,7 @@ def sample_size(df, atrophy, conf, power, mean_control=None, mean_patient=None):
 
 
 def add_gt_to_dataframe(df, max_vert, min_vert):
-    """  Add theoretic CSA values (rx^2 * MEAN(area)) to dataframe
+    """  Add theoretic CSA values (rX^2 * MEAN(area)) to dataframe
     :param df: dataframe with csv files data
     :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae
     levels present in csv files
@@ -307,7 +308,7 @@ def add_stat_to_dataframe(df, max_vert, min_vert):
     df['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df[
         'diff_c' + str(min_vert) + '_c' + str(max_vert)].div(df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)])
     # add column ratio
-    df['ratio_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df['MEAN(area)'].div(df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)])
+    df['ratio_c' + str(min_vert) + '_c' + str(max_vert)] = 100 - 100 * df['MEAN(area)'].div(df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)])
     return df
 
 
@@ -369,7 +370,7 @@ def main():
     inter_subject_mean(df, df_results)
 
     # compute sample size
-    print("\n==================sample_size======================\n")
+    print("==================sample_size======================\n")
     # configuration parameters can be modified in config.yaml file
     atrophy = config_param['stats']['sample_size']['atrophy_sample']
     # conf = confidence level
@@ -412,7 +413,7 @@ def main():
 
         # boxplot error across different rescaling values
         column_ratio = [i for i in df.columns if 'ratio' in i]
-        df['rescale_in_percent'] = df.reset_index()['rescale'].values * 100
+        df['rescale_in_percent'] = 100 - df.reset_index()['rescale'].values * 100
         boxplot_perc_err(df, column_ratio, path_output)
 
         # plot minimum number of patients required to detect an atrophy of a given value
