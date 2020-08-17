@@ -132,7 +132,7 @@ def boxplot_perc_err(df, column_ratio, path_output):
     :param path_output: directory in which plot is saved
     """
     fig3 = plt.figure()
-    df.boxplot(column=column_ratio, by='rescale_in_percent')
+    df.boxplot(column=column_ratio, by='rescale', showmeans=True, meanline=True)
     plt.title('boxplot of measured atrophy in function of theoretic atrophy')
     plt.ylabel('measured atrophy in %')
     plt.xlabel('theoretic atrophy in %')
@@ -412,7 +412,7 @@ def main():
         boxplot_csa(df, path_output)
 
         # boxplot error across different rescaling values
-        column_ratio = [i for i in df.columns if 'ratio' in i]
+        column_ratio = [j for j in df.columns if 'ratio' in j]
         df['rescale_in_percent'] = 100 - df.reset_index()['rescale'].values * 100
         boxplot_perc_err(df, column_ratio, path_output)
 
