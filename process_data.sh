@@ -61,8 +61,8 @@ image_crop_if_does_not_exist(){
     # Detect ponto-medullary junction
     sct_detect_pmj -i ${file}.nii.gz -s ${file_seg}.nii.gz -c $contrast -qc ${PATH_QC}
     # parameters to crop image
-    local nx=$(python3 ${PATH_DATA}/../get_pmj.py -i ${file}_pmj.nii.gz -o nx)
-    local z_pmj=$(python3 ${PATH_DATA}/../get_pmj.py -i ${file}_pmj.nii.gz -o z_pmj)
+    local nx=$(${PATH_DATA}/../get_pmj -i ${file}_pmj.nii.gz -o nx)
+    local z_pmj=$(${PATH_DATA}/../get_pmj -i ${file}_pmj.nii.gz -o z_pmj)
     center_image=$((nx/2))
     local x_min=$((center_image-20))
     local x_max=$((center_image+20))
