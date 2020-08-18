@@ -50,12 +50,12 @@ image_crop_if_does_not_exist(){
   FILE_PMJ=${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${file}_pmj
   # Verify if a manually detected pmj is present
   if [ -e "${FILE_PMJ}-manual.nii.gz" ]; then
-    echo "PMJ was manually located in file: ${FILE_PMJ}-manual.nii.gz"
+    echo "Found manual PMJ detection; file: ${FILE_PMJ}-manual.nii.gz"
     # parameters to crop image
-    local nx=$(get_pmj -i ${file}_pmj-manual.nii.gz -o nx)
-    local z_pmj=$(get_pmj -i ${file}_pmj-manual.nii.gz -o z_pmj)
-    local x_min=$(get_pmj -i ${file}_pmj-manual.nii.gz -o x_min)
-    local x_max=$(get_pmj -i ${file}_pmj-manual.nii.gz -o x_max)
+    local nx=$(get_pmj -i ${FILE_PMJ}-manual.nii.gz -o nx)
+    local z_pmj=$(get_pmj -i ${FILE_PMJ}-manual.nii.gz -o z_pmj)
+    local x_min=$(get_pmj -i ${FILE_PMJ}-manual.nii.gz -o x_min)
+    local x_max=$(get_pmj -i ${FILE_PMJ}-manual.nii.gz -o x_max)
     # crop original image and segmented image
     sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
     sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
