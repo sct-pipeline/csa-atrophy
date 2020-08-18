@@ -49,6 +49,30 @@ echo "transfo_file: $transfo_file"
 
 # FUNCTIONS
 # ==============================================================================
+image_crop_if_does_not_exist(){
+  local file=$1
+  local file_seg=$2
+  local contrast=$3
+  FILE_CROP=${file}_crop
+  FILE_SEG_CROP=${file_seg}_crop
+  if [ -e "${FILE_CROP}.nii.gz" ]; then
+    echo "file is alreasy cropped using file: $FILE_CROP"
+  else
+    # Detect ponto-medullary junction
+    sct_detect_pmj -i ${file}.nii.gz -s ${file_seg}.nii.gz -c $contrast -qc ${PATH_QC}
+    # parameters to crop image
+    local nx=$(python3 ${PATH_DATA}/../get_pmj.py -i ${file}_pmj.nii.gz -o nx)
+    local z_pmj=$(python3 ${PATH_DATA}/../get_pmj.py -i ${file}_pmj.nii.gz -o z_pmj)
+    center_image=$((nx/2))
+    local x_min=$((center_image-20))
+    local x_max=$((center_image+20))
+    # crop image
+    sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+    sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+  fi
+}
+
+
 # Check if manual label already exists. If it does, copy it locally. If it does
 # not, perform automatic labeling.
 label_if_does_not_exist(){
@@ -70,7 +94,7 @@ label_if_does_not_exist(){
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
     # Create labels in the Spinal Cord
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   fi
 }
 
@@ -98,7 +122,7 @@ segment_if_does_not_exist(){
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
 # Copy config files to output results folder
-cp -u $config_script ${PATH_RESULTS}/
+cp -f $config_script ${PATH_RESULTS}/
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
@@ -116,9 +140,13 @@ file_c=${SUBJECT}_${contrast_str}
 segment_if_does_not_exist $file_c ${contrast}
 # name segmented file
 file_c_seg=${FILESEG}
+# crop image
+image_crop_if_does_not_exist ${file_c} ${file_c_seg} ${contrast}
+file_c_crop=${FILE_CROP}
+file_c_seg_crop=${FILE_SEG_CROP}
 # Label spinal cord (only if it does not exist) in dir anat
-label_if_does_not_exist $file_c $file_c_seg $contrast $contrast_str
-file_label=${file_c_seg}_labeled
+label_if_does_not_exist $file_c_crop $file_c_seg_crop $contrast $contrast_str
+file_crop_label=${file_c_seg_crop}_labeled
 cd ../
 
 # iterate across rescaling
@@ -135,11 +163,11 @@ for r_coef in ${R_COEFS[@]}; do
   cd anat_r${r_coef}
 
   # Rescale header of native nifti file
-  file_c_r=${file_c}_r${r_coef}
-  affine_rescale -i ../anat/${file_c}.nii.gz -r ${r_coef} -o ${file_c_r}.nii.gz
+  file_c_crop_r=${file_c_crop}_r${r_coef}
+  affine_rescale -i ../anat/${file_c_crop}.nii.gz -r ${r_coef} -o ${file_c_crop_r}.nii.gz
   # rescale labeled segmentation
-  file_label_c_r=${file_c_r}_seg_labeled
-  affine_rescale -i ../anat/${file_label}.nii.gz -r ${r_coef} -o ${file_label_c_r}.nii.gz
+  file_crop_label_c_r=${file_c_crop_r}_seg_labeled
+  affine_rescale -i ../anat/${file_crop_label}.nii.gz -r ${r_coef} -o ${file_crop_label_c_r}.nii.gz
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
@@ -149,23 +177,23 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${file_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo}
-    file_c_r_t=${file_c_r}_t${i_transfo}
+    affine_transfo -i ${file_c_crop_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo}
+    file_c_crop_r_t=${file_c_crop_r}_t${i_transfo}
     # transform the labeled segmentation with same transfo values
-    affine_transfo -i ${file_label_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo} -interpolation 0
-    file_label_c_r_t=${file_label_c_r}_t${i_transfo}
+    affine_transfo -i ${file_crop_label_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo} -interpolation 0
+    file_crop_label_c_r_t=${file_crop_label_c_r}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
-    segment_if_does_not_exist ${file_c_r_t} ${contrast}
+    segment_if_does_not_exist ${file_c_crop_r_t} ${contrast}
     # name segmented file
-    file_c_r_t_seg=${FILESEG}
+    file_c_crop_r_t_seg=${FILESEG}
     # Compute average CSA between C2 and C5 levels (append across subjects)
-    sct_process_segmentation -i $file_c_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_label_c_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_c_crop_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_crop_label_c_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_r_t}.nii.gz"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_r_t_seg}.nii.gz"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_label_c_r_t}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_crop_r_t}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_crop_r_t_seg}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_crop_label_c_r_t}.nii.gz"
     )
   done
   cd ../
