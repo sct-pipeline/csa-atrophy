@@ -159,7 +159,7 @@ segment_if_does_not_exist $file_c_or ${contrast}
 file_c_or_seg=${FILESEG}
 
 # dilate segmentation (for cropping)
-sct_maths -i ${file_c_or_seg}.nii.gz -dilate 15mm -shape cube -o ${file_c_or_seg}_dil.nii.gz
+sct_maths -i ${file_c_or_seg}.nii.gz -dilate 15 -shape cube -o ${file_c_or_seg}_dil.nii.gz
 # crop image
 sct_crop_image -i ${file_c_or}.nii.gz -m ${file_c_or_seg}_dil.nii.gz
 file_c_or_crop=${file_c_or}_crop
