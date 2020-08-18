@@ -3,12 +3,11 @@
 # process_data.sh
 # ---------------
 # Number of transformations to apply to each subject
-n_transfo: 3
+n_transfo: 2
 # Rescaling factor to apply to each subject. Note: value '1' should always be present.
 rescaling:
   - 1
   - 0.95
-  - 0.8
 # Contrasts on which to perform the analysis. Available values are: 't1', 't2'
 contrast: "t1"
 transfo_file: transfo_values.csv

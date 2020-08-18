@@ -11,7 +11,7 @@
 # Author: Julien Cohen-Adad, Paul Bautin
 ###################################################
 
-# TODO: crop data to save computation time
+# TODO: simplify variable names: no need to call file_or_c_blablabla. Instead: update file
 
 # Uncomment for full verbose
 set -x
@@ -37,18 +37,13 @@ rescaling=$(yaml_parser -o rescaling -i $config_script)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 contrast=$(yaml_parser -o contrast -i $config_script)
 # TODO: enable to input a list of contrast and loop across contrasts
-if [ $contrast == "t2" ]; then
-  contrast_str="T2w"
-fi
-if [ $contrast == "t1" ]; then
-  contrast_str="T1w"
-fi
 transfo_file=$(yaml_parser -o transfo_file -i $config_script)
 echo "transfo_file: $transfo_file"
 
 
 # FUNCTIONS
 # ==============================================================================
+
 # Check if manual label already exists. If it does, copy it locally. If it does
 # not, perform automatic labeling.
 label_if_does_not_exist(){
@@ -70,7 +65,7 @@ label_if_does_not_exist(){
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
     # Create labels in the Spinal Cord
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   fi
 }
 
@@ -98,7 +93,8 @@ segment_if_does_not_exist(){
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
 # Copy config files to output results folder
-cp $config_script ${PATH_RESULTS}/
+mkdir ${PATH_RESULTS}/$SUBJECT/
+cp $config_script ${PATH_RESULTS}/$SUBJECT/
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
@@ -107,31 +103,72 @@ cd $SUBJECT
 # we don't need dwi data, so let's remove it
 rm -r dwi
 
-# Image analysis
+
+# Image analysis in folder anat
 #=======================================================================
-# Segment spinal cord (only if it does not exist) in dir anat
 cd anat
-echo "contrast: $contrast"
-file_c=${SUBJECT}_${contrast_str}
-segment_if_does_not_exist $file_c ${contrast}
+# Reorient to RPI and resample file
+if [ $contrast == "t2" ]; then
+  contrast_str="T2w"
+  file_c=${SUBJECT}_${contrast_str}
+  # Reorient to RPI
+  sct_image -i ${file_c}.nii.gz -setorient RPI -o ${file_c}_RPI.nii.gz
+  file_c_o=${file_c}_RPI
+  # Resample to 0.8mm iso
+  sct_resample -i ${file_c}_RPI.nii.gz -mm 0.8x0.8x0.8 -o ${file_c_o}r.nii.gz
+  file_c_or=${file_c_o}r
+elif [ $contrast == "t1" ]; then
+  contrast_str="T1w"
+  file_c=${SUBJECT}_${contrast_str}
+  # Reorient to RPI
+  sct_image -i ${file_c}.nii.gz -setorient RPI -o ${file_c}_RPI.nii.gz
+  file_c_o=${file_c}_RPI
+  # Resample to 1mm iso
+  sct_resample -i ${file_c}_RPI.nii.gz -mm 1x1x1 -o ${file_c_o}r.nii.gz
+  file_c_or=${file_c_o}r
+fi
+
+# Segment spinal cord (only if it does not exist) in dir anat
+segment_if_does_not_exist $file_c_or ${contrast}
 # name segmented file
-file_c_seg=${FILESEG}
+file_c_or_seg=${FILESEG}
+
+# dilate segmentation (for cropping)
+sct_maths -i ${file_c_or_seg}.nii.gz -dilate 15 -shape cube -o ${file_c_or_seg}_dil.nii.gz
+# crop image
+sct_crop_image -i ${file_c_or}.nii.gz -m ${file_c_or_seg}_dil.nii.gz
+file_c_or_crop=${file_c_or}_crop
+# crop segmentation
+sct_crop_image -i ${file_c_or_seg}.nii.gz -m ${file_c_or_seg}_dil.nii.gz
+file_c_or_seg_crop=${file_c_or_seg}_crop
+
 # Label spinal cord (only if it does not exist) in dir anat
-label_if_does_not_exist $file_c $file_c_seg $contrast $contrast_str
-file_label=${file_c_seg}_labeled
+label_if_does_not_exist $file_c_or_crop $file_c_or_seg_crop $contrast $contrast_str
+file_c_or_crop_label=${file_c_or_seg_crop}_labeled
 cd ../
 
-# iterate across rescaling
+
+# CSA measure iterated across rescaling in folder anat_r{r_coef}
+# ====================================================================
 for r_coef in ${R_COEFS[@]}; do
+  # If directory exists (e.g. 2nd pass after QC and manual correction), we should remove it
+  if [ -d "anat_r${r_coef}" ]; then
+    rm -r "anat_r${r_coef}"
+    echo "anat_r${r_coef} already exists: removing folder"
+  fi
+  if [ -f "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv" ]; then
+    rm "$PATH_RESULTS/csa_perlevel_${SUBJECT}_${r_coef}.csv"
+    echo "csa_perlevel_${SUBJECT}_${r_coef}.csv already exists: removing file"
+  fi
   mkdir anat_r$r_coef
   cd anat_r${r_coef}
 
   # Rescale header of native nifti file
-  file_c_r=${file_c}_r${r_coef}
-  affine_rescale -i ../anat/${file_c}.nii.gz -r ${r_coef} -o ${file_c_r}.nii.gz
+  file_c_or_crop_r=${file_c_or_crop}_r${r_coef}
+  affine_rescale -i ../anat/${file_c_or_crop}.nii.gz -r ${r_coef} -o ${file_c_or_crop_r}.nii.gz
   # rescale labeled segmentation
-  file_label_c_r=${file_c_r}_seg_labeled
-  affine_rescale -i ../anat/${file_label}.nii.gz -r ${r_coef} -o ${file_label_c_r}.nii.gz
+  file_c_or_crop_label_r=${file_c_or_crop_r}_seg_labeled
+  affine_rescale -i ../anat/${file_c_or_crop_label}.nii.gz -r ${r_coef} -o ${file_c_or_crop_label_r}.nii.gz
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
@@ -141,21 +178,23 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${file_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo}
-    file_c_r_t=${file_c_r}_t${i_transfo}
+    affine_transfo -i ${file_c_or_crop_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo}
+    file_c_or_crop_r_t=${file_c_or_crop_r}_t${i_transfo}
     # transform the labeled segmentation with same transfo values
-    affine_transfo -i ${file_label_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo}_seg_labeled -interpolation 0
-    file_label_c_r_t=${file_label_c_r}_t${i_transfo}
+    affine_transfo -i ${file_c_or_crop_label_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo} -interpolation 0
+    file_c_or_crop_label_r_t=${file_c_or_crop_label_r}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
-    segment_if_does_not_exist ${file_c_r_t} ${contrast}
+    segment_if_does_not_exist ${file_c_or_crop_r_t} ${contrast}
     # name segmented file
-    file_c_r_t_seg=${FILESEG}
+    file_c_or_crop_r_t_seg=${FILESEG}
     # Compute average CSA between C2 and C5 levels (append across subjects)
-    sct_process_segmentation -i $file_c_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_label_c_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_c_or_crop_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_c_or_crop_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
-    "$PATH_RESULTS/csa_data/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_seg}.nii.gz"
+    "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_r_t}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_r_t_seg}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_label_r_t}.nii.gz"
     )
   done
   cd ../
