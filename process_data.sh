@@ -47,30 +47,24 @@ crop_image(){
   local file=$1
   local file_seg=$2
   local contrast=$3
-  FILE_PMJ=${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${file}_pmj
+  FILE_PMJ="${file}_pmj"
+  FILE_PMJ_MANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${file}_pmj"
   # Verify if a manually detected pmj is present
-  if [ -e "${FILE_PMJ}-manual.nii.gz" ]; then
-    echo "Found manual PMJ detection; file: ${FILE_PMJ}-manual.nii.gz"
-    # parameters to crop image
-    local nx=$(get_pmj -i ${FILE_PMJ}-manual.nii.gz -o nx)
-    local z_pmj=$(get_pmj -i ${FILE_PMJ}-manual.nii.gz -o z_pmj)
-    local x_min=$(get_pmj -i ${FILE_PMJ}-manual.nii.gz -o x_min)
-    local x_max=$(get_pmj -i ${FILE_PMJ}-manual.nii.gz -o x_max)
-    # crop original image and segmented image
-    sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
-    sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+  if [ -e "${FILE_PMJ_MANUAL}.nii.gz" ]; then
+    echo "Found manual PMJ detection; file: ${FILE_PMJ_MANUAL}.nii.gz"
+    FILE_PMJ="${FILE_PMJ_MANUAL}"
   else
     # Detect ponto-medullary junction automatically
     sct_detect_pmj -i ${file}.nii.gz -s ${file_seg}.nii.gz -c $contrast -qc ${PATH_QC}
-    # parameters to crop image
-    local nx=$(get_pmj -i ${file}_pmj.nii.gz -o nx)
-    local z_pmj=$(get_pmj -i ${file}_pmj.nii.gz -o z_pmj)
-    local x_min=$(get_pmj -i ${file}_pmj.nii.gz -o x_min)
-    local x_max=$(get_pmj -i ${file}_pmj.nii.gz -o x_max)
-    # crop original image and segmented image
-    sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
-    sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
   fi
+  # parameters to crop image
+  local nx=$(get_pmj -i ${FILE_PMJ}.nii.gz -o nx)
+  local z_pmj=$(get_pmj -i ${FILE_PMJ}.nii.gz -o z_pmj)
+  local x_min=$(get_pmj -i ${FILE_PMJ}.nii.gz -o x_min)
+  local x_max=$(get_pmj -i ${FILE_PMJ}.nii.gz -o x_max)
+  # crop original image and segmented image
+  sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+  sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
 }
 
 
