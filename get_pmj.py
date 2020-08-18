@@ -4,9 +4,9 @@ from __future__ import division
 # -*- coding: utf-8
 #########################################################################################
 #
-# Evaluate the robustness of automated CSA with global rescaled images
+# detect Ponto-Medullary Junction location and pass parameters to process_data.sh
 #
-# example: python csa_rescale_stat.py -i <results>
+# example: python get_pmj.py -i sub-amu01_T1w_pmj.nii.gz -0 nx
 # ---------------------------------------------------------------------------------------
 # Authors: Paul Bautin
 #
