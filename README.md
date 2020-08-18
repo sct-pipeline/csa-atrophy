@@ -8,20 +8,25 @@ Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as f
 - Compute CSA --> CSA(sI, rX, tY)
 
 After everything is done, compute stats:
-- intra-subject MEAN: MEAN[CSA(sI, rX, :)] --> MEAN_intra(sI, rX)
-- intra-subject STD (per subject): STD[CSA(sI, rX, :)] --> STD_intra_sub(sI, rX)
-- intra-subject COV (per subject): STD[CSA(sI, rX, :)] / MEAN[CSA(sI, rX, :)] --> COV_intra_sub(sI, rX)
-- intra-subject STD: MEAN[STD_intra_sub(:, rX)] --> STD_intra(rX)
-- intra-subject COV: MEAN[COV_intra_sub(:, rX)] --> COV_intra(rX)
-- inter-subject STD: STD[MEAN_intra(:, rX)] --> STD_inter(rX)
+Per-subject stat: Panda dataframe `df_sub`:
+- intra-subject MEAN: MEAN[CSA(sI, rX, :)] --> MEAN_intra(sI, rX): `df_sub['mean']`
+- intra-subject STD: STD[CSA(sI, rX, :)] --> STD_intra(sI, rX): `df_sub['std']`
+- intra-subject COV: STD[CSA(sI, rX, :)] / MEAN[CSA(sI, rX, :)] --> COV_intra(sI, rX): `df_sub['cov']`
+- rescale_estimated_subject MEAN: MEAN[CSA(sI, rX, :)] / MEAN[CSA(sI, 1, :)] --> MEAN_rescale_estimated_subject(sI, rX): `df_sub['rescale_estimated']`
 
-- rescale_estimated_subject MEAN: MEAN[CSA(sI, rX, :)] / MEAN[CSA(sI, 1, :)] --> MEAN_rescale_estimated_subject(sI, rX)
-- rescale_estimated (across subjects) MEAN: MEAN[MEAN_rescale_estimated_subject(:, rX)] --> MEAN_rescale_estimated(rX)
-- rescale_estimated (across subjects) STD: STD[MEAN_rescale_estimated_subject(:, rX)] --> STD_rescale_estimated(rX)
+Across-subject stats: Panda dataframe `df_rescale`
+- intra-subject STD: MEAN[STD_intra(:, rX)] --> STD_intra(rX): `df_rescale['std_intra']`
+- intra-subject COV: MEAN[COV_intra_sub(:, rX)] --> COV_intra(rX): `df_rescale['cov']`
+- inter-subject STD: STD[MEAN_intra(:, rX)] --> STD_inter(rX): `df_rescale['std_inter']`
+- rescale_estimated (across subjects) MEAN: MEAN[MEAN_rescale_estimated_subject(:, rX)] --> MEAN_rescale_estimated(rX): `df_rescale['mean_rescale_estimated']`
+- rescale_estimated (across subjects) STD: STD[MEAN_rescale_estimated_subject(:, rX)] --> STD_rescale_estimated(rX): `df_rescale['std_rescale_estimated']`
 
+Power analysis:
+- sample size: [(z(uncertainty) + z(power))^2 * (2 * STD[MEAN(:, rX)]^2)] / [MEAN[CSA(sI, 1, :)] - MEAN[CSA(sI, rX, :)]] 
+
+Not calculated (for now):
 - error (across subjects) MEAN: MEAN[MEAN_error_intra(:, rX)]
 - error (across subjects) STD: STD[MEAN_error_intra(:, rX)]
-- sample size: [(z(uncertainty) + z(power))^2 * (2 * STD[MEAN(:, rX)]^2)] / [MEAN[CSA(sI, 1, :)] - MEAN[CSA(sI, rX, :)]] 
 
 Plot results:
 - STD_intersub

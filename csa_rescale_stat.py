@@ -273,11 +273,9 @@ def sample_size(df, atrophy, conf, power, mean_control=None, mean_patient=None):
     print("With parameters: \n - STD: {} \n - power: {} %\n - significance: {} %\n - ratio 1:1 (patients/controls)".format(round(std_sample, 3), power*100, conf*100))
 
 
-def add_gt_to_dataframe(df, max_vert, min_vert):
+def add_gt_to_dataframe(df):
     """  Add theoretic CSA values (rX^2 * MEAN(area)) to dataframe
     :param df: dataframe with csv files data
-    :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae
-    levels present in csv files
     :return df: modified dataframe with added theoretic_csa
     """
     # iterate across different vertebrae levels and add ground truth values to each subject in dataframe
@@ -298,11 +296,9 @@ def add_gt_to_dataframe(df, max_vert, min_vert):
     return df
 
 
-def add_stat_to_dataframe(df, max_vert, min_vert):
+def add_stat_to_dataframe(df):
     """ add columns diff_csa, perc_diff_csa to dataframe
         :param df: original dataframe with csv file data
-        :param vertlevels: vertebrae levels of interest list, by default list contains all vertebrae
-        levels present in csv files
         :return df_a: modified dataframe with added gt_csa, diff_csa, perc_diff_csa for different vertebrae levels
         """
     # add column diff
@@ -327,6 +323,8 @@ def main():
     parser = get_parser()
     arguments = parser.parse_args()
     path_results = os.path.join(os.getcwd(), arguments.i)
+
+    # aggregate all csv results files
     concatenate_csv_files(path_results)
     vertlevels_input = arguments.l
     path_output = arguments.o
@@ -354,14 +352,28 @@ def main():
         if not all(elem in set(list(df_vert['VertLevel'].values)) for elem in vertlevels):
             raise ValueError("\nInput vertebral levels '{}' do not exist in csv files".format(vertlevels))
     # register vertebrae levels of interest (Default: all vertebrae levels in csv files)
-    max_vert = max(vertlevels)
-    min_vert = min(vertlevels)
-    diff_vert = np.setdiff1d(list(set(df_vert['VertLevel'].values)), list(vertlevels))
-    print("Stats are computed across vertebrae levels C{} and C{}".format(min_vert, max_vert))
+    # diff_vert = np.setdiff1d(list(set(df_vert['VertLevel'].values)), list(vertlevels))
+    print("Stats are averaged across vertebral levels: {}".format(vertlevels))
 
-    # Create new dataframe with one row per subject (no vertebrae level distinction)
-    df = df_vert.set_index('VertLevel').drop(index=diff_vert).groupby(['rescale', 'basename']).mean()
-    df = add_gt_to_dataframe(df, max_vert, min_vert)
+    # Create new dataframe with only selected vertebral levels
+    df = df_vert[df_vert['VertLevel'].isin(vertlevels)]
+
+    # Drop column VertLevel (no more used)
+    df = df.drop('VertLevel', 1)
+
+    # Average values across levels, for each subject
+    df.groupby(['rescale', 'basename']).mean()
+
+    # Add column "transfo" to DF
+
+    # TODO update code below
+
+    df_sub = pd.DataFrame
+    df_sub['']
+
+    # df = df_vert.set_index('VertLevel').drop(index=diff_vert).groupby(['rescale', 'basename']).mean()
+    # df = add_gt_to_dataframe(df, max_vert, min_vert)
+
     # Dataframe column additions diff, perc_diff for different vertebrae levels
     df = add_stat_to_dataframe(df, max_vert, min_vert)
     # add column 'subject' to dataframe
