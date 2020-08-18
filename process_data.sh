@@ -47,36 +47,29 @@ image_crop_if_does_not_exist(){
   local file=$1
   local file_seg=$2
   local contrast=$3
-  FILE_CROP=${file}_crop
-  FILE_SEG_CROP=${file_seg}_crop
-  FILE_PMJ=${file}_pmj
-  # Verify if image was not already cropped
-  if [ -e "${FILE_CROP}.nii.gz" ]; then
-    echo "file is already cropped; using file: $FILE_CROP"
+  FILE_PMJ=${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${file}_pmj
+  # Verify if a manually detected pmj is present
+  if [ -e "${FILE_PMJ}-manual.nii.gz" ]; then
+    echo "PMJ was manually located in file: ${FILE_PMJ}-manual.nii.gz"
+    # parameters to crop image
+    local nx=$(get_pmj -i ${file}_pmj-manual.nii.gz -o nx)
+    local z_pmj=$(get_pmj -i ${file}_pmj-manual.nii.gz -o z_pmj)
+    local x_min=$(get_pmj -i ${file}_pmj-manual.nii.gz -o x_min)
+    local x_max=$(get_pmj -i ${file}_pmj-manual.nii.gz -o x_max)
+    # crop original image and segmented image
+    sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+    sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
   else
-    # Verify if a manually detected pmj is present
-    if [ -e "${FILE_PMJ}-manual.nii.gz" ]; then
-      echo "PMJ was manually located in file: ${FILE_PMJ}-manual.nii.gz"
-      # parameters to crop image
-      local nx=$(get_pmj -i ${file}_pmj-manual.nii.gz -o nx)
-      local z_pmj=$(get_pmj -i ${file}_pmj-manual.nii.gz -o z_pmj)
-      local x_min=$(get_pmj -i ${file}_pmj-manual.nii.gz -o x_min)
-      local x_max=$(get_pmj -i ${file}_pmj-manual.nii.gz -o x_max)
-      # crop original image and segmented image
-      sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
-      sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
-    else
-      # Detect ponto-medullary junction automatically
-      sct_detect_pmj -i ${file}.nii.gz -s ${file_seg}.nii.gz -c $contrast -qc ${PATH_QC}
-      # parameters to crop image
-      local nx=$(get_pmj -i ${file}_pmj.nii.gz -o nx)
-      local z_pmj=$(get_pmj -i ${file}_pmj.nii.gz -o z_pmj)
-      local x_min=$(get_pmj -i ${file}_pmj.nii.gz -o x_min)
-      local x_max=$(get_pmj -i ${file}_pmj.nii.gz -o x_max)
-      # crop original image and segmented image
-      sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
-      sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
-    fi
+    # Detect ponto-medullary junction automatically
+    sct_detect_pmj -i ${file}.nii.gz -s ${file_seg}.nii.gz -c $contrast -qc ${PATH_QC}
+    # parameters to crop image
+    local nx=$(get_pmj -i ${file}_pmj.nii.gz -o nx)
+    local z_pmj=$(get_pmj -i ${file}_pmj.nii.gz -o z_pmj)
+    local x_min=$(get_pmj -i ${file}_pmj.nii.gz -o x_min)
+    local x_max=$(get_pmj -i ${file}_pmj.nii.gz -o x_max)
+    # crop original image and segmented image
+    sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+    sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
   fi
 }
 
@@ -140,33 +133,48 @@ cd $SUBJECT
 # we don't need dwi data, so let's remove it
 rm -r dwi
 
-# Image analysis
+
+# Image analysis in folder anat
 #=======================================================================
-# Segment spinal cord (only if it does not exist) in dir anat
 cd anat
+# Reorient to RPI and resample file
 if [ $contrast == "t2" ]; then
   contrast_str="T2w"
   file_c=${SUBJECT}_${contrast_str}
+  # Reorient to RPI
+  sct_image -i ${file_c}.nii.gz -setorient RPI -o ${file_c}_RPI.nii.gz
+  file_c_o=${file_c}_RPI
+  # Resample to 0.8mm iso
+  sct_resample -i ${file_c}_RPI.nii.gz -mm 0.8x0.8x0.8 -o ${file_c_o}r.nii.gz
+  file_c_or=${file_c_o}r
 fi
 if [ $contrast == "t1" ]; then
   contrast_str="T1w"
   file_c=${SUBJECT}_${contrast_str}
+  # Reorient to RPI
+  sct_image -i ${file_c}.nii.gz -setorient RPI -o ${file_c}_RPI.nii.gz
+  file_c_o=${file_c}_RPI
+  # Resample to 1mm iso
+  sct_resample -i ${file_c}_RPI.nii.gz -mm 1x1x1 -o ${file_c_o}r.nii.gz
+  file_c_or=${file_c_o}r
 fi
-echo "contrast: $contrast"
-file_c=${SUBJECT}_${contrast_str}
-segment_if_does_not_exist $file_c ${contrast}
+
+# Segment spinal cord (only if it does not exist) in dir anat
+segment_if_does_not_exist $file_c_or ${contrast}
 # name segmented file
-file_c_seg=${FILESEG}
+file_c_or_seg=${FILESEG}
 # crop image
-image_crop_if_does_not_exist ${file_c} ${file_c_seg} ${contrast}
-file_c_crop=${FILE_CROP}
-file_c_seg_crop=${FILE_SEG_CROP}
+image_crop_if_does_not_exist ${file_c_or} ${file_c_or_seg} ${contrast}
+file_c_or_crop=${file_c_or}_crop
+file_c_or_seg_crop=${file_c_or_seg}_crop
 # Label spinal cord (only if it does not exist) in dir anat
-label_if_does_not_exist $file_c_crop $file_c_seg_crop $contrast $contrast_str
-file_crop_label=${file_c_seg_crop}_labeled
+label_if_does_not_exist $file_c_or_crop $file_c_or_seg_crop $contrast $contrast_str
+file_c_or_crop_label=${file_c_or_seg_crop}_labeled
 cd ../
 
-# iterate across rescaling
+
+# CSA measure iterated across rescaling in folder anat_r{r_coef}
+# ====================================================================
 for r_coef in ${R_COEFS[@]}; do
   # If directory exists (e.g. 2nd pass after QC and manual correction), we should remove it
   if [ -d "anat_r${r_coef}" ]; then
@@ -181,11 +189,11 @@ for r_coef in ${R_COEFS[@]}; do
   cd anat_r${r_coef}
 
   # Rescale header of native nifti file
-  file_c_crop_r=${file_c_crop}_r${r_coef}
-  affine_rescale -i ../anat/${file_c_crop}.nii.gz -r ${r_coef} -o ${file_c_crop_r}.nii.gz
+  file_c_or_crop_r=${file_c_or_crop}_r${r_coef}
+  affine_rescale -i ../anat/${file_c_or_crop}.nii.gz -r ${r_coef} -o ${file_c_or_crop_r}.nii.gz
   # rescale labeled segmentation
-  file_crop_label_c_r=${file_c_crop_r}_seg_labeled
-  affine_rescale -i ../anat/${file_crop_label}.nii.gz -r ${r_coef} -o ${file_crop_label_c_r}.nii.gz
+  file_c_or_crop_label_r=${file_c_or_crop_r}_seg_labeled
+  affine_rescale -i ../anat/${file_c_or_crop_label}.nii.gz -r ${r_coef} -o ${file_c_or_crop_label_r}.nii.gz
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
@@ -195,23 +203,23 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${file_c_crop_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo}
-    file_c_crop_r_t=${file_c_crop_r}_t${i_transfo}
+    affine_transfo -i ${file_c_or_crop_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo}
+    file_c_or_crop_r_t=${file_c_or_crop_r}_t${i_transfo}
     # transform the labeled segmentation with same transfo values
-    affine_transfo -i ${file_crop_label_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo} -interpolation 0
-    file_crop_label_c_r_t=${file_crop_label_c_r}_t${i_transfo}
+    affine_transfo -i ${file_c_or_crop_label_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo} -interpolation 0
+    file_c_or_crop_label_r_t=${file_c_or_crop_label_r}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
-    segment_if_does_not_exist ${file_c_crop_r_t} ${contrast}
+    segment_if_does_not_exist ${file_c_or_crop_r_t} ${contrast}
     # name segmented file
-    file_c_crop_r_t_seg=${FILESEG}
+    file_c_or_crop_r_t_seg=${FILESEG}
     # Compute average CSA between C2 and C5 levels (append across subjects)
-    sct_process_segmentation -i $file_c_crop_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_crop_label_c_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_c_or_crop_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_c_or_crop_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_crop_r_t}.nii.gz"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_crop_r_t_seg}.nii.gz"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_crop_label_c_r_t}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_r_t}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_r_t_seg}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_label_r_t}.nii.gz"
     )
   done
   cd ../
@@ -235,5 +243,3 @@ echo "SCT version: `sct_version`"
 echo "Ran on:      `uname -nsr`"
 echo "Duration:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 echo "~~~"
-
-}
