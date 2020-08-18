@@ -122,7 +122,7 @@ segment_if_does_not_exist(){
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
 # Copy config files to output results folder
-cp -f $config_script ${PATH_RESULTS}/
+cp -u $config_script ${PATH_RESULTS}/
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
