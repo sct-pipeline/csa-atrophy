@@ -6,7 +6,7 @@ from __future__ import division
 #
 # detect Ponto-Medullary Junction location and pass parameters to process_data.sh
 #
-# example: python get_pmj.py -i sub-amu01_T1w_pmj.nii.gz -0 nx
+# example: python get_pmj.py -i sub-amu01_T1w_pmj.nii.gz -o nx
 # ---------------------------------------------------------------------------------------
 # Authors: Paul Bautin
 #
