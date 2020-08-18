@@ -64,6 +64,8 @@ def main():
                   'x_pmj': x_pmj[0],
                   'y_pmj': y_pmj[0],
                   'z_pmj': z_pmj[0],
+                  'x_min': round(nx/2 - 20),
+                  'x_max': round(nx/2 + 20),
     }
     print(dict_param[arguments.o])
 

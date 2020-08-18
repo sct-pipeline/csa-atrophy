@@ -37,12 +37,6 @@ rescaling=$(yaml_parser -o rescaling -i $config_script)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 contrast=$(yaml_parser -o contrast -i $config_script)
 # TODO: enable to input a list of contrast and loop across contrasts
-if [ $contrast == "t2" ]; then
-  contrast_str="T2w"
-fi
-if [ $contrast == "t1" ]; then
-  contrast_str="T1w"
-fi
 transfo_file=$(yaml_parser -o transfo_file -i $config_script)
 echo "transfo_file: $transfo_file"
 
@@ -55,20 +49,34 @@ image_crop_if_does_not_exist(){
   local contrast=$3
   FILE_CROP=${file}_crop
   FILE_SEG_CROP=${file_seg}_crop
+  FILE_PMJ=${file}_pmj
+  # Verify if image was not already cropped
   if [ -e "${FILE_CROP}.nii.gz" ]; then
-    echo "file is alreasy cropped using file: $FILE_CROP"
+    echo "file is already cropped; using file: $FILE_CROP"
   else
-    # Detect ponto-medullary junction
-    sct_detect_pmj -i ${file}.nii.gz -s ${file_seg}.nii.gz -c $contrast -qc ${PATH_QC}
-    # parameters to crop image
-    local nx=$(get_pmj -i ${file}_pmj.nii.gz -o nx)
-    local z_pmj=$(get_pmj -i ${file}_pmj.nii.gz -o z_pmj)
-    center_image=$((nx/2))
-    local x_min=$((center_image-20))
-    local x_max=$((center_image+20))
-    # crop image
-    sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
-    sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+    # Verify if a manually detected pmj is present
+    if [ -e "${FILE_PMJ}-manual.nii.gz" ]; then
+      echo "PMJ was manually located in file: ${FILE_PMJ}-manual.nii.gz"
+      # parameters to crop image
+      local nx=$(get_pmj -i ${file}_pmj-manual.nii.gz -o nx)
+      local z_pmj=$(get_pmj -i ${file}_pmj-manual.nii.gz -o z_pmj)
+      local x_min=$(get_pmj -i ${file}_pmj-manual.nii.gz -o x_min)
+      local x_max=$(get_pmj -i ${file}_pmj-manual.nii.gz -o x_max)
+      # crop original image and segmented image
+      sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+      sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+    else
+      # Detect ponto-medullary junction automatically
+      sct_detect_pmj -i ${file}.nii.gz -s ${file_seg}.nii.gz -c $contrast -qc ${PATH_QC}
+      # parameters to crop image
+      local nx=$(get_pmj -i ${file}_pmj.nii.gz -o nx)
+      local z_pmj=$(get_pmj -i ${file}_pmj.nii.gz -o z_pmj)
+      local x_min=$(get_pmj -i ${file}_pmj.nii.gz -o x_min)
+      local x_max=$(get_pmj -i ${file}_pmj.nii.gz -o x_max)
+      # crop original image and segmented image
+      sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+      sct_crop_image -i ${file_seg}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+    fi
   fi
 }
 
@@ -122,7 +130,8 @@ segment_if_does_not_exist(){
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
 # Copy config files to output results folder
-cp -u $config_script ${PATH_RESULTS}/
+mkdir ${PATH_RESULTS}/$SUBJECT/
+cp -u $config_script ${PATH_RESULTS}/$SUBJECT/
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
@@ -135,6 +144,14 @@ rm -r dwi
 #=======================================================================
 # Segment spinal cord (only if it does not exist) in dir anat
 cd anat
+if [ $contrast == "t2" ]; then
+  contrast_str="T2w"
+  file_c=${SUBJECT}_${contrast_str}
+fi
+if [ $contrast == "t1" ]; then
+  contrast_str="T1w"
+  file_c=${SUBJECT}_${contrast_str}
+fi
 echo "contrast: $contrast"
 file_c=${SUBJECT}_${contrast_str}
 segment_if_does_not_exist $file_c ${contrast}
@@ -151,6 +168,7 @@ cd ../
 
 # iterate across rescaling
 for r_coef in ${R_COEFS[@]}; do
+  # If directory exists (e.g. 2nd pass after QC and manual correction), we should remove it
   if [ -d "anat_r${r_coef}" ]; then
     rm -r "anat_r${r_coef}"
     echo "anat_r${r_coef} already exists: removing folder"
@@ -177,10 +195,10 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${file_c_crop_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo}
+    affine_transfo -i ${file_c_crop_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo}
     file_c_crop_r_t=${file_c_crop_r}_t${i_transfo}
     # transform the labeled segmentation with same transfo values
-    affine_transfo -i ${file_crop_label_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$config_script -o _t${i_transfo} -interpolation 0
+    affine_transfo -i ${file_crop_label_c_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo} -interpolation 0
     file_crop_label_c_r_t=${file_crop_label_c_r}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist ${file_c_crop_r_t} ${contrast}
@@ -217,3 +235,5 @@ echo "SCT version: `sct_version`"
 echo "Ran on:      `uname -nsr`"
 echo "Duration:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 echo "~~~"
+
+}
