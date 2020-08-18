@@ -5,6 +5,9 @@ from __future__ import division
 #########################################################################################
 #
 # detect Ponto-Medullary Junction location and pass parameters to process_data.sh
+# process_data will then crop image: sct_crop_image -i ${file}.nii.gz -xmin ${x_min} -xmax ${x_max} -zmax ${z_pmj}
+# check for QC, if problem, do it manually, push to the dataset, and run a 2nd pass
+#
 #
 # example: python get_pmj.py -i sub-amu01_T1w_pmj.nii.gz -o nx
 # ---------------------------------------------------------------------------------------
@@ -38,12 +41,6 @@ def get_parser():
         help='Return desired image parameter(e.g. image shape: nx)',
     )
     return parser
-
-# check for QC, if problem, do it manually, push to the dataset, and run a 2nd pass
-# run a small python script that will fetch the `z_pmj` coordinate of the label
-# note: you can also run: sct_label_utils -i IMAGE_pmj.nii.gz -display
-# fetch n_x dim
-# Crop image
 
 
 def main():
