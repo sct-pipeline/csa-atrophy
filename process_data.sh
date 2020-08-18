@@ -43,7 +43,7 @@ echo "transfo_file: $transfo_file"
 
 # FUNCTIONS
 # ==============================================================================
-image_crop_if_does_not_exist(){
+crop_image(){
   local file=$1
   local file_seg=$2
   local contrast=$3
@@ -164,7 +164,7 @@ segment_if_does_not_exist $file_c_or ${contrast}
 # name segmented file
 file_c_or_seg=${FILESEG}
 # crop image
-image_crop_if_does_not_exist ${file_c_or} ${file_c_or_seg} ${contrast}
+crop_image ${file_c_or} ${file_c_or_seg} ${contrast}
 file_c_or_crop=${file_c_or}_crop
 file_c_or_seg_crop=${file_c_or_seg}_crop
 # Label spinal cord (only if it does not exist) in dir anat

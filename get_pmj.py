@@ -1,5 +1,3 @@
-from __future__ import division
-
 # !/usr/bin/env python
 # -*- coding: utf-8
 #########################################################################################
@@ -16,10 +14,13 @@ from __future__ import division
 # About the license: see the file LICENSE
 #########################################################################################
 
+from __future__ import division
+
 import os
 import argparse
 import nibabel as nib
 import numpy as np
+
 
 def get_parser():
     """parser function"""
@@ -33,12 +34,13 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help='Path to image with Ponto-Medullary Junction label (e.g. "csa_atrophy_results/data_processed/sub-amu01/anat/sub-amu01_T1w_pmj.nii.gz")',
+        help='Path to image with Ponto-Medullary Junction label '
+             '(e.g. "csa_atrophy_results/data_processed/sub-amu01/anat/sub-amu01_T1w_pmj.nii.gz")',
     )
     mandatory.add_argument(
         "-o",
         required=True,
-        help='Return desired image parameter(e.g. image shape: nx)',
+        help='Return desired image parameter. See variable dict_param() in main().',
     )
     return parser
 
@@ -64,7 +66,7 @@ def main():
                   'x_pmj': x_pmj[0],
                   'y_pmj': y_pmj[0],
                   'z_pmj': z_pmj[0],
-                  'x_min': round(nx/2 - 20),
+                  'x_min': round(nx/2 - 20),  # 20 is the number of voxels we want to crop from, assuming
                   'x_max': round(nx/2 + 20),
     }
     print(dict_param[arguments.o])
