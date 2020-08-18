@@ -36,7 +36,6 @@ setup(
             'yaml_parser=yaml_parser:main',
             'csa_rescale_stat=csa_rescale_stat:main',
             'manual_correction=manual_correction:main',
-            'get_pmj=get_pmj:main'
         ],
     },
 )
