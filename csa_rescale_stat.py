@@ -281,7 +281,7 @@ def add_gt_to_dataframe(df):
     # iterate across different vertebrae levels and add ground truth values to each subject in dataframe
     # get CSA values without rescale
     csa_without_rescale = df.groupby('rescale').get_group(1).groupby(['basename']).mean()['MEAN(area)']
-    df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)] = np.nan
+    df['theoretic_csa'] = np.nan
     # iterate across rescaling coefficients
     for name, group in df.groupby('rescale'):
         # get group rescale value
@@ -291,8 +291,9 @@ def add_gt_to_dataframe(df):
         for subject in group.index.values:
             # if dataframe subject exist in csa_without_rescale register theoretic csa value in th_csa_cX_cY
             if subject in csa_without_rescale.index.values:
-                group.loc[subject, 'theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)] = csa_without_rescale.loc[subject] * (atrophy ** 2)
-        df.loc[atrophy, 'theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)] = group['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)].values
+                group.loc[subject, 'theoretic_csa'] = csa_without_rescale.loc[subject] * (atrophy ** 2)
+        df.loc[atrophy, 'theoretic_csa'] = group['theoretic_csa'].values
+        df.loc[atrophy, 'csa_without_rescale'] = df.groupby('rescale').get_group(1)['MEAN(area)'].values
     return df
 
 
@@ -302,16 +303,11 @@ def add_stat_to_dataframe(df):
         :return df_a: modified dataframe with added gt_csa, diff_csa, perc_diff_csa for different vertebrae levels
         """
     # add column diff
-    df['diff_c' + str(min_vert) + '_c' + str(max_vert)] = df['MEAN(area)'].sub(
-        df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)]).abs()
+    df['diff'] = df['MEAN(area)'].sub(df['theoretic_csa']).abs()
     # add column perc_diff
-    df['perc_diff_c' + str(min_vert) + '_c' + str(max_vert)] = 100 * df[
-        'diff_c' + str(min_vert) + '_c' + str(max_vert)].div(df['theoretic_csa_c' + str(min_vert) + '_c' + str(max_vert)])
+    df['perc_diff'] = 100 * df['diff'].div(df['theoretic_csa'])
     # add column ratio
-    for name, group in df.reset_index().groupby('rescale'):
-        atrophy = group['rescale'].values[0]
-        df.loc[atrophy, 'csa_without_rescale'] = df.groupby('rescale').get_group(1)['MEAN(area)'].values
-    df['ratio_c' + str(min_vert) + '_c' + str(max_vert)] = 100 - 100 * df['MEAN(area)'].div(df['csa_without_rescale'])
+    df['ratio'] = 100 - 100 * df['MEAN(area)'].div(df['csa_without_rescale'])
     return df
 
 
@@ -368,8 +364,11 @@ def main():
 
     # TODO update code below
 
-    df_sub = pd.DataFrame
-    df_sub['']
+    df_sub = pd.DataFrame()
+    df_sub['subject'] = list(tf.split('_T')[0] for tf in df.reset_index()['basename'])
+    df_sub['csa'] = df['MEAN(area)'].values
+    df_sub['rescale'] = df['rescale'].values
+    print(df_sub)
 
     # df = df_vert.set_index('VertLevel').drop(index=diff_vert).groupby(['rescale', 'basename']).mean()
     # df = add_gt_to_dataframe(df, max_vert, min_vert)
