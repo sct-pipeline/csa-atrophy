@@ -157,10 +157,16 @@ fi
 segment_if_does_not_exist $file_c_or ${contrast}
 # name segmented file
 file_c_or_seg=${FILESEG}
+
+# dilate segmentation (for cropping)
+sct_maths -i ${file_c_or_seg}.nii.gz -dilate 15mm -shape cube -o ${file_c_or_seg}_dil.nii.gz
 # crop image
-crop_image ${file_c_or} ${file_c_or_seg} ${contrast}
+sct_crop_image -i ${file_c_or}.nii.gz -m ${file_c_or_seg}_dil.nii.gz
 file_c_or_crop=${file_c_or}_crop
+# crop segmentation
+sct_crop_image -i ${file_c_or_seg}.nii.gz -m ${file_c_or_seg}_dil.nii.gz
 file_c_or_seg_crop=${file_c_or_seg}_crop
+
 # Label spinal cord (only if it does not exist) in dir anat
 label_if_does_not_exist $file_c_or_crop $file_c_or_seg_crop $contrast $contrast_str
 file_c_or_crop_label=${file_c_or_seg_crop}_labeled

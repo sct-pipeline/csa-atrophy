@@ -29,7 +29,6 @@ def get_parser():
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
-
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -42,6 +41,12 @@ def get_parser():
         required=True,
         help='Return desired image parameter. See variable dict_param() in main().',
     )
+    mandatory.add_argument(
+        "-size",
+        required=False,
+        help='Size, in mm, of the cropping window. The cropping window will be centered around the PMJ.',
+        default=50,
+    )
     return parser
 
 
@@ -52,22 +57,23 @@ def main():
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args()
-    img_cropped = nib.load(arguments.i)
-    data_cropped = img_cropped.get_fdata()
+    nii = nib.load(arguments.i)
+    data = nii.get_fdata()
     # first 3 values of shape respectively refer to space x, y and z
-    nx, ny, nz = img_cropped.shape
+    nx, ny, nz = nii.shape
+    px, py, pz = nii.dim
     # Ponto-Medullary Junction location
-    x_pmj, y_pmj, z_pmj = np.where(data_cropped)
+    x_pmj, y_pmj, z_pmj = np.where(data)
     # dictionnary to pass elements to process_data.sh
     dict_param = {
-                  'nx' : nx,
-                  'ny' : ny,
-                  'nz' : nz,
-                  'x_pmj': x_pmj[0],
-                  'y_pmj': y_pmj[0],
-                  'z_pmj': z_pmj[0],
-                  'x_min': round(nx/2 - 20),  # 20 is the number of voxels we want to crop from, assuming
-                  'x_max': round(nx/2 + 20),
+        'nx': nx,
+        'ny': ny,
+        'nz': nz,
+        'x_pmj': x_pmj[0],
+        'y_pmj': y_pmj[0],
+        'z_pmj': z_pmj[0],
+        'x_min': round(x_pmj[0] - arguments.size/(2*px)),  # 20 is the number of voxels we want to crop from, assuming
+        'x_max': round(nx/2 + 20),
     }
     print(dict_param[arguments.o])
 
