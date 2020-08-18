@@ -11,7 +11,7 @@
 # Author: Julien Cohen-Adad, Paul Bautin
 ###################################################
 
-# TODO: crop data to save computation time
+# TODO: simplify variable names: no need to call file_or_c_blablabla. Instead: update file
 
 # Uncomment for full verbose
 set -x
@@ -118,7 +118,7 @@ segment_if_does_not_exist(){
 sct_check_dependencies -short
 # Copy config files to output results folder
 mkdir ${PATH_RESULTS}/$SUBJECT/
-cp -u $config_script ${PATH_RESULTS}/$SUBJECT/
+cp $config_script ${PATH_RESULTS}/$SUBJECT/
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
@@ -141,8 +141,7 @@ if [ $contrast == "t2" ]; then
   # Resample to 0.8mm iso
   sct_resample -i ${file_c}_RPI.nii.gz -mm 0.8x0.8x0.8 -o ${file_c_o}r.nii.gz
   file_c_or=${file_c_o}r
-fi
-if [ $contrast == "t1" ]; then
+elif [ $contrast == "t1" ]; then
   contrast_str="T1w"
   file_c=${SUBJECT}_${contrast_str}
   # Reorient to RPI
