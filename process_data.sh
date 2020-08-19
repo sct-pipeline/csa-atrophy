@@ -92,9 +92,6 @@ segment_if_does_not_exist(){
 # ==============================================================================
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
-# Copy config files to output results folder
-mkdir ${PATH_RESULTS}/$SUBJECT/
-cp $config_script ${PATH_RESULTS}/$SUBJECT/
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
@@ -110,41 +107,36 @@ cd anat
 # Reorient to RPI and resample file
 if [ $contrast == "t2" ]; then
   contrast_str="T2w"
-  file_c=${SUBJECT}_${contrast_str}
-  # Reorient to RPI
-  sct_image -i ${file_c}.nii.gz -setorient RPI -o ${file_c}_RPI.nii.gz
-  file_c_o=${file_c}_RPI
-  # Resample to 0.8mm iso
-  sct_resample -i ${file_c}_RPI.nii.gz -mm 0.8x0.8x0.8 -o ${file_c_o}r.nii.gz
-  file_c_or=${file_c_o}r
+  interp="0.8x0.8x0.8"
 elif [ $contrast == "t1" ]; then
   contrast_str="T1w"
-  file_c=${SUBJECT}_${contrast_str}
-  # Reorient to RPI
-  sct_image -i ${file_c}.nii.gz -setorient RPI -o ${file_c}_RPI.nii.gz
-  file_c_o=${file_c}_RPI
-  # Resample to 1mm iso
-  sct_resample -i ${file_c}_RPI.nii.gz -mm 1x1x1 -o ${file_c_o}r.nii.gz
-  file_c_or=${file_c_o}r
+  interp="1x1x1"
 fi
+file=${SUBJECT}_${contrast_str}
+# Reorient to RPI
+sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
+file=${file}_RPI
+# Resample isotropically
+sct_resample -i ${file}.nii.gz -mm $interp -o ${file}_r.nii.gz
+file=${file}_r
 
 # Segment spinal cord (only if it does not exist) in dir anat
-segment_if_does_not_exist $file_c_or ${contrast}
+segment_if_does_not_exist $file ${contrast}
 # name segmented file
-file_c_or_seg=${FILESEG}
-
-# dilate segmentation (for cropping)
-sct_maths -i ${file_c_or_seg}.nii.gz -dilate 15 -shape cube -o ${file_c_or_seg}_dil.nii.gz
-# crop image
-sct_crop_image -i ${file_c_or}.nii.gz -m ${file_c_or_seg}_dil.nii.gz
-file_c_or_crop=${file_c_or}_crop
-# crop segmentation
-sct_crop_image -i ${file_c_or_seg}.nii.gz -m ${file_c_or_seg}_dil.nii.gz
-file_c_or_seg_crop=${file_c_or_seg}_crop
+file_seg=${FILESEG}
 
 # Label spinal cord (only if it does not exist) in dir anat
-label_if_does_not_exist $file_c_or_crop $file_c_or_seg_crop $contrast $contrast_str
-file_c_or_crop_label=${file_c_or_seg_crop}_labeled
+label_if_does_not_exist $file $file_seg $contrast $contrast_str
+file_label=${file_seg}_labeled
+
+# dilate segmentation (for cropping)
+sct_maths -i ${file_seg}.nii.gz -dilate 15 -shape cube -o ${file_seg}_dil.nii.gz
+# crop image
+sct_crop_image -i ${file}.nii.gz -m ${file_seg}_dil.nii.gz
+file=${file}_crop
+# crop segmentation
+sct_crop_image -i ${file_seg}.nii.gz -m ${file_seg}_dil.nii.gz
+file_seg=${file_seg}_crop
 cd ../
 
 
@@ -164,11 +156,11 @@ for r_coef in ${R_COEFS[@]}; do
   cd anat_r${r_coef}
 
   # Rescale header of native nifti file
-  file_c_or_crop_r=${file_c_or_crop}_r${r_coef}
-  affine_rescale -i ../anat/${file_c_or_crop}.nii.gz -r ${r_coef} -o ${file_c_or_crop_r}.nii.gz
+  file_r=${file}_r${r_coef}
+  affine_rescale -i ../anat/${file}.nii.gz -r ${r_coef} -o ${file_r}.nii.gz
   # rescale labeled segmentation
-  file_c_or_crop_label_r=${file_c_or_crop_r}_seg_labeled
-  affine_rescale -i ../anat/${file_c_or_crop_label}.nii.gz -r ${r_coef} -o ${file_c_or_crop_label_r}.nii.gz
+  file_label_r=${file_r}_seg_labeled
+  affine_rescale -i ../anat/${file_label}.nii.gz -r ${r_coef} -o ${file_label_r}.nii.gz
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
@@ -178,23 +170,23 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${file_c_or_crop_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo}
-    file_c_or_crop_r_t=${file_c_or_crop_r}_t${i_transfo}
+    affine_transfo -i ${file_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config $config_script -o _t${i_transfo}
+    file_r_t=${file_r}_t${i_transfo}
     # transform the labeled segmentation with same transfo values
-    affine_transfo -i ${file_c_or_crop_label_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo} -interpolation 0
-    file_c_or_crop_label_r_t=${file_c_or_crop_label_r}_t${i_transfo}
+    affine_transfo -i ${file_label_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config $config_script -o _t${i_transfo} -interpolation 0
+    file_label_r_t=${file_label_r}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
-    segment_if_does_not_exist ${file_c_or_crop_r_t} ${contrast}
+    segment_if_does_not_exist ${file_r_t} ${contrast}
     # name segmented file
-    file_c_or_crop_r_t_seg=${FILESEG}
+    file_r_t_seg=${FILESEG}
     # Compute average CSA between C2 and C5 levels (append across subjects)
-    sct_process_segmentation -i $file_c_or_crop_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_c_or_crop_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_r_t}.nii.gz"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_r_t_seg}.nii.gz"
-    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_c_or_crop_label_r_t}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_r_t}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_r_t_seg}.nii.gz"
+    "$PATH_DATA_PROCESSED/${SUBJECT}/anat_r${r_coef}/${file_label_r_t}.nii.gz"
     )
   done
   cd ../
