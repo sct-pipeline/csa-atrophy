@@ -92,9 +92,6 @@ segment_if_does_not_exist(){
 # ==============================================================================
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
-# Copy config files to output results folder
-mkdir ${PATH_RESULTS}/$SUBJECT/
-cp $config_script ${PATH_RESULTS}/$SUBJECT/
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
@@ -110,23 +107,18 @@ cd anat
 # Reorient to RPI and resample file
 if [ $contrast == "t2" ]; then
   contrast_str="T2w"
-  file=${SUBJECT}_${contrast_str}
-  # Reorient to RPI
-  sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
-  file=${file}_RPI
-  # Resample to 0.8mm iso
-  sct_resample -i ${file}.nii.gz -mm 0.8x0.8x0.8 -o ${file}_r.nii.gz
-  file=${file}_r
+  interp="0.8x0.8x0.8"
 elif [ $contrast == "t1" ]; then
   contrast_str="T1w"
-  file=${SUBJECT}_${contrast_str}
-  # Reorient to RPI
-  sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
-  file=${file}_RPI
-  # Resample to 1mm iso
-  sct_resample -i ${file}.nii.gz -mm 1x1x1 -o ${file}_r.nii.gz
-  file=${file}_r
+  interp="1x1x1"
 fi
+file=${SUBJECT}_${contrast_str}
+# Reorient to RPI
+sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
+file=${file}_RPI
+# Resample isotropically
+sct_resample -i ${file}.nii.gz -mm $interp -o ${file}_r.nii.gz
+file=${file}_r
 
 # Segment spinal cord (only if it does not exist) in dir anat
 segment_if_does_not_exist $file ${contrast}
@@ -178,10 +170,10 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
-    affine_transfo -i ${file_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo}
+    affine_transfo -i ${file_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config $config_script -o _t${i_transfo}
     file_r_t=${file_r}_t${i_transfo}
     # transform the labeled segmentation with same transfo values
-    affine_transfo -i ${file_label_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config ${PATH_RESULTS}/$SUBJECT/$config_script -o _t${i_transfo} -interpolation 0
+    affine_transfo -i ${file_label_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config $config_script -o _t${i_transfo} -interpolation 0
     file_label_r_t=${file_label_r}_t${i_transfo}
     # Segment spinal cord (only if it does not exist)
     segment_if_does_not_exist ${file_r_t} ${contrast}
