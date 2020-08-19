@@ -91,7 +91,7 @@ def yaml_parser(config_file):
 
 
 def plot_perc_err(df, path_output):
-    """plot percentage difference between simulated atrophy and ground truth atrophy
+    """plot percentage difference between measured rescaling and rescaling
     :param df: dataframe for computing stats across subject: df_rescale
     :param path_output: directory in which plot is saved
     """
@@ -221,12 +221,10 @@ def add_columns_df_sub(df):
     :param df: dataframe for computing stats per subject: df_sub
     :return df: modified dataframe with added theoretic_csa and csa_without_rescale
     """
-    # iterate across different vertebrae levels and add ground truth values to each subject in dataframe
     # get CSA values without rescale
     df = df.set_index('rescale')
     csa_without_rescale = df.groupby('rescale').get_group(1)
     csa_without_rescale = csa_without_rescale.set_index('subject')
-    df['theoretic_csa'] = np.nan
     # iterate across rescaling coefficients
     for rescale, group in df.groupby('rescale'):
         # get group rescale value
@@ -281,7 +279,6 @@ def main():
         if not all(elem in set(list(df_vert['VertLevel'].values)) for elem in vertlevels):
             raise ValueError("\nInput vertebral levels '{}' do not exist in csv files".format(vertlevels))
     # register vertebrae levels of interest (Default: all vertebrae levels in csv files)
-    # diff_vert = np.setdiff1d(list(set(df_vert['VertLevel'].values)), list(vertlevels))
     print("Stats are averaged across vertebral levels: {}".format(vertlevels))
 
     # Create new dataframe with only selected vertebral levels
