@@ -90,22 +90,20 @@ def yaml_parser(config_file):
     return config_param
 
 
-def plot_perc_err(df, columns_to_plot, df_results, path_output):
+def plot_perc_err(df, path_output):
     """plot percentage difference between simulated atrophy and ground truth atrophy
-    for different vertebrae levels
-    :param df: dataframe for first plot
-    :param columns_to_plot: perc_diff dataframe columns for plotting
+    :param df: dataframe for computing stats across subject: df_rescale
     :param path_output: directory in which plot is saved
     """
-    df = df.reset_index().set_index('rescale_in_percent')
+    df = df.reset_index().set_index('rescale_area')
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
-    df.groupby('rescale_in_percent')[columns_to_plot].mean().plot(kind='bar', ax=axes[0], grid=True)
+    df.groupby('rescale_area')['mean_perc_error'].mean().plot(kind='bar', ax=axes[0], grid=True)
     axes[0].set_title('mean error function of area rescaling')
     axes[0].set_ylabel('error in %')
-    df_results['intra_sub_cov'].plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
-    axes[1].set_title('COV of intra-subject CSA in function of area rescaling')
+    df['std_perc_error'].plot(kind='bar', ax=axes[1], sharex=True, sharey=True, legend=False)
+    axes[1].set_title('STD of error in function of area rescaling')
     plt.xlabel('area rescaling in %')
-    plt.ylabel('COV in %')
+    plt.ylabel('STD in %')
     plt.grid()
     plt.tight_layout()
     output_file = path_output + "/err_plot.png"
@@ -114,11 +112,11 @@ def plot_perc_err(df, columns_to_plot, df_results, path_output):
 
 def boxplot_csa(df, path_output):
     """boxplot CSA for different rescaling values
-    :param df: dataframe with csv files data
+    :param df: dataframe with csv files data: df_vert
     :param path_output: directory in which plot is saved
     """
     fig2 = plt.figure()
-    df.boxplot(column=['MEAN(area)'], by='rescale_in_percent', showmeans=True, meanline=True)
+    df.boxplot(column=['MEAN(area)'], by='rescale_area', showmeans=True, meanline=True)
     plt.title('Boxplot of CSA in function of area rescaling')
     plt.suptitle("")
     plt.ylabel('csa in mm^2')
@@ -127,14 +125,13 @@ def boxplot_csa(df, path_output):
     plt.savefig(output_file)
 
 
-def boxplot_atrophy(df, column_ratio, path_output):
+def boxplot_atrophy(df, path_output):
     """boxplot error for different rescaling values
-    :param df: dataframe with csv files data
-    :param min_max_vertlevels: uses dataframe column with most distant vertebrae levels. Example: perc_diff_c2_c5
+    :param df: dataframe for computing stats per subject: df_sub
     :param path_output: directory in which plot is saved
     """
     fig3 = plt.figure()
-    df.boxplot(column=column_ratio, by='rescale_in_percent', showmeans=True, meanline=True)
+    df.boxplot(column='rescale_estimated', by='rescale_area', showmeans=True, meanline=True)
     plt.title('boxplot of measured atrophy in function of area rescaling')
     plt.ylabel('measured atrophy in %')
     plt.xlabel('area rescaling in %')
@@ -190,13 +187,9 @@ def sample_size(df, config_param):
     ratio patients/control 1:1 and with the assumption that both samples have the same STD.
     ref: Suresh and Chandrashekara 2012. “Sample size estimation and power analysis for clinical research studies”
     doi: 10.4103/0974-1208.97779
-    Example: sample_size(df_a, 0.95, 0.8, mean_control=None, mean_patient=None, atrophy=7.7)
-    :param df: dataframe with csv files data
-    :param atrophy: expected atrophy in mm^2. Example atrophy=7.7
-    :param conf: Confidence level. Example 0.8
-    :param power: Power level. Example 0.9
-    :param mean_control: mean CSA value of control group
-    :param mean_patient: mean csa value of patient group
+    :param df: dataframe for computing stats across subject: df_rescale
+    :param config_param: configuration parameters can be modified in config.yaml file. Example conf = 0.95
+    :return sample_size: sample size for each rescaling
     """
     sample_size = []
     # configuration parameters can be modified in config.yaml file
@@ -219,17 +212,14 @@ def sample_size(df, config_param):
             deno_n = (abs(atrophy)) ** 2
             sample_size.append(ceil(num_n / deno_n))
         else:
-            print('hello')
             sample_size.append('inf')
     return sample_size
-        #print("Minimum sample size to detect an atrophy of {} mm² is: {}".format(atrophy, sample))
-        #print("With parameters: \n - STD: {} \n - power: {} %\n - significance: {} %\n - ratio 1:1 (patients/controls)".format(round(std_sample, 3), power*100, conf*100))
 
 
-def add_gt_to_dataframe(df):
-    """  Add theoretic CSA values (rX^2 * MEAN(area)) to dataframe
-    :param df: dataframe with csv files data
-    :return df: modified dataframe with added theoretic_csa
+def add_columns_df_sub(df):
+    """  Add columns theoretic CSA values (rX^2 * MEAN(area)) and CSA without rescaling to dataframe
+    :param df: dataframe for computing stats per subject: df_sub
+    :return df: modified dataframe with added theoretic_csa and csa_without_rescale
     """
     # iterate across different vertebrae levels and add ground truth values to each subject in dataframe
     # get CSA values without rescale
@@ -250,6 +240,7 @@ def add_gt_to_dataframe(df):
         df.loc[rescale, 'csa_without_rescale'] = csa_without_rescale['mean'].values
     df = df.reset_index()
     return df
+
 
 def main():
     """
@@ -279,6 +270,7 @@ def main():
     df_vert['basename'] = list(
         (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
         path in df_vert['Filename'])
+    df_vert['rescale_area'] = list(100 * (r ** 2) for r in df_vert['rescale'])
 
 
     # verify if vertlevels of interest were given in input by user
@@ -309,25 +301,26 @@ def main():
     df_sub = pd.DataFrame()
     # add necessary columns to df_sub dataframe
     df_sub['rescale'] = df.groupby(['rescale','subject']).mean().reset_index()['rescale']
-    df_sub['rescale_area'] = 100 * (1 - df.groupby(['rescale', 'subject']).mean().reset_index()['rescale'] ** 2)
+    df_sub['rescale_area'] = 100 * (df.groupby(['rescale', 'subject']).mean().reset_index()['rescale'] ** 2)
     df_sub['subject'] = df.groupby(['rescale', 'subject']).mean().reset_index()['subject']
     df_sub['num_tf'] = df.groupby(['rescale', 'subject'])['transfo'].count().values
     # add stats to per subject datframe
     df_sub['mean'] = df.groupby(['rescale', 'subject']).mean()['MEAN(area)'].values
     df_sub['std'] = df.groupby(['rescale', 'subject']).std()['MEAN(area)'].values
     df_sub['cov'] = 100 * df_sub['std'].div(df_sub['mean'])
-    df_sub = add_gt_to_dataframe(df_sub)
+    df_sub = add_columns_df_sub(df_sub)
     df_sub['rescale_estimated'] = 100 * df_sub['mean'].div(df_sub['csa_without_rescale'])
     df_sub['error'] = (df_sub['mean'] - df_sub['theoretic_csa']).abs()
     df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).abs().div(df_sub['mean'])
-    print(round(df_sub, 2))
+    df_sub = df_sub.round(2)
+    print(df_sub)
 
 
     # Ceate dataframe for computing stats across subject: df_rescale
     print("\n====================rescaling_dataframe==========================\n")
     df_rescale = pd.DataFrame()
     df_rescale['rescale'] = df_sub.groupby(['rescale']).mean().reset_index()['rescale']
-    df_rescale['rescale_area'] = 100 * (1 - df_sub.groupby('rescale').mean().reset_index()['rescale'] ** 2)
+    df_rescale['rescale_area'] = 100 * (df_sub.groupby('rescale').mean().reset_index()['rescale'] ** 2)
     df_rescale['num_sub'] = df_sub.groupby('rescale')['mean'].count().values
     df_rescale['mean_inter'] = df_sub.groupby('rescale').mean()['mean'].values
     df_rescale['std_intra'] = df_sub.groupby('rescale').mean()['std'].values
@@ -335,34 +328,34 @@ def main():
     df_rescale['std_inter'] = df_sub.groupby('rescale').std()['mean'].values
     df_rescale['mean_rescale_estimated'] = df_sub.groupby('rescale').mean()['rescale_estimated'].values
     df_rescale['mean_rescale_estimated'] = df_sub.groupby('rescale').std()['rescale_estimated'].values
-    df_rescale['mean_error'] = df_sub.groupby('rescale').mean()['error'].values
-    df_rescale['std_error'] = df_sub.groupby('rescale').std()['error'].values
+    df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
+    df_rescale['std_perc_error'] = df_sub.groupby('rescale').std()['perc_error'].values
     df_rescale['sample_size'] = sample_size(df_rescale, config_param)
-    print(round(df_rescale,2))
+    df_rescale = df_rescale.round(2)
+    print(df_rescale)
 
 
     # plot graph if verbose is present
     if arguments.fig:
         if not os.path.isdir(arguments.o):
             os.makedirs(arguments.o)
+        df_vert = df_vert.round(2)
 
         # plot percentage difference between simulated atrophy and ground truth atrophy
-        column_perc_diff = [i for i in df.columns if 'perc_diff' in i]
-        plot_perc_err(df, column_perc_diff, df_results, path_output)
+        plot_perc_err(df_rescale, path_output)
 
         # boxplot CSA across different rescaling values
-        boxplot_csa(df, path_output)
+        boxplot_csa(df_vert, path_output)
 
         # boxplot of atrophy across different rescaling values
-        column_ratio = [j for j in df.columns if 'ratio' in j]
-        boxplot_atrophy(df, column_ratio, path_output)
+        boxplot_atrophy(df_sub, path_output)
 
         # plot minimum number of patients required to detect an atrophy of a given value
         # z_conf = z_score for confidence level,
         # z_power = z_score for power level,
         # std = STD of subjects without rescaling CSA values
         # mean_csa =  mean CSA value of subjects without rescaling
-        plot_sample_size(z_conf=1.96, z_power=(0.84, 1.282), std=df_results.loc[0, 'inter_sub_std'], mean_csa=df_results.loc[0, 'inter_sub_mean'], path_output=path_output)
+        plot_sample_size(z_conf=1.96, z_power=(0.84, 1.282), std=df_rescale.loc[1, 'std_inter'], mean_csa=df_rescale.loc[1, 'mean_inter'], path_output=path_output)
         print('\nfigures have been plotted in dataset')
 
 
