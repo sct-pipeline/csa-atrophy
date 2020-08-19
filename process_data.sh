@@ -115,8 +115,8 @@ if [ $contrast == "t2" ]; then
   sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
   file=${file}_RPI
   # Resample to 0.8mm iso
-  sct_resample -i ${file}.nii.gz -mm 0.8x0.8x0.8 -o ${file}r.nii.gz
-  file=${file}r
+  sct_resample -i ${file}.nii.gz -mm 0.8x0.8x0.8 -o ${file}_r.nii.gz
+  file=${file}_r
 elif [ $contrast == "t1" ]; then
   contrast_str="T1w"
   file=${SUBJECT}_${contrast_str}
@@ -124,14 +124,18 @@ elif [ $contrast == "t1" ]; then
   sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
   file=${file}_RPI
   # Resample to 1mm iso
-  sct_resample -i ${file}.nii.gz -mm 1x1x1 -o ${file}r.nii.gz
-  file=${file}r
+  sct_resample -i ${file}.nii.gz -mm 1x1x1 -o ${file}_r.nii.gz
+  file=${file}_r
 fi
 
 # Segment spinal cord (only if it does not exist) in dir anat
 segment_if_does_not_exist $file ${contrast}
 # name segmented file
 file_seg=${FILESEG}
+
+# Label spinal cord (only if it does not exist) in dir anat
+label_if_does_not_exist $file $file_seg $contrast $contrast_str
+file_label=${file_seg}_labeled
 
 # dilate segmentation (for cropping)
 sct_maths -i ${file_seg}.nii.gz -dilate 15 -shape cube -o ${file_seg}_dil.nii.gz
@@ -141,10 +145,6 @@ file=${file}_crop
 # crop segmentation
 sct_crop_image -i ${file_seg}.nii.gz -m ${file_seg}_dil.nii.gz
 file_seg=${file_seg}_crop
-
-# Label spinal cord (only if it does not exist) in dir anat
-label_if_does_not_exist $file $file_seg $contrast $contrast_str
-file_label=${file_seg}_labeled
 cd ../
 
 
