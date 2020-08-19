@@ -184,61 +184,7 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
     plt.savefig(output_file, bbox_inches='tight')
 
 
-def inter_subject_mean(df, df_results):
-    """
-    Compute inter-subject CSA average for each rescaling
-    :param df: dataframe with csv files data
-    :param df_results: results dataframe
-    """
-    df = df.reset_index()
-    for name, group in df.groupby('rescale_in_percent'):
-        inter_sub_mean = group.groupby('subject')['MEAN(area)'].mean().mean()
-        atrophy = set(group.reset_index().rescale_in_percent)
-        print("For rescaling: {} MEAN inter-subject CSA is {} mm^2".format(atrophy, round(inter_sub_mean, 3)))
-        # fill results dataframe
-        df_results.loc[atrophy, 'inter_sub_mean'] = inter_sub_mean
-    print('\n')
-
-
-def inter_subject_std(df, df_results):
-    """
-    Compute inter-subject CSA STD for each rescaling
-    :param df: dataframe with csv files data
-    :param df_results: results dataframe
-    """
-    # TODO: possible normalization of csa for inter-subject studies
-    df = df.reset_index()
-    for name, group in df.groupby('rescale_in_percent'):
-        inter_sub_std = group.groupby('subject')['MEAN(area)'].mean().std()
-        inter_sub_cov = stats.variation(group.groupby('subject')['MEAN(area)'].mean()) * 100
-        atrophy = set(group.reset_index().rescale_in_percent)
-        print("For rescaling: {} STD of inter-subject CSA is {} mm^2 and COV is {} %".format(atrophy, round(inter_sub_std, 3), round(inter_sub_cov, 3)))
-        # fill results dataframe
-        df_results.loc[atrophy, 'inter_sub_std'] = inter_sub_std
-        df_results.loc[atrophy, 'inter_sub_cov'] = inter_sub_cov
-    print('\n')
-
-
-def intra_subject_std(df, df_results):
-    """
-    Compute intra-subject CSA STD for each rescaling
-    :param df: dataframe with csv files data
-    :param df_results: results dataframe
-    """
-    df = df.reset_index()
-    for name, group in df.groupby('rescale_in_percent'):
-        intra_sub_std = group.groupby('subject')['MEAN(area)'].std().mean()
-        intra_sub_cov = (group.groupby('subject')['MEAN(area)'].std() / group.groupby('subject')['MEAN(area)'].mean()).mean() * 100
-        atrophy = set(group.reset_index().rescale_in_percent)
-        print("For rescaling: {} STD of intra-subject CSA is {} mm^2 and COV is {} %".format(atrophy, round(intra_sub_std, 3), round(intra_sub_cov, 3)))
-        # fill results dataframe
-        df_results.loc[atrophy, 'intra_sub_std'] = intra_sub_std
-        df_results.loc[atrophy, 'intra_sub_cov'] = intra_sub_cov
-    print('\n')
-
-
-
-def sample_size(df, atrophy, conf, power, mean_control=None, mean_patient=None):
+def sample_size(df, config_param):
     """
     Calculate the minimum number of patients required to detect an atrophy of a given value (i.e. power analysis),
     ratio patients/control 1:1 and with the assumption that both samples have the same STD.
@@ -252,25 +198,32 @@ def sample_size(df, atrophy, conf, power, mean_control=None, mean_patient=None):
     :param mean_control: mean CSA value of control group
     :param mean_patient: mean csa value of patient group
     """
+    sample_size = []
+    # configuration parameters can be modified in config.yaml file
+    # conf = confidence level
+    conf = config_param['stats']['sample_size']['conf']
+    # power = power level
+    power = config_param['stats']['sample_size']['power']
     z_score_dict = {'confidence_Level': [0.60, 0.70, 0.8, 0.85, 0.90, 0.95],
                     'z_value': [0.842, 1.04, 1.28, 1.44, 1.64, 1.96], }
 
     df_z = pd.DataFrame(z_score_dict)
     df_z = df_z.set_index('confidence_Level')
-    std_sample = df.groupby('rescale').get_group(1).groupby('subject')['MEAN(area)'].mean().std()
-    # Check if user input atrophy percentage or mean_control and mean_patient
-    if atrophy:
-        atrophy = atrophy
-    elif mean_control is not None & mean_patient is not None:
-        atrophy = abs(mean_control - mean_patient)
-    else:
-        print('input error: either input mean_control and mean_patient or atrophy in mm^2')
-    # sample size calculation
-    num_n = 2 * ((df_z.at[conf, 'z_value'] + df_z.at[power, 'z_value']) ** 2) * (std_sample ** 2)
-    deno_n = (abs(atrophy)) ** 2
-    sample = ceil(num_n / deno_n)
-    print("Minimum sample size to detect an atrophy of {} mm² is: {}".format(atrophy, sample))
-    print("With parameters: \n - STD: {} \n - power: {} %\n - significance: {} %\n - ratio 1:1 (patients/controls)".format(round(std_sample, 3), power*100, conf*100))
+    for name, group in df.groupby('rescale'):
+        std = group['std_inter'].values[0]
+        mean_patient = group['mean_inter'].values[0]
+        mean_control = df.groupby('rescale').get_group(1)['mean_inter'].values[0]
+        atrophy = mean_control - mean_patient
+        if atrophy != 0:
+            num_n = 2 * ((df_z.at[conf, 'z_value'] + df_z.at[power, 'z_value']) ** 2) * (std ** 2)
+            deno_n = (abs(atrophy)) ** 2
+            sample_size.append(ceil(num_n / deno_n))
+        else:
+            print('hello')
+            sample_size.append('inf')
+    return sample_size
+        #print("Minimum sample size to detect an atrophy of {} mm² is: {}".format(atrophy, sample))
+        #print("With parameters: \n - STD: {} \n - power: {} %\n - significance: {} %\n - ratio 1:1 (patients/controls)".format(round(std_sample, 3), power*100, conf*100))
 
 
 def add_gt_to_dataframe(df):
@@ -280,36 +233,23 @@ def add_gt_to_dataframe(df):
     """
     # iterate across different vertebrae levels and add ground truth values to each subject in dataframe
     # get CSA values without rescale
-    csa_without_rescale = df.groupby('rescale').get_group(1).groupby(['basename']).mean()['MEAN(area)']
+    df = df.set_index('rescale')
+    csa_without_rescale = df.groupby('rescale').get_group(1)
+    csa_without_rescale = csa_without_rescale.set_index('subject')
     df['theoretic_csa'] = np.nan
     # iterate across rescaling coefficients
-    for name, group in df.groupby('rescale'):
+    for rescale, group in df.groupby('rescale'):
         # get group rescale value
-        group = group.reset_index().set_index('basename')
-        atrophy = group['rescale'].values[0]
+        group = group.reset_index().set_index('subject')
         # iterate across dataframe subjects
         for subject in group.index.values:
             # if dataframe subject exist in csa_without_rescale register theoretic csa value in th_csa_cX_cY
             if subject in csa_without_rescale.index.values:
-                group.loc[subject, 'theoretic_csa'] = csa_without_rescale.loc[subject] * (atrophy ** 2)
-        df.loc[atrophy, 'theoretic_csa'] = group['theoretic_csa'].values
-        df.loc[atrophy, 'csa_without_rescale'] = df.groupby('rescale').get_group(1)['MEAN(area)'].values
+                group.loc[subject, 'theoretic_csa'] = csa_without_rescale.loc[subject, 'mean'] * (rescale ** 2)
+        df.loc[rescale, 'theoretic_csa'] = group['theoretic_csa'].values
+        df.loc[rescale, 'csa_without_rescale'] = csa_without_rescale['mean'].values
+    df = df.reset_index()
     return df
-
-
-def add_stat_to_dataframe(df):
-    """ add columns diff_csa, perc_diff_csa to dataframe
-        :param df: original dataframe with csv file data
-        :return df_a: modified dataframe with added gt_csa, diff_csa, perc_diff_csa for different vertebrae levels
-        """
-    # add column diff
-    df['diff'] = df['MEAN(area)'].sub(df['theoretic_csa']).abs()
-    # add column perc_diff
-    df['perc_diff'] = 100 * df['diff'].div(df['theoretic_csa'])
-    # add column ratio
-    df['ratio'] = 100 - 100 * df['MEAN(area)'].div(df['csa_without_rescale'])
-    return df
-
 
 def main():
     """
@@ -319,11 +259,11 @@ def main():
     parser = get_parser()
     arguments = parser.parse_args()
     path_results = os.path.join(os.getcwd(), arguments.i)
+    vertlevels_input = arguments.l
+    path_output = arguments.o
 
     # aggregate all csv results files
     concatenate_csv_files(path_results)
-    vertlevels_input = arguments.l
-    path_output = arguments.o
 
     # read data
     data = pd.read_csv(os.path.join(path_results, r'csa_all.csv'), decimal=".")
@@ -340,6 +280,7 @@ def main():
         (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
         path in df_vert['Filename'])
 
+
     # verify if vertlevels of interest were given in input by user
     if vertlevels_input is None:
         vertlevels = list(set(df_vert['VertLevel'].values))
@@ -353,73 +294,52 @@ def main():
 
     # Create new dataframe with only selected vertebral levels
     df = df_vert[df_vert['VertLevel'].isin(vertlevels)]
-
     # Drop column VertLevel (no more used)
     df = df.drop('VertLevel', 1)
-
     # Average values across levels, for each subject
-    df.groupby(['rescale', 'basename']).mean()
+    df = df.groupby(['rescale', 'basename']).mean()
+    df = df.reset_index()
+    df['subject'] = list(tf.split('_T')[0] for tf in df['basename'])
+    df['transfo'] = list(tf.split('w_')[1] for tf in df['basename'])
+    df = df.drop('basename', 1)
 
-    # Add column "transfo" to DF
 
-    # TODO update code below
-
+    # Ceate dataframe for computing stats per subject: df_sub
+    print("\n====================subject_dataframe==========================\n")
     df_sub = pd.DataFrame()
-    df_sub['subject'] = list(tf.split('_T')[0] for tf in df.reset_index()['basename'])
-    df_sub['csa'] = df['MEAN(area)'].values
-    df_sub['rescale'] = df['rescale'].values
-    print(df_sub)
+    # add necessary columns to df_sub dataframe
+    df_sub['rescale'] = df.groupby(['rescale','subject']).mean().reset_index()['rescale']
+    df_sub['rescale_area'] = 100 * (1 - df.groupby(['rescale', 'subject']).mean().reset_index()['rescale'] ** 2)
+    df_sub['subject'] = df.groupby(['rescale', 'subject']).mean().reset_index()['subject']
+    df_sub['num_tf'] = df.groupby(['rescale', 'subject'])['transfo'].count().values
+    # add stats to per subject datframe
+    df_sub['mean'] = df.groupby(['rescale', 'subject']).mean()['MEAN(area)'].values
+    df_sub['std'] = df.groupby(['rescale', 'subject']).std()['MEAN(area)'].values
+    df_sub['cov'] = 100 * df_sub['std'].div(df_sub['mean'])
+    df_sub = add_gt_to_dataframe(df_sub)
+    df_sub['rescale_estimated'] = 100 * df_sub['mean'].div(df_sub['csa_without_rescale'])
+    df_sub['error'] = (df_sub['mean'] - df_sub['theoretic_csa']).abs()
+    df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).abs().div(df_sub['mean'])
+    print(round(df_sub, 2))
 
-    # df = df_vert.set_index('VertLevel').drop(index=diff_vert).groupby(['rescale', 'basename']).mean()
-    # df = add_gt_to_dataframe(df, max_vert, min_vert)
 
-    # Dataframe column additions diff, perc_diff for different vertebrae levels
-    df = add_stat_to_dataframe(df, max_vert, min_vert)
-    # add column 'subject' to dataframe
-    df['subject'] = list(tf.split('_T')[0] for tf in df.reset_index()['basename'])
-    df['rescale_in_percent'] = 100 - (df.reset_index()['rescale'] ** 2).values * 100
-    df['rescale_in_percent'] = df['rescale_in_percent'].round(2)
+    # Ceate dataframe for computing stats across subject: df_rescale
+    print("\n====================rescaling_dataframe==========================\n")
+    df_rescale = pd.DataFrame()
+    df_rescale['rescale'] = df_sub.groupby(['rescale']).mean().reset_index()['rescale']
+    df_rescale['rescale_area'] = 100 * (1 - df_sub.groupby('rescale').mean().reset_index()['rescale'] ** 2)
+    df_rescale['num_sub'] = df_sub.groupby('rescale')['mean'].count().values
+    df_rescale['mean_inter'] = df_sub.groupby('rescale').mean()['mean'].values
+    df_rescale['std_intra'] = df_sub.groupby('rescale').mean()['std'].values
+    df_rescale['cov_intra'] = df_sub.groupby('rescale').mean()['cov'].values
+    df_rescale['std_inter'] = df_sub.groupby('rescale').std()['mean'].values
+    df_rescale['mean_rescale_estimated'] = df_sub.groupby('rescale').mean()['rescale_estimated'].values
+    df_rescale['mean_rescale_estimated'] = df_sub.groupby('rescale').std()['rescale_estimated'].values
+    df_rescale['mean_error'] = df_sub.groupby('rescale').mean()['error'].values
+    df_rescale['std_error'] = df_sub.groupby('rescale').std()['error'].values
+    df_rescale['sample_size'] = sample_size(df_rescale, config_param)
+    print(round(df_rescale,2))
 
-    # Create results dataframe
-    rescaling = sorted(set(df.reset_index()['rescale_in_percent'].values))
-    data_results = {'rescaling':rescaling}
-    df_results = pd.DataFrame(data_results).set_index('rescaling')
-
-    # Print mean CSA for each rescaling
-    print("\n====================mean==========================\n")
-    inter_subject_mean(df, df_results)
-
-    # compute sample size
-    print("==================sample_size======================\n")
-    # configuration parameters can be modified in config.yaml file
-    atrophy = config_param['stats']['sample_size']['atrophy_sample']
-    # conf = confidence level
-    conf = config_param['stats']['sample_size']['conf']
-    # power = power level
-    power = config_param['stats']['sample_size']['power']
-    sample_size(df, atrophy, conf, power, mean_control=None, mean_patient=None)
-
-    # display number of subjects in test (multiple transformations of the same subjects are considered different)
-    print("\n=================number subjects=======================\n")
-    df['subject'] = list(tf.split('_T')[0] for tf in df.reset_index()['basename'])
-    for r in rescaling:
-        number_sub = df.groupby('subject')['MEAN(area)'].mean().count()
-        number_tf = df.groupby(['rescale', 'subject'])['MEAN(area)'].count().values[0]
-        print('For rescaling ' + str(r) + ' number of subjects is ' + str(number_sub) +
-              ' and number of transformations per subject ' + str(number_tf))
-        # fill results dataframe
-        df_results.loc[r, 'number_sub'] = number_sub
-        df_results.loc[r, 'number_tf'] = number_tf
-
-    # compute STD for different vertebrae levels
-    print("\n=======================inter_subject_std============================\n")
-    inter_sub_std = inter_subject_std(df, df_results)
-    print("\n===================intra_subject_std=========================\n")
-    intra_subject_std(df, df_results)
-    # register results dataframe in a csv file
-    df_results.to_csv(os.path.join(path_results, r'stats_results.csv'))
-    # round dataframe
-    df = df.round(2)
 
     # plot graph if verbose is present
     if arguments.fig:
