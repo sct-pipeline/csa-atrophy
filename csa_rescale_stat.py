@@ -76,8 +76,9 @@ def concatenate_csv_files(path_results):
             files.append(os.path.join(path_results, file))
     if not files:
         raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
-    metrics = pd.concat(
-        [pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
+    #metrics = pd.concat(
+       #[pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
+    metrics = pd.concat(pd.read_csv(f) for f in files)
     # output csv file in PATH_RESULTS
     metrics.to_csv(os.path.join(path_results, r'csa_all.csv'))
 
@@ -265,11 +266,10 @@ def main():
     config_param = yaml_parser(arguments.config)
 
     # add column 'basename' to dataframe
-    df_vert['basename'] = list(
-        (os.path.basename(path).split('_r')[0] + '_' + os.path.basename(path).split('_')[3].split('.nii.gz')[0]) for
-        path in df_vert['Filename'])
+    df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
+    df_vert['rescale'] = list(float(b.split('crop_r')[1].split('_')[0]) for b in df_vert['basename'])
     df_vert['rescale_area'] = list(100 * (r ** 2) for r in df_vert['rescale'])
-
+    df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
 
     # verify if vertlevels of interest were given in input by user
     if vertlevels_input is None:
@@ -289,9 +289,9 @@ def main():
     df = df.groupby(['rescale', 'basename']).mean()
     df = df.reset_index()
     df['subject'] = list(tf.split('_T')[0] for tf in df['basename'])
-    df['transfo'] = list(tf.split('w_')[1] for tf in df['basename'])
+    df['transfo'] = list(tf.split('_t')[1].split('_seg')[0] for tf in df['basename'])
+    df['num_slices'] = df_vert.groupby(['rescale', 'basename'])['slices'].sum().values
     df = df.drop('basename', 1)
-
 
     # Ceate dataframe for computing stats per subject: df_sub
     print("\n====================subject_dataframe==========================\n")
@@ -301,6 +301,7 @@ def main():
     df_sub['rescale_area'] = 100 * (df.groupby(['rescale', 'subject']).mean().reset_index()['rescale'] ** 2)
     df_sub['subject'] = df.groupby(['rescale', 'subject']).mean().reset_index()['subject']
     df_sub['num_tf'] = df.groupby(['rescale', 'subject'])['transfo'].count().values
+    df_sub['num_slices'] = df.groupby(['rescale', 'subject'])['num_slices'].mean().values
     # add stats to per subject datframe
     df_sub['mean'] = df.groupby(['rescale', 'subject']).mean()['MEAN(area)'].values
     df_sub['std'] = df.groupby(['rescale', 'subject']).std()['MEAN(area)'].values
@@ -318,6 +319,8 @@ def main():
     df_rescale = pd.DataFrame()
     df_rescale['rescale'] = df_sub.groupby(['rescale']).mean().reset_index()['rescale']
     df_rescale['rescale_area'] = 100 * (df_sub.groupby('rescale').mean().reset_index()['rescale'] ** 2)
+    df_rescale['mean_slices'] = df_sub.groupby(['rescale']).mean()['num_slices']
+    df_rescale['std_slices'] = df_sub.groupby(['rescale']).std()['num_slices']
     df_rescale['num_sub'] = df_sub.groupby('rescale')['mean'].count().values
     df_rescale['mean_inter'] = df_sub.groupby('rescale').mean()['mean'].values
     df_rescale['std_intra'] = df_sub.groupby('rescale').mean()['std'].values
@@ -330,7 +333,6 @@ def main():
     df_rescale['sample_size'] = sample_size(df_rescale, config_param)
     df_rescale = df_rescale.round(2)
     print(df_rescale)
-
 
     # plot graph if verbose is present
     if arguments.fig:
