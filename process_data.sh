@@ -23,6 +23,7 @@ set -e
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # get starting time:
+start_all=`date +%s`
 start=`date +%s`
 
 # Global variables
@@ -231,7 +232,7 @@ done
 # Display useful info for the log
 # ===============================
 end=`date +%s`
-runtime=$((end-start))
+runtime=$((end-start_all))
 echo
 echo "~~~"
 echo "SCT version: `sct_version`"
