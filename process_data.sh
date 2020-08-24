@@ -184,14 +184,15 @@ for r_coef in ${R_COEFS[@]}; do
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
     start=`date +%s`
-    affine_transfo -i ${file_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config $config_script -o _t${i_transfo}
+    affine_transfo -i ${file_r}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file_r} -config $config_script -o _t${i_transfo}
     file_r_t=${file_r}_t${i_transfo}
     end=`date +%s`
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of of image transfo t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # transform the labeled segmentation with same transfo values
+
     start=`date +%s`
-    affine_transfo -i ${file_label_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config $config_script -o _t${i_transfo} -interpolation 0
+    affine_transfo -i ${file_label_r}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file_r} -config $config_script -o _t${i_transfo} -interpolation 0
     file_label_r_t=${file_label_r}_t${i_transfo}
     end=`date +%s`
     runtime=$((end-start))
