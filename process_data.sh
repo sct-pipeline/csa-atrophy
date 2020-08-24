@@ -23,6 +23,7 @@ set -e
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # get starting time:
+start_all=`date +%s`
 start=`date +%s`
 
 # Global variables
@@ -74,16 +75,17 @@ label_if_does_not_exist(){
 segment_if_does_not_exist(){
   local file="$1"
   local contrast="$2"
+  local qc=$3
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
   FILESEGMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILESEG}-manual.nii.gz"
   if [ -e $FILESEGMANUAL ]; then
     echo "Found! Using manual segmentation."
     rsync -avzh $FILESEGMANUAL ${FILESEG}.nii.gz
-    sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc $qc
   else
     # Segment spinal cord
-    sct_deepseg_sc -i ${file}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_deepseg_sc -i ${file}.nii.gz -c ${contrast} $qc
   fi
 }
 
@@ -119,15 +121,26 @@ file=${file}_RPI
 # Resample isotropically
 sct_resample -i ${file}.nii.gz -mm $interp -o ${file}_r.nii.gz
 file=${file}_r
+end=`date +%s`
+runtime=$((end-start))
+echo "+++++++++++ TIME: Duration of reorienting and resampling:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 
 # Segment spinal cord (only if it does not exist) in dir anat
-segment_if_does_not_exist $file ${contrast}
+start=`date +%s`
+segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
 # name segmented file
 file_seg=${FILESEG}
+end=`date +%s`
+runtime=$((end-start))
+echo "+++++++++++ TIME: Duration of segmentation on non cropped image:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 
 # Label spinal cord (only if it does not exist) in dir anat
+start=`date +%s`
 label_if_does_not_exist $file $file_seg $contrast $contrast_str
 file_label=${file_seg}_labeled
+end=`date +%s`
+runtime=$((end-start))
+echo "+++++++++++ TIME: Duration of labelling:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 
 # dilate segmentation (for cropping)
 sct_maths -i ${file_seg}.nii.gz -dilate 15 -shape cube -o ${file_seg}_dil.nii.gz
@@ -170,17 +183,33 @@ for r_coef in ${R_COEFS[@]}; do
     # "transfo_values.csv" file if it already exists.
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
+    start=`date +%s`
     affine_transfo -i ${file_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config $config_script -o _t${i_transfo}
     file_r_t=${file_r}_t${i_transfo}
+    end=`date +%s`
+    runtime=$((end-start))
+    echo "+++++++++++ TIME: Duration of of image transfo t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # transform the labeled segmentation with same transfo values
+    start=`date +%s`
     affine_transfo -i ${file_label_r}.nii.gz -transfo ${PATH_RESULTS}/$transfo_file -config $config_script -o _t${i_transfo} -interpolation 0
     file_label_r_t=${file_label_r}_t${i_transfo}
+    end=`date +%s`
+    runtime=$((end-start))
+    echo "+++++++++++ TIME: Duration of labelling transfo t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # Segment spinal cord (only if it does not exist)
+    start=`date +%s`
     segment_if_does_not_exist ${file_r_t} ${contrast}
+    end=`date +%s`
+    runtime=$((end-start))
+    echo "+++++++++++ TIME: Duration of segmentation t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # name segmented file
     file_r_t_seg=${FILESEG}
     # Compute average CSA between C2 and C5 levels (append across subjects)
-    sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv -qc ${PATH_QC}
+    start=`date +%s`
+    sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv
+    end=`date +%s`
+    runtime=$((end-start))
+    echo "+++++++++++ TIME: Duration of sct_process_segmentation t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # add files to check
     FILES_TO_CHECK+=(
     "$PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv"
@@ -203,7 +232,7 @@ done
 # Display useful info for the log
 # ===============================
 end=`date +%s`
-runtime=$((end-start))
+runtime=$((end-start_all))
 echo
 echo "~~~"
 echo "SCT version: `sct_version`"
