@@ -96,8 +96,6 @@ def get_function(task):
         return 'sct_deepseg_gm'
     elif task == 'FILES_LABEL':
         return 'sct_label_utils'
-    elif task == 'FILES_PMJ':
-        return 'sct_label_utils'
     else:
         raise ValueError("This task is not recognized: {}".format(task))
 
@@ -109,8 +107,6 @@ def get_suffix(task, suffix=''):
         return '_gmseg'+suffix
     elif task == 'FILES_LABEL':
         return '_labels-disc'+suffix
-    elif task == 'FILES_PMJ':
-        return '_pmj'+suffix
     else:
         raise ValueError("This task is not recognized: {}".format(task))
 
@@ -139,17 +135,6 @@ def correct_vertebral_labeling(fname, fname_label):
     """
     message = "Click at the posterior tip of inter-vertebral disc, then click 'Save and Quit'."
     os.system('sct_label_utils -i {} -create-viewer 2,3,4,5 -o {} -msg {}'.format(fname, fname_label, message))
-
-def correct_pmj_detection(fname, fname_label):
-    """
-    Open sct_label_utils to manually label vertebral levels.
-    :param fname:
-    :param fname_label:
-    :param name_rater:
-    :return:
-    """
-    message = "Click on the Ponto-Medullary Junction, then click 'Save and Quit'."
-    os.system('sct_label_utils -i {} -create-viewer 1 -o {} -msg {}'.format(fname, fname_label, message))
 
 
 def create_json(fname_nifti, name_rater):
@@ -263,8 +248,6 @@ def main():
                             correct_segmentation(fname, fname_label)
                         elif task == 'FILES_LABEL':
                             correct_vertebral_labeling(fname, fname_label)
-                        elif task == 'FILES_PMJ':
-                            correct_pmj_detection(fname, fname_label)
                         else:
                             sys.exit('Task not recognized from yml file: {}'.format(task))
                         # create json sidecar with the name of the expert rater
