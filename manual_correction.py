@@ -165,20 +165,6 @@ def create_json(fname_nifti, name_rater):
         json.dump(metadata, outfile, indent=4)
 
 
-def get_rescaling(file):
-    """
-    Get subject from BIDS file name
-    :param file:
-    :return: rescaling
-    """
-    if "_r" in file:
-        rescale = "_"+file.split('_')[2]
-        return rescale
-    else:
-        rescale = ""
-        return rescale
-
-
 def check_files_exist(dict_files, path_data):
     """
     Check if all files listed in the input dictionary exist
