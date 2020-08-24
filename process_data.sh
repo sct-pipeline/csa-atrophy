@@ -52,7 +52,7 @@ label_if_does_not_exist(){
   local contrast="$3"
   local contrast_str="$4"
   # Update global variable with segmentation file name
-  FILELABEL="${file}_labels"
+  FILELABEL="${file}_labels-disc"
   FILELABELMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILELABEL}-manual.nii.gz"
   if [ -e "$FILELABELMANUAL" ]; then
     echo "manual labeled file was found: $FILELABELMANUAL"
