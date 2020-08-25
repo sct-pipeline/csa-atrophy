@@ -4,3 +4,6 @@ scipy
 matplotlib
 scikit-image
 nibabel
+yaml
+argparse
+os
