@@ -56,7 +56,7 @@ sct_run_batch -config {} -include-list {}
 # Get parser arguments
 parser = get_parser()
 arguments = parser.parse_args()
-config_file = arguments.config
+config_file = os.path.abspath(os.path.expanduser(arguments.config))
 config_param = yaml_parser(config_file)
 print(config_param)
 # Get list of subjects in path data
