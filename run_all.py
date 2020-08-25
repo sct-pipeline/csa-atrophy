@@ -10,16 +10,14 @@
 import os
 import argparse
 
-def get_parser():
+def get_parser(mandatory=None):
     """parser function"""
     parser = argparse.ArgumentParser(
         description="Compute statistics based on the csv files containing the CSA metrics:",
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
-
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatory.add_argument(
+    parser.add_argument(
         '-config',
         required=True,
         help='Path to config file, which contains parameters for the command sct_run_batch.',
@@ -51,6 +49,7 @@ def bash_text(config_file, sublist):
 #SBATCH --cpus-per-task=32    # number of OpenMP processes
 #SBATCH --mem=128G
 
+cd $SCRATCH
 sct_run_batch -config {} -include-list {}
 """.format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""))
     return bash_job
@@ -71,4 +70,4 @@ for sublist in sublists:
     os.system('sbatch {}'.format(filename))
     # remove tmp file
     # os.remove(filename_config)
-    #os.remove(filename)
+    # os.remove(filename)
