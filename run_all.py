@@ -52,34 +52,36 @@ sct_run_batch -config {} -include-list {}
 """.format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""))
     return bash_job
 
+def main():
+    # Get parser arguments
+    parser = get_parser()
+    arguments = parser.parse_args()
+    config_file = os.path.abspath(os.path.expanduser(arguments.config))
+    config_param = yaml_parser(config_file)
+    print(config_param)
+    # Get list of subjects in path data
+    dir_data = config_param['path_data']
+    path_data = os.path.abspath(os.path.expanduser(dir_data))
+    list = os.listdir(path_data)
+    list_subjects = [subject for subject in list if "sub" in subject]
 
-# Get parser arguments
-parser = get_parser()
-arguments = parser.parse_args()
-config_file = os.path.abspath(os.path.expanduser(arguments.config))
-config_param = yaml_parser(config_file)
-print(config_param)
-# Get list of subjects in path data
-dir_data = config_param['path_data']
-path_data = os.path.abspath(os.path.expanduser(dir_data))
-list = os.listdir(path_data)
-list_subjects = [subject for subject in list if "sub" in subject]
+    # Create X sublists of 32 subjects each
+    n = 32
+    sublists = [list_subjects[i:i + n] for i in range(0, len(list_subjects), n)]
 
-# Create X sublists of 32 subjects each
-n = 32
-sublists = [list_subjects[i:i + n] for i in range(0, len(list_subjects), n)]
+    i = 0
+    # Loop across the sublists
+    for sublist in sublists:
+        i = i + 1
+        # Create temporary job shell script: tmp.job_csa_sublist_i.sh
+        filename = os.path.abspath(os.path.expanduser(arguments.o_shell)) + str(i) + ".sh"
+        # create shell script for sbatch
+        with open(filename, 'w+') as temp_file:
+            # bash content
+            temp_file.write(bash_text(config_file, sublist))
+            temp_file.close()
+        # Run it
+        os.system('sbatch {}'.format(filename))
 
-i = 0
-# Loop across the sublists
-for sublist in sublists:
-    i = i + 1
-    # Create temporary job shell script: tmp.job_csa_sublist_i.sh
-    filename = os.path.abspath(os.path.expanduser(arguments.o_shell)) + str(i) + ".sh"
-    # create shell script for sbatch
-    with open(filename, 'w+') as temp_file:
-        # bash content
-        temp_file.write(bash_text(config_file, sublist))
-        temp_file.close()
-    # Run it
-    os.system('sbatch {}'.format(filename))
-
+if __name__ == "__main__":
+    main()
