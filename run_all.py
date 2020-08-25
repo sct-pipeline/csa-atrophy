@@ -9,6 +9,7 @@
 
 import os
 import argparse
+import yaml
 
 def get_parser(mandatory=None):
     """parser function"""
@@ -22,22 +23,19 @@ def get_parser(mandatory=None):
         required=True,
         help='Path to config file, which contains parameters for the command sct_run_batch.',
     )
+    parser.add_argument(
+        '-o_shell',
+        help='output file name. Example: ',
+        default='job_csa_sublist'
+    )
     return parser
 
 
-# Get parser arguments
-parser = get_parser()
-arguments = parser.parse_args()
-config_file = arguments.config
-# Get list of subjects in path data
-dir_data = 'data-multi-subject'
-path_data = os.path.abspath(os.path.expanduser(dir_data))
-list = os.listdir(path_data)
-list_subjects = [subject for subject in list if "sub" in subject]
-
-# Create X sublists of 32 subjects each
-n = 32
-sublists = [list_subjects[i:i + n] for i in range(0, len(list_subjects), n)]
+def yaml_parser(config_file):
+    """parse config_script.yml file containing pipeline's parameters"""
+    with open(config_file, 'r') as config_var:
+        config_param = yaml.safe_load(config_var)
+    return config_param
 
 
 # text for shell script
@@ -55,12 +53,28 @@ sct_run_batch -config {} -include-list {}
     return bash_job
 
 
+# Get parser arguments
+parser = get_parser()
+arguments = parser.parse_args()
+config_file = arguments.config
+config_param = yaml_parser(config_file)
+print(config_param)
+# Get list of subjects in path data
+dir_data = config_param['path_data']
+path_data = os.path.abspath(os.path.expanduser(dir_data))
+list = os.listdir(path_data)
+list_subjects = [subject for subject in list if "sub" in subject]
+
+# Create X sublists of 32 subjects each
+n = 32
+sublists = [list_subjects[i:i + n] for i in range(0, len(list_subjects), n)]
+
 i = 0
 # Loop across the sublists
 for sublist in sublists:
     i = i + 1
     # Create temporary job shell script: tmp.job_csa_sublist_i.sh
-    filename = os.path.abspath(os.path.expanduser('job_csa_sublist')) + str(i) + ".sh"
+    filename = os.path.abspath(os.path.expanduser(arguments.o_shell)) + str(i) + ".sh"
     # create shell script for sbatch
     with open(filename, 'w+') as temp_file:
         # bash content
@@ -68,6 +82,4 @@ for sublist in sublists:
         temp_file.close()
     # Run it
     os.system('sbatch {}'.format(filename))
-    # remove tmp file
-    # os.remove(filename_config)
-    # os.remove(filename)
+
