@@ -8,8 +8,29 @@
 #########################################################################################
 
 import os
+import argparse
+
+def get_parser():
+    """parser function"""
+    parser = argparse.ArgumentParser(
+        description="Compute statistics based on the csv files containing the CSA metrics:",
+        formatter_class=argparse.RawTextHelpFormatter,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-config',
+        required=True,
+        help='Path to config file, which contains parameters for the command sct_run_batch.',
+    )
+    return parser
 
 
+# Get parser arguments
+parser = get_parser()
+arguments = parser.parse_args()
+config_file = arguments.config
 # Get list of subjects in path data
 dir_data = 'data-multi-subject'
 path_data = os.path.abspath(os.path.expanduser(dir_data))
@@ -22,7 +43,7 @@ sublists = [list_subjects[i:i + n] for i in range(0, len(list_subjects), n)]
 
 
 # text for shell script
-def bash_text(config_file):
+def bash_text(config_file, sublist):
     bash_job = """#!/bin/sh
 #SBATCH --account=def-jcohen
 #SBATCH --time=0-08:00        # time (DD-HH:MM)
@@ -30,27 +51,9 @@ def bash_text(config_file):
 #SBATCH --cpus-per-task=32    # number of OpenMP processes
 #SBATCH --mem=128G
 
-sct_run_batch -config """ + str(config_file) + """
-"""
+sct_run_batch -config {} -include-list {}
+""".format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""))
     return bash_job
-
-
-# text for config_file
-def config_text():
-    config = """
-# config file for sct_run_batch
-path_data: data-multi-subject
-path_output: csa_atrophy_results_t1
-script: process_data.sh
-script_args: /home/paul/Github/stats/config_script.yml
-jobs: -1
-batch_log: sct_run_batch_log.txt
-continue_on_error: 1
-subject_prefix: sub-
-zip: true
-include-list: """ + str(sublist) + """
-"""
-    return config
 
 
 i = 0
@@ -59,19 +62,13 @@ for sublist in sublists:
     i = i + 1
     # Create temporary job shell script: tmp.job_csa_sublist_i.sh
     filename = os.path.abspath(os.path.expanduser('job_csa_sublist')) + str(i) + ".sh"
-    filename_config = os.path.abspath(os.path.expanduser('config_sct_run_batch_')) + str(i) + ".yml"
-    # create config file for sct_run_batch
-    with open(filename_config, 'w+') as config_file:
-        config_file.write(config_text())
-        config_file.close()
     # create shell script for sbatch
     with open(filename, 'w+') as temp_file:
         # bash content
-        temp_file.write(bash_text(filename_config))
+        temp_file.write(bash_text(config_file, sublist))
         temp_file.close()
     # Run it
-    command = 'sbatch ' + "tmp." + os.path.basename(filename)
-    os.system(command)
+    os.system('sbatch {}'.format(filename))
     # remove tmp file
-    os.remove(filename_config)
-    os.remove(filename)
+    # os.remove(filename_config)
+    #os.remove(filename)
