@@ -248,7 +248,7 @@ def main():
     # get parser elements
     parser = get_parser()
     arguments = parser.parse_args()
-    path_results = os.path.join(os.getcwd(), arguments.i)
+    path_results = os.path.abspath(os.path.expanduser(arguments.i))
     vertlevels_input = arguments.l
     path_output = arguments.o
 
