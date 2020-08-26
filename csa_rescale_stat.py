@@ -311,7 +311,6 @@ def main():
     df['num_slices'] = df_vert.groupby(['rescale', 'basename'])['slices'].sum().values
     df = df.drop('basename', 1)
 
-
     # Create dataframe for computing stats per subject: df_sub
     print("\n==================== subject_dataframe ==========================\n")
     df_sub = pd.DataFrame()
@@ -321,12 +320,12 @@ def main():
     df_sub['subject'] = df.groupby(['rescale', 'subject']).mean().reset_index()['subject']
     df_sub['num_tf'] = df.groupby(['rescale', 'subject'])['transfo'].count().values
     df_sub['num_slices'] = df.groupby(['rescale', 'subject'])['num_slices'].mean().values
-    # add stats to per subject datframe
+    # add stats to per subject dataframe
     df_sub['mean'] = df.groupby(['rescale', 'subject']).mean()['MEAN(area)'].values
     df_sub['std'] = df.groupby(['rescale', 'subject']).std()['MEAN(area)'].values
-    df_sub['cov'] = 100 * df_sub['std'].div(df_sub['mean'])
+    df_sub['cov'] = df_sub['std'].div(df_sub['mean'])
     df_sub = add_columns_df_sub(df_sub)
-    df_sub['rescale_estimated'] = 100 * df_sub['mean'].div(df_sub['csa_without_rescale'])
+    df_sub['rescale_estimated'] = df_sub['mean'].div(df_sub['csa_without_rescale'])
     df_sub['error'] = (df_sub['mean'] - df_sub['theoretic_csa']).abs()
     df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).abs().div(df_sub['mean'])
     df_sub = df_sub.round(2)
