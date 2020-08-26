@@ -13,6 +13,8 @@ from __future__ import division
 # About the license: see the file LICENSE
 #########################################################################################
 
+# TODO: add plot of STD across transfo
+
 import pandas as pd
 import numpy as np
 import os
@@ -117,6 +119,8 @@ def boxplot_csa(df, path_output):
     :param df: dataframe with csv files data: df_sub
     :param path_output: directory in which plot is saved
     """
+    # TODO: round xlabel
+    # TODO: find a way to display ylabel title with superscript
     fig2 = plt.figure()
     df.boxplot(column=['mean'], by='rescale_area', showmeans=True, meanline=True)
     plt.title('Boxplot of CSA in function of area rescaling')
@@ -133,12 +137,18 @@ def boxplot_atrophy(df, path_output):
     :param df: dataframe for computing stats per subject: df_sub
     :param path_output: directory in which plot is saved
     """
-    fig3 = plt.figure()
+    fig = plt.figure()
+    # convert to percentage
+    df['rescale_estimated'] = df['rescale_estimated'] * 100
+    # round rescale area
+    df['rescale_area'] = round(df['rescale_area'], ndigits=0).astype(int)
     df.boxplot(column='rescale_estimated', by='rescale_area', showmeans=True, meanline=True)
     plt.title('boxplot of measured atrophy in function of area rescaling')
     plt.ylabel('measured atrophy in %')
     plt.xlabel('area rescaling in %')
     plt.suptitle("")
+    # TODO: scale x and y similarly
+    # TODO: add diagonal (remove horizontal lines)
     output_file = os.path.join(path_output, "fig_boxplot_atrophy.png")
     plt.savefig(output_file)
     print("--> Created figure: {}".format(output_file))
@@ -357,7 +367,6 @@ def main():
     if arguments.fig:
         if path_output:
             os.makedirs(path_output, exist_ok=True)
-        df_vert = df_vert.round(2)
 
         # plot percentage difference between simulated atrophy and ground truth atrophy
         plot_perc_err(df_rescale, path_output)
