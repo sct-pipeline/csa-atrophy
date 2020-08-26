@@ -44,7 +44,7 @@ def get_parser():
     mandatory.add_argument(
         '-config',
         required=True,
-        help='Path to config file, which contains parameters for the statistics and figures.',
+        help='Path to config file, which contains parameters for the statistics and figures. Example: config_script.yml',
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
