@@ -107,8 +107,9 @@ def plot_perc_err(df, path_output):
     plt.ylabel('STD in %')
     plt.grid()
     plt.tight_layout()
-    output_file = path_output + "/err_plot.png"
+    output_file = os.path.join(path_output, "fig_err.png")
     plt.savefig(output_file)
+    print("--> Created figure: {}".format(output_file))
 
 
 def boxplot_csa(df, path_output):
@@ -122,8 +123,9 @@ def boxplot_csa(df, path_output):
     plt.suptitle("")
     plt.ylabel('csa in mm^2')
     plt.xlabel('area rescaling in %')
-    output_file = path_output + "/boxplot_csa.png"
+    output_file = os.path.join(path_output, "fig_boxplot_csa.png")
     plt.savefig(output_file)
+    print("--> Created figure: {}".format(output_file))
 
 
 def boxplot_atrophy(df, path_output):
@@ -137,8 +139,9 @@ def boxplot_atrophy(df, path_output):
     plt.ylabel('measured atrophy in %')
     plt.xlabel('area rescaling in %')
     plt.suptitle("")
-    output_file = path_output + "/boxplot_atrophy.png"
+    output_file = os.path.join(path_output, "fig_boxplot_atrophy.png")
     plt.savefig(output_file)
+    print("--> Created figure: {}".format(output_file))
 
 
 def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
@@ -178,8 +181,9 @@ def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
 
     secax = ax.secondary_xaxis('top', functions=(forward, inverse))
     secax.set_xlabel('atrophy in %')
-    output_file = path_output + "/min_subj.png"
+    output_file = os.path.join(path_output, "fig_min_subj.png")
     plt.savefig(output_file, bbox_inches='tight')
+    print("--> Created figure: {}".format(output_file))
 
 
 def sample_size(df, config_param):
@@ -250,7 +254,7 @@ def main():
     arguments = parser.parse_args()
     path_results = os.path.abspath(os.path.expanduser(arguments.i))
     vertlevels_input = arguments.l
-    path_output = arguments.o
+    path_output = os.path.abspath(arguments.o)
 
     # aggregate all csv results files
     concatenate_csv_files(path_results)
@@ -370,7 +374,6 @@ def main():
         # std = STD of subjects without rescaling CSA values
         # mean_csa =  mean CSA value of subjects without rescaling
         plot_sample_size(z_conf=1.96, z_power=(0.84, 1.282), std=df_rescale.loc[1, 'std_inter'], mean_csa=df_rescale.loc[1, 'mean_inter'], path_output=path_output)
-        print('\nfigures have been plotted in dataset')
 
 
 if __name__ == "__main__":
