@@ -355,7 +355,7 @@ def main():
 
     # plot graph if verbose is present
     if arguments.fig:
-        if os.path.isdir(path_output):
+        if path_output:
             os.makedirs(path_output, exist_ok=True)
         df_vert = df_vert.round(2)
 
