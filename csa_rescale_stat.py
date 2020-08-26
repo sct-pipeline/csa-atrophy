@@ -328,7 +328,6 @@ def main():
     df_sub['rescale_estimated'] = df_sub['mean'].div(df_sub['csa_without_rescale'])
     df_sub['error'] = (df_sub['mean'] - df_sub['theoretic_csa']).abs()
     df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).abs().div(df_sub['mean'])
-    df_sub = df_sub.round(2)
     print(df_sub)
 
     # Create dataframe for computing stats across subject: df_rescale
@@ -348,13 +347,12 @@ def main():
     df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
     df_rescale['std_perc_error'] = df_sub.groupby('rescale').std()['perc_error'].values
     df_rescale['sample_size'] = sample_size(df_rescale, config_param)
-    df_rescale = df_rescale.round(2)
     print(df_rescale)
 
     # plot graph if verbose is present
     if arguments.fig:
-        if not os.path.isdir(arguments.o):
-            os.makedirs(arguments.o)
+        if os.path.isdir(path_output):
+            os.makedirs(path_output, exist_ok=True)
         df_vert = df_vert.round(2)
 
         # plot percentage difference between simulated atrophy and ground truth atrophy
