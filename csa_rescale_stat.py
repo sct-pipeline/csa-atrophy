@@ -113,11 +113,11 @@ def plot_perc_err(df, path_output):
 
 def boxplot_csa(df, path_output):
     """boxplot CSA for different rescaling values
-    :param df: dataframe with csv files data: df_vert
+    :param df: dataframe with csv files data: df_sub
     :param path_output: directory in which plot is saved
     """
     fig2 = plt.figure()
-    df.boxplot(column=['MEAN(area)'], by='rescale_area', showmeans=True, meanline=True)
+    df.boxplot(column=['mean'], by='rescale_area', showmeans=True, meanline=True)
     plt.title('Boxplot of CSA in function of area rescaling')
     plt.suptitle("")
     plt.ylabel('csa in mm^2')
@@ -270,6 +270,7 @@ def main():
         if df_vert['MEAN(area)'][i] == 'None':
             lines_to_drop.append(i)
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
+    df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
     print("  Rows removed: {}".format(lines_to_drop))
 
     # fetch parameters from config.yaml file
@@ -277,9 +278,7 @@ def main():
 
     # add useful columns to dataframe
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
-    # TODO: remove lines that are not used / recomputed later
     df_vert['rescale'] = list(float(b.split('crop_r')[1].split('_')[0]) for b in df_vert['basename'])
-    df_vert['rescale_area'] = list(100 * (r ** 2) for r in df_vert['rescale'])
     df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
 
     # verify if vertlevels of interest were given in input by user
@@ -307,6 +306,7 @@ def main():
     df['num_slices'] = df_vert.groupby(['rescale', 'basename'])['slices'].sum().values
     df = df.drop('basename', 1)
 
+
     # Create dataframe for computing stats per subject: df_sub
     print("\n==================== subject_dataframe ==========================\n")
     df_sub = pd.DataFrame()
@@ -331,9 +331,9 @@ def main():
     print("\n==================== rescaling_dataframe ==========================\n")
     df_rescale = pd.DataFrame()
     df_rescale['rescale'] = df_sub.groupby(['rescale']).mean().reset_index()['rescale']
-    df_rescale['rescale_area'] = 100 * (df_sub.groupby('rescale').mean().reset_index()['rescale'] ** 2)
-    df_rescale['mean_slices'] = df_sub.groupby(['rescale']).mean()['num_slices']
-    df_rescale['std_slices'] = df_sub.groupby(['rescale']).std()['num_slices']
+    df_rescale['rescale_area'] = df_sub.groupby('rescale_area').mean().reset_index()['rescale_area']
+    df_rescale['mean_slices'] = df_sub.groupby(['rescale']).mean()['num_slices'].values
+    df_rescale['std_slices'] = df_sub.groupby(['rescale']).std()['num_slices'].values
     df_rescale['num_sub'] = df_sub.groupby('rescale')['mean'].count().values
     df_rescale['mean_inter'] = df_sub.groupby('rescale').mean()['mean'].values
     df_rescale['std_intra'] = df_sub.groupby('rescale').mean()['std'].values
@@ -357,7 +357,7 @@ def main():
         plot_perc_err(df_rescale, path_output)
 
         # boxplot CSA across different rescaling values
-        boxplot_csa(df_vert, path_output)
+        boxplot_csa(df_sub, path_output)
 
         # boxplot of atrophy across different rescaling values
         boxplot_atrophy(df_sub, path_output)
