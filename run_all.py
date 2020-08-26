@@ -42,7 +42,7 @@ def yaml_parser(config_file):
 
 
 # text for shell script
-def bash_text(config_file, sublist, filename):
+def bash_text(config_file, sublist, log_filename):
     bash_job = """#!/bin/sh
 #SBATCH --account=def-jcohen
 #SBATCH --time=0-08:00        # time (DD-HH:MM)
@@ -51,8 +51,8 @@ def bash_text(config_file, sublist, filename):
 #SBATCH --mem=128G
 
 cd $SCRATCH
-sct_run_batch -config {} -include-list {} -batch-log log_{}
-""".format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""), filename)
+sct_run_batch -config {} -include-list {} -batch-log {}
+""".format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""), log_filename)
     return bash_job
 
 
@@ -78,10 +78,11 @@ def main():
         i = i + 1
         # Create temporary job shell script, default: job_csa_sublist_i.sh
         filename = os.path.abspath(os.path.expanduser(arguments.o_shell)) + str(i) + ".sh"
+        log_filename = os.path.dirname(filename) + "/log_" + os.path.basename(filename).split(".")[0] + ".txt"
         # create shell script for sbatch
         with open(filename, 'w+') as temp_file:
             # bash content
-            temp_file.write(bash_text(config_file, sublist, filename))
+            temp_file.write(bash_text(config_file, sublist, log_filename))
             temp_file.close()
         # Run it
         os.system('sbatch {}'.format(filename))
