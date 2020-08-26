@@ -3,7 +3,7 @@
 #########################################################################################
 #
 # Break down OpenMP jobs across sub-datasets
-# example: python run_all.py
+# example: python run_all.py -i config_sct_run_batch
 #
 #########################################################################################
 
@@ -11,10 +11,11 @@ import os
 import argparse
 import yaml
 
+
 def get_parser(mandatory=None):
     """parser function"""
     parser = argparse.ArgumentParser(
-        description="Compute statistics based on the csv files containing the CSA metrics:",
+        description="Break down OpenMP jobs across sub-datasets",
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
@@ -25,7 +26,9 @@ def get_parser(mandatory=None):
     )
     parser.add_argument(
         '-o_shell',
-        help='output file name. Example: ',
+        help='Path to the temporary batch script given to sbatch. By default basename is given a suffix _i with i the '
+             'number of iterations over the batch script and extension .sh. Example: -o_shell job_csa_sublist outputs '
+             'job_csa_sublist_i.sh',
         default='job_csa_sublist'
     )
     return parser
@@ -52,13 +55,13 @@ sct_run_batch -config {} -include-list {} -batch-log log_{}
 """.format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""), filename)
     return bash_job
 
+
 def main():
     # Get parser arguments
     parser = get_parser()
     arguments = parser.parse_args()
     config_file = os.path.abspath(os.path.expanduser(arguments.config))
     config_param = yaml_parser(config_file)
-    print(config_param)
     # Get list of subjects in path data
     dir_data = config_param['path_data']
     path_data = os.path.abspath(os.path.expanduser(dir_data))
@@ -73,7 +76,7 @@ def main():
     # Loop across the sublists
     for sublist in sublists:
         i = i + 1
-        # Create temporary job shell script: tmp.job_csa_sublist_i.sh
+        # Create temporary job shell script, default: job_csa_sublist_i.sh
         filename = os.path.abspath(os.path.expanduser(arguments.o_shell)) + str(i) + ".sh"
         # create shell script for sbatch
         with open(filename, 'w+') as temp_file:
@@ -82,6 +85,7 @@ def main():
             temp_file.close()
         # Run it
         os.system('sbatch {}'.format(filename))
+
 
 if __name__ == "__main__":
     main()
