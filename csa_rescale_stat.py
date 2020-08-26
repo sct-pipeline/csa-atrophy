@@ -270,13 +270,14 @@ def main():
         if df_vert['MEAN(area)'][i] == 'None':
             lines_to_drop.append(i)
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
-    print("Rows removed: {}".format(lines_to_drop))
+    print("  Rows removed: {}".format(lines_to_drop))
 
     # fetch parameters from config.yaml file
     config_param = yaml_parser(arguments.config)
 
     # add useful columns to dataframe
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
+    # TODO: remove lines that are not used / recomputed later
     df_vert['rescale'] = list(float(b.split('crop_r')[1].split('_')[0]) for b in df_vert['basename'])
     df_vert['rescale_area'] = list(100 * (r ** 2) for r in df_vert['rescale'])
     df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
@@ -302,14 +303,15 @@ def main():
     df = df.reset_index()
     df['subject'] = list(tf.split('_T')[0] for tf in df['basename'])
     df['transfo'] = list(tf.split('_t')[1].split('_seg')[0] for tf in df['basename'])
+    # Sum number of slices across selected vertebrae
     df['num_slices'] = df_vert.groupby(['rescale', 'basename'])['slices'].sum().values
     df = df.drop('basename', 1)
 
-    # Ceate dataframe for computing stats per subject: df_sub
-    print("\n====================subject_dataframe==========================\n")
+    # Create dataframe for computing stats per subject: df_sub
+    print("\n==================== subject_dataframe ==========================\n")
     df_sub = pd.DataFrame()
     # add necessary columns to df_sub dataframe
-    df_sub['rescale'] = df.groupby(['rescale','subject']).mean().reset_index()['rescale']
+    df_sub['rescale'] = df.groupby(['rescale', 'subject']).mean().reset_index()['rescale']
     df_sub['rescale_area'] = 100 * (df.groupby(['rescale', 'subject']).mean().reset_index()['rescale'] ** 2)
     df_sub['subject'] = df.groupby(['rescale', 'subject']).mean().reset_index()['subject']
     df_sub['num_tf'] = df.groupby(['rescale', 'subject'])['transfo'].count().values
@@ -325,9 +327,8 @@ def main():
     df_sub = df_sub.round(2)
     print(df_sub)
 
-
-    # Ceate dataframe for computing stats across subject: df_rescale
-    print("\n====================rescaling_dataframe==========================\n")
+    # Create dataframe for computing stats across subject: df_rescale
+    print("\n==================== rescaling_dataframe ==========================\n")
     df_rescale = pd.DataFrame()
     df_rescale['rescale'] = df_sub.groupby(['rescale']).mean().reset_index()['rescale']
     df_rescale['rescale_area'] = 100 * (df_sub.groupby('rescale').mean().reset_index()['rescale'] ** 2)
@@ -370,7 +371,5 @@ def main():
         print('\nfigures have been plotted in dataset')
 
 
-# Run
-#########################################################################################
 if __name__ == "__main__":
     main()
