@@ -265,10 +265,15 @@ def main():
     # identify outliers
     print("Remove rows with missing values...")
     # TODO: find lines with None under "MEAN" and remove them, and add warning in verbose / log file
+    vertebrae_to_drop = []
+    filename_to_drop = []
     lines_to_drop = []
-    for i in range(len(df_vert)):
-        if df_vert['MEAN(area)'][i] == 'None':
-            lines_to_drop.append(i)
+    #for i in range(len(df_vert)):
+    #    if df_vert['MEAN(area)'][i] == 'None':
+    #       lines_to_drop.append(i)
+    #        filename_to_drop.append(df_vert.loc[i, "Filename"])
+    #        vertebrae_to_drop.append(df_vert.loc[i, "VertLevel"])
+    lines_to_drop = df_vert[df_vert['MEAN(area)'] == 'None'].index
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
     df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
     print("  Rows removed: {}".format(lines_to_drop))
