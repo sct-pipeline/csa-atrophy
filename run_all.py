@@ -3,7 +3,7 @@
 #########################################################################################
 #
 # Break down OpenMP jobs across sub-datasets
-# example: python run_all.py
+# example: python run_all.py -i config_sct_run_batch
 #
 #########################################################################################
 
