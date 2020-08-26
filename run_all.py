@@ -39,7 +39,7 @@ def yaml_parser(config_file):
 
 
 # text for shell script
-def bash_text(config_file, sublist):
+def bash_text(config_file, sublist, filename):
     bash_job = """#!/bin/sh
 #SBATCH --account=def-jcohen
 #SBATCH --time=0-08:00        # time (DD-HH:MM)
@@ -48,8 +48,8 @@ def bash_text(config_file, sublist):
 #SBATCH --mem=128G
 
 cd $SCRATCH
-sct_run_batch -config {} -include-list {}
-""".format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""))
+sct_run_batch -config {} -include-list {} -batch-log log_{}
+""".format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""), filename)
     return bash_job
 
 def main():
@@ -78,7 +78,7 @@ def main():
         # create shell script for sbatch
         with open(filename, 'w+') as temp_file:
             # bash content
-            temp_file.write(bash_text(config_file, sublist))
+            temp_file.write(bash_text(config_file, sublist, filename))
             temp_file.close()
         # Run it
         os.system('sbatch {}'.format(filename))
