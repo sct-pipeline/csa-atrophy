@@ -17,7 +17,6 @@ import pandas as pd
 import numpy as np
 import os
 import argparse
-from scipy import stats
 import matplotlib.pyplot as plt
 from math import ceil
 from ruamel.yaml import YAML
@@ -78,6 +77,7 @@ def concatenate_csv_files(path_results):
         raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
     #metrics = pd.concat(
        #[pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
+    print("Concatenate csv files. This will take a few seconds...")
     metrics = pd.concat(pd.read_csv(f) for f in files)
     # output csv file in PATH_RESULTS
     metrics.to_csv(os.path.join(path_results, r'csa_all.csv'))
@@ -262,13 +262,28 @@ def main():
     df_vert = pd.DataFrame(data)
     pd.set_option('display.max_rows', None)
 
+    # identify outliers
+    # TODO: find lines with None under "MEAN" and remove them, and add warning in verbose / log file
+    lines_to_drop = []
+    for i in range(len(df_vert)):
+        if df_vert['MEAN(area)'][i] == 'None':
+            lines_to_drop.append(i)
+    df_vert = df_vert.drop(df_vert.index[lines_to_drop])
+
     # fetch parameters from config.yaml file
     config_param = yaml_parser(arguments.config)
 
-    # add column 'basename' to dataframe
+    # add useful columns to dataframe
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
     df_vert['rescale'] = list(float(b.split('crop_r')[1].split('_')[0]) for b in df_vert['basename'])
     df_vert['rescale_area'] = list(100 * (r ** 2) for r in df_vert['rescale'])
+    # i=0
+    # for slices in df_vert['Slice (I->S)']:
+    #     print(i)
+    #     i+=1
+    #     print(slices)
+    #     int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1
+
     df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
 
     # verify if vertlevels of interest were given in input by user
