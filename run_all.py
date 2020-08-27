@@ -25,10 +25,10 @@ def get_parser(mandatory=None):
         help='Path to config file, which contains parameters for the command sct_run_batch.',
     )
     parser.add_argument(
-        '-o_shell',
+        '-o-shell',
         help='Path to the temporary batch script given to sbatch. By default basename is given a suffix _i with i the '
-             'number of iterations over the batch script and extension .sh. Example: -o_shell job_csa_sublist outputs '
-             'job_csa_sublist_i.sh',
+             'number of iterations over the batch script and extension .sh. Example: -o-shell job_csa_sublist will '
+             'output job_csa_sublist_i.sh',
         default='job_csa_sublist'
     )
     return parser
