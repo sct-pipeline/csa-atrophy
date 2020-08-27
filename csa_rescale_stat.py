@@ -122,6 +122,8 @@ def boxplot_csa(df, path_output):
     # TODO: round xlabel
     # TODO: find a way to display ylabel title with superscript
     fig2 = plt.figure()
+    # round rescale area
+    df['rescale_area'] = round(df['rescale_area'], ndigits=0).astype(int)
     df.boxplot(column=['mean'], by='rescale_area', showmeans=True, meanline=True)
     plt.title('Boxplot of CSA in function of area rescaling')
     plt.suptitle("")
@@ -142,7 +144,10 @@ def boxplot_atrophy(df, path_output):
     df['rescale_estimated'] = df['rescale_estimated'] * 100
     # round rescale area
     df['rescale_area'] = round(df['rescale_area'], ndigits=0).astype(int)
-    df.boxplot(column='rescale_estimated', by='rescale_area', showmeans=True, meanline=True)
+    df.boxplot(column='rescale_estimated', by='rescale_area', positions=list(set(df['rescale_area'].values)), showmeans=True, meanline=True)
+    min_rescale = min(df['rescale_area'].values)
+    max_rescale = max(df['rescale_area'].values)
+    plt.plot([min_rescale, max_rescale], [min_rescale, max_rescale], ls="--", c=".3")
     plt.title('boxplot of measured atrophy in function of area rescaling')
     plt.ylabel('measured atrophy in %')
     plt.xlabel('area rescaling in %')
@@ -278,15 +283,6 @@ def main():
 
     # identify outliers
     print("Remove rows with missing values...")
-    # TODO: find lines with None under "MEAN" and remove them, and add warning in verbose / log file
-    vertebrae_to_drop = []
-    filename_to_drop = []
-    lines_to_drop = []
-    #for i in range(len(df_vert)):
-    #    if df_vert['MEAN(area)'][i] == 'None':
-    #       lines_to_drop.append(i)
-    #        filename_to_drop.append(df_vert.loc[i, "Filename"])
-    #        vertebrae_to_drop.append(df_vert.loc[i, "VertLevel"])
     lines_to_drop = df_vert[df_vert['MEAN(area)'] == 'None'].index
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
     df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
@@ -316,7 +312,7 @@ def main():
     df = df.drop('VertLevel', 1)
     # Average values across levels, for each subject
     df = df.groupby(['rescale', 'basename']).mean()
-    # Reset index because the groupy assigned rescale and basename as the new indexes. We want to re-generate a
+    # Reset index because the groupby assigned rescale and basename as the new indexes. We want to re-generate a
     # number-based index
     df = df.reset_index()
     df['subject'] = list(tf.split('_T')[0] for tf in df['basename'])
