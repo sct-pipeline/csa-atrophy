@@ -115,11 +115,15 @@ elif [ $contrast == "t1" ]; then
   interp="1x1x1"
 fi
 file=${SUBJECT}_${contrast_str}
+path_derivatives="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat"
+file_manual_labels="${path_derivatives}/${file}_labels-disc-manual"
 # Reorient to RPI
 sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
+sct_image -i ${file_manual_labels}.nii.gz -setorient RPI -o "${path_derivatives}/${file}_RPI_labels-disc-manual".nii.gz
 file=${file}_RPI
 # Resample isotropically
 sct_resample -i ${file}.nii.gz -mm $interp -o ${file}_r.nii.gz
+sct_resample -i ${file_manual_labels}.nii.gz -mm $interp -o "${path_derivatives}/${file}_r_labels-disc-manual".nii.gz
 file=${file}_r
 end=`date +%s`
 runtime=$((end-start))
