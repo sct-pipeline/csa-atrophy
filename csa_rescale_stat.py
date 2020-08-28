@@ -374,11 +374,13 @@ def main():
         boxplot_atrophy(df_sub, path_output)
 
         # plot minimum number of patients required to detect an atrophy of a given value
-        # z_conf = z_score for confidence level,
-        # z_power = z_score for power level,
+        # z_score for confidence level,
+        z_score_confidence = config_param['fig']['sample_size']['conf']
+        # z_score for power level,
+        z_score_power = config_param['fig']['sample_size']['conf']
         # std = STD of subjects without rescaling CSA values
         # mean_csa =  mean CSA value of subjects without rescaling
-        plot_sample_size(z_conf=1.96, z_power=(0.84, 1.282), std=df_rescale.loc[1, 'std_inter'], mean_csa=df_rescale.loc[1, 'mean_inter'], path_output=path_output)
+        plot_sample_size(z_conf=z_score_confidence, z_power=z_score_power, std=df_rescale.loc[1, 'std_inter'], mean_csa=df_rescale.loc[1, 'mean_inter'], path_output=path_output)
 
 
 if __name__ == "__main__":
