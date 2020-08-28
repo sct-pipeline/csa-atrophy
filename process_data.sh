@@ -117,13 +117,22 @@ fi
 file=${SUBJECT}_${contrast_str}
 path_derivatives="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat"
 file_manual_labels="${path_derivatives}/${file}_labels-disc-manual"
-# Reorient to RPI
+# Reorient image to RPI
 sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
-sct_image -i ${file_manual_labels}.nii.gz -setorient RPI -o "${path_derivatives}/${file}_RPI_labels-disc-manual".nii.gz
+# Reorient labelling to RPI if manual labelling without reorienting exists
+if [ -e ${file_manual_labels}.nii.gz ]; then
+  echo "Manual label exists: reorienting"
+  sct_image -i ${file_manual_labels}.nii.gz -setorient RPI -o "${path_derivatives}/${file}_RPI_labels-disc-manual".nii.gz
+  file_manual_labels="${path_derivatives}/${file}_RPI_labels-disc-manual"
+fi
 file=${file}_RPI
-# Resample isotropically
+# Resample image isotropically
 sct_resample -i ${file}.nii.gz -mm $interp -o ${file}_r.nii.gz
-sct_resample -i ${file_manual_labels}.nii.gz -mm $interp -o "${path_derivatives}/${file}_r_labels-disc-manual".nii.gz
+# Resample labelling isotropically if manual labelling without resampling exists
+if [ -e ${file_manual_labels}.nii.gz ]; then
+  echo "Manual label exists: resampling"
+  sct_resample -i ${file_manual_labels}.nii.gz -mm $interp -o "${path_derivatives}/${file}_r_labels-disc-manual".nii.gz
+fi
 file=${file}_r
 end=`date +%s`
 runtime=$((end-start))
