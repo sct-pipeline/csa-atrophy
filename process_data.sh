@@ -211,7 +211,7 @@ for r_coef in ${R_COEFS[@]}; do
     file_r_t_seg=${FILESEG}
     # Compute average CSA between C2 and C5 levels (append across subjects)
     start=`date +%s`
-    sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv
+    sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 3:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv
     end=`date +%s`
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of sct_process_segmentation t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
