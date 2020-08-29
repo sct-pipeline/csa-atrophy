@@ -33,6 +33,12 @@ def get_parser(mandatory=None):
              #SBATCH --cpus-per-task=32    # number of OpenMP processes
              #SBATCH --mem=128G""",
     )
+    parser.add_argument(
+        '-n',
+        help='Break down OpenMP jobs across sub-datasets of n subjects. Adjust number in function of available '
+             'CPUs per task',
+        default=32
+    )
     return parser
 
 
@@ -78,8 +84,8 @@ def main():
     list = os.listdir(path_data)
     list_subjects = [subject for subject in list if "sub" in subject]
 
-    # Create X sublists of 32 subjects each
-    n = 32
+    # Create X sublists of n subjects each
+    n = arguments.n
     sublists = [list_subjects[i:i + n] for i in range(0, len(list_subjects), n)]
 
     i = 0
