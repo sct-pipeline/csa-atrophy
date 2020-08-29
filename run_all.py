@@ -31,12 +31,13 @@ def get_parser(mandatory=None):
              #SBATCH --time=0-08:00        # time (DD-HH:MM)
              #SBATCH --nodes=1
              #SBATCH --cpus-per-task=32    # number of OpenMP processes
-             #SBATCH --mem=128G""",
+             #SBATCH --mem=128G
+             cd $SCRATCH""",
     )
     parser.add_argument(
         '-n',
-        help='Break down OpenMP jobs across sub-datasets of n subjects. Adjust number in function of available '
-             'CPUs per task',
+        help="Break down OpenMP jobs across sub-datasets of n subjects. Adjust 'n' based on the number of CPU cores "
+             "available",
         default=32
     )
     return parser
@@ -53,7 +54,6 @@ def yaml_parser(config_file):
 def bash_text(config_file, sublist, log_filename, job_template):
     bash_job = """#!/bin/sh
 {}
-cd $SCRATCH
 sct_run_batch -config {} -include-list {} -batch-log {}
     """.format(job_template, config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""), log_filename)
     return bash_job
