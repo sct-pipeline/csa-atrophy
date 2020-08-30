@@ -40,6 +40,7 @@ contrast=$(yaml_parser -o contrast -i $config_script)
 # TODO: enable to input a list of contrast and loop across contrasts
 transfo_file=$(yaml_parser -o transfo_file -i $config_script)
 echo "transfo_file: $transfo_file"
+path_derivatives="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat"
 
 
 # FUNCTIONS
@@ -54,9 +55,12 @@ label_if_does_not_exist(){
   local contrast_str="$4"
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels-disc"
-  FILELABELMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILELABEL}-manual.nii.gz"
-  if [ -e "$FILELABELMANUAL" ]; then
-    echo "manual labeled file was found: $FILELABELMANUAL"
+  FILELABELMANUAL="${path_derivatives}/${file%%_RPI*}_labels-disc-manual.nii.gz"
+  if [ -e "${FILELABELMANUAL}" ]; then
+    echo "manual labeled file was found: ${FILELABELMANUAL##*/}"
+    # reorienting and resampling image
+    sct_image -i ${FILELABELMANUAL} -setorient RPI -o "${path_derivatives}/${file%%_RPI*}_RPI_labels-disc-manual.nii.gz"
+    sct_resample -i ${FILELABELMANUAL} -mm $interp -o "${path_derivatives}/${file%%_RPI*}_RPI_r_labels-disc-manual.nii.gz"
     rsync -avzh $FILELABELMANUAL ${FILELABEL}.nii.gz
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${FILELABELMANUAL} -qc ${PATH_QC} -qc-subject ${SUBJECT}
@@ -115,24 +119,11 @@ elif [ $contrast == "t1" ]; then
   interp="1x1x1"
 fi
 file=${SUBJECT}_${contrast_str}
-path_derivatives="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat"
-file_manual_labels="${path_derivatives}/${file}_labels-disc-manual"
 # Reorient image to RPI
 sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
-# Reorient labelling to RPI if manual labelling without reorienting exists
-if [ -e ${file_manual_labels}.nii.gz ]; then
-  echo "Manual label exists: reorienting"
-  sct_image -i ${file_manual_labels}.nii.gz -setorient RPI -o "${path_derivatives}/${file}_RPI_labels-disc-manual".nii.gz
-  file_manual_labels="${path_derivatives}/${file}_RPI_labels-disc-manual"
-fi
 file=${file}_RPI
 # Resample image isotropically
 sct_resample -i ${file}.nii.gz -mm $interp -o ${file}_r.nii.gz
-# Resample labelling isotropically if manual labelling without resampling exists
-if [ -e ${file_manual_labels}.nii.gz ]; then
-  echo "Manual label exists: resampling"
-  sct_resample -i ${file_manual_labels}.nii.gz -mm $interp -o "${path_derivatives}/${file}_r_labels-disc-manual".nii.gz
-fi
 file=${file}_r
 end=`date +%s`
 runtime=$((end-start))
