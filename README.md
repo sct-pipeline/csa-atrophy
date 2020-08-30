@@ -7,8 +7,6 @@ Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as f
 - Segment the cord
 - Compute CSA --> CSA(sI, rX, tY)
 
-![schematic_data_augmentation](schem_transfo.png)
-
 # How to run
 
 This code has been tested using Python 3.7.
