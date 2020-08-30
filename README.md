@@ -7,6 +7,8 @@ Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as f
 - Segment the cord
 - Compute CSA --> CSA(sI, rX, tY)
 
+![](scheme_transfo.png)
+
 After everything is done, compute stats:
 - intra-subject MEAN: MEAN[CSA(sI, rX, :)] --> MEAN_intra(sI, rX)
 - intra-subject STD (per subject): STD[CSA(sI, rX, :)] --> STD_intra_sub(sI, rX)
