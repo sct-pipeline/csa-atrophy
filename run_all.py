@@ -81,7 +81,7 @@ def main():
     for sublist in sublists:
         i = i + 1
         # Create temporary job shell script, default: job_csa_sublist_i.sh
-        filename = os.path.abspath(os.path.expanduser('tmp.job_csa_sublist_')) + str(i) + ".sh"
+        filename = os.path.abspath(os.path.expanduser(arguments.o_shell)) + str(i) + ".sh"
         log_filename = os.path.join(path_output, "log", "log_" + os.path.basename(filename).split(".")[1] + ".txt")
         # create shell script for sbatch
         with open(filename, 'w+') as temp_file:
