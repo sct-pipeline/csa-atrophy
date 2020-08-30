@@ -38,6 +38,7 @@ def get_parser(mandatory=None):
         '-n',
         help="Break down OpenMP jobs across sub-datasets of n subjects. Adjust 'n' based on the number of CPU cores "
              "available",
+        type=int,
         default=32
     )
     return parser
