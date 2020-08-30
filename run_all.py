@@ -3,7 +3,7 @@
 #########################################################################################
 #
 # Break down OpenMP jobs across sub-datasets
-# example: python run_all.py -i config_sct_run_batch
+# example: python run_all.py -config config_sct_run_batch.yml
 #
 #########################################################################################
 
@@ -25,11 +25,21 @@ def get_parser(mandatory=None):
         help='Path to config file, which contains parameters for the command sct_run_batch.',
     )
     parser.add_argument(
-        '-o-shell',
-        help='Path to the temporary batch script given to sbatch. By default basename is given a suffix _i with i the '
-             'number of iterations over the batch script and extension .sh. Example: -o-shell job_csa_sublist will '
-             'output job_csa_sublist_i.sh',
-        default='job_csa_sublist'
+        '-job-template',
+        help="""Path to sbatch config file containing sbatch options preceded of #SBATCH. Example: 
+             #SBATCH --account=def-jcohen
+             #SBATCH --time=0-08:00        # time (DD-HH:MM)
+             #SBATCH --nodes=1
+             #SBATCH --cpus-per-task=32    # number of OpenMP processes
+             #SBATCH --mem=128G
+             cd $SCRATCH""",
+    )
+    parser.add_argument(
+        '-n',
+        help="Break down OpenMP jobs across sub-datasets of n subjects. Adjust 'n' based on the number of CPU cores "
+             "available",
+        type=int,
+        default=32
     )
     return parser
 
@@ -42,17 +52,11 @@ def yaml_parser(config_file):
 
 
 # text for shell script
-def bash_text(config_file, sublist, log_filename):
+def bash_text(config_file, sublist, log_filename, job_template):
     bash_job = """#!/bin/sh
-#SBATCH --account=def-jcohen
-#SBATCH --time=0-08:00        # time (DD-HH:MM)
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=32    # number of OpenMP processes
-#SBATCH --mem=128G
-
-cd $SCRATCH
+{}
 sct_run_batch -config {} -include-list {} -batch-log {}
-""".format(config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""), log_filename)
+    """.format(job_template, config_file, str(sublist).replace("[", "").replace("]", "").replace("'", "").replace(",", ""), log_filename)
     return bash_job
 
 
@@ -61,6 +65,19 @@ def main():
     parser = get_parser()
     arguments = parser.parse_args()
     config_file = os.path.abspath(os.path.expanduser(arguments.config))
+
+    # Check if sbatch config file was given with given with flag -job-template
+    if arguments.job_template is not None:
+        path_job_template = os.path.abspath(os.path.expanduser(arguments.job_template))
+        job_template = open(path_job_template, 'r').read()
+    else:
+        job_template = """#SBATCH --account=def-jcohen
+#SBATCH --time=0-08:00        # time (DD-HH:MM)
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=32    # number of OpenMP processes
+#SBATCH --mem=128G
+"""
+
     config_param = yaml_parser(config_file)
 
     # get path for log file
@@ -72,8 +89,8 @@ def main():
     list = os.listdir(path_data)
     list_subjects = [subject for subject in list if "sub" in subject]
 
-    # Create X sublists of 32 subjects each
-    n = 32
+    # Create X sublists of n subjects each
+    n = arguments.n
     sublists = [list_subjects[i:i + n] for i in range(0, len(list_subjects), n)]
 
     i = 0
@@ -81,12 +98,12 @@ def main():
     for sublist in sublists:
         i = i + 1
         # Create temporary job shell script, default: job_csa_sublist_i.sh
-        filename = os.path.abspath(os.path.expanduser(arguments.o_shell)) + str(i) + ".sh"
+        filename = os.path.abspath(os.path.expanduser('tmp.job_csa_sublist_')) + str(i) + ".sh"
         log_filename = os.path.join(path_output, "log", "log_" + os.path.basename(filename).split(".")[1] + ".txt")
         # create shell script for sbatch
         with open(filename, 'w+') as temp_file:
             # bash content
-            temp_file.write(bash_text(config_file, sublist, log_filename))
+            temp_file.write(bash_text(config_file, sublist, log_filename, job_template))
             temp_file.close()
         # Run it
         os.system('sbatch {}'.format(filename))
