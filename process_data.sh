@@ -82,7 +82,7 @@ segment_if_does_not_exist(){
   local qc=$3
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
-  FILESEGMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILESEG}-manual.nii.gz"
+  FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual.nii.gz"
   if [ -e $FILESEGMANUAL ]; then
     echo "Found! Using manual segmentation."
     rsync -avzh $FILESEGMANUAL ${FILESEG}.nii.gz
