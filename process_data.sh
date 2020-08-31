@@ -40,7 +40,6 @@ contrast=$(yaml_parser -o contrast -i $config_script)
 # TODO: enable to input a list of contrast and loop across contrasts
 transfo_file=$(yaml_parser -o transfo_file -i $config_script)
 echo "transfo_file: $transfo_file"
-path_derivatives="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat"
 
 
 # FUNCTIONS
@@ -57,21 +56,19 @@ label_if_does_not_exist(){
   FILELABEL="${file}_labels-disc"
   FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_labels-disc-manual.nii.gz"
   if [ -e "${FILELABELMANUAL}" ]; then
-    echo "manual labeled file was found: ${FILELABELMANUAL##*/}"
+    echo "manual labeled file was found: ${FILELABELMANUAL}"
     # reorienting and resampling image
     sct_image -i ${FILELABELMANUAL} -setorient RPI -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_labels-disc-manual.nii.gz"
     sct_resample -i ${FILELABELMANUAL} -mm $interp -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_r_labels-disc-manual.nii.gz"
     rsync -avzh $FILELABELMANUAL ${FILELABEL}.nii.gz
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${FILELABELMANUAL} -qc ${PATH_QC} -qc-subject ${SUBJECT}
-
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   else
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
-    # Create labels in the Spinal Cord
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   fi
+  # Create labels in the Spinal Cord
+  sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
 }
 
 # Check if manual segmentation already exists. If it does, copy it locally. If
@@ -98,6 +95,9 @@ segment_if_does_not_exist(){
 # ==============================================================================
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
+# copy derivatives directory containing manual corrections to PATH_DATA_PROCESSED
+cp -r "${PATH_DATA}/derivatives" ${PATH_DATA_PROCESSED}
+path_derivatives="${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}/anat"
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
