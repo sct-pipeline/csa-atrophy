@@ -54,20 +54,21 @@ label_if_does_not_exist(){
   local contrast_str="$4"
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels-disc"
-  FILELABELMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILELABEL}-manual.nii.gz"
-  if [ -e "$FILELABELMANUAL" ]; then
-    echo "manual labeled file was found: $FILELABELMANUAL"
+  FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_labels-disc-manual.nii.gz"
+  if [ -e "${FILELABELMANUAL}" ]; then
+    echo "manual labeled file was found: ${FILELABELMANUAL}"
+    # reorienting and resampling image
+    sct_image -i ${FILELABELMANUAL} -setorient RPI -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_labels-disc-manual.nii.gz"
+    sct_resample -i ${FILELABELMANUAL} -mm $interp -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_r_labels-disc-manual.nii.gz"
     rsync -avzh $FILELABELMANUAL ${FILELABEL}.nii.gz
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${FILELABELMANUAL} -qc ${PATH_QC} -qc-subject ${SUBJECT}
-
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   else
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
-    # Create labels in the Spinal Cord
-    sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   fi
+  # Create labels in the Spinal Cord
+  sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
 }
 
 # Check if manual segmentation already exists. If it does, copy it locally. If
@@ -78,7 +79,7 @@ segment_if_does_not_exist(){
   local qc=$3
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
-  FILESEGMANUAL="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat/${FILESEG}-manual.nii.gz"
+  FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual.nii.gz"
   if [ -e $FILESEGMANUAL ]; then
     echo "Found! Using manual segmentation."
     rsync -avzh $FILESEGMANUAL ${FILESEG}.nii.gz
@@ -94,6 +95,10 @@ segment_if_does_not_exist(){
 # ==============================================================================
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
+# copy derivatives directory containing manual corrections to PATH_DATA_PROCESSED
+mkdir -p "${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}/anat/"
+cp -r "${PATH_DATA}/derivatives/labels/${SUBJECT}/anat" "${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}"
+path_derivatives="${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}/anat"
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
@@ -115,10 +120,10 @@ elif [ $contrast == "t1" ]; then
   interp="1x1x1"
 fi
 file=${SUBJECT}_${contrast_str}
-# Reorient to RPI
+# Reorient image to RPI
 sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
 file=${file}_RPI
-# Resample isotropically
+# Resample image isotropically
 sct_resample -i ${file}.nii.gz -mm $interp -o ${file}_r.nii.gz
 file=${file}_r
 end=`date +%s`
@@ -207,7 +212,7 @@ for r_coef in ${R_COEFS[@]}; do
     file_r_t_seg=${FILESEG}
     # Compute average CSA between C2 and C5 levels (append across subjects)
     start=`date +%s`
-    sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 2:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv
+    sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 3:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv
     end=`date +%s`
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of sct_process_segmentation t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
