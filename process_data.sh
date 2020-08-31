@@ -96,7 +96,8 @@ segment_if_does_not_exist(){
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
 # copy derivatives directory containing manual corrections to PATH_DATA_PROCESSED
-cp -r "${PATH_DATA}/derivatives" ${PATH_DATA_PROCESSED}
+mkdir -p "${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}/anat/"
+cp -r "${PATH_DATA}/derivatives/labels/${SUBJECT}/anat" "${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}"
 path_derivatives="${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}/anat"
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
