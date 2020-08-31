@@ -55,12 +55,12 @@ label_if_does_not_exist(){
   local contrast_str="$4"
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels-disc"
-  FILELABELMANUAL="${path_derivatives}/${file%%_RPI*}_labels-disc-manual.nii.gz"
+  FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_labels-disc-manual.nii.gz"
   if [ -e "${FILELABELMANUAL}" ]; then
     echo "manual labeled file was found: ${FILELABELMANUAL##*/}"
     # reorienting and resampling image
-    sct_image -i ${FILELABELMANUAL} -setorient RPI -o "${path_derivatives}/${file%%_RPI*}_RPI_labels-disc-manual.nii.gz"
-    sct_resample -i ${FILELABELMANUAL} -mm $interp -o "${path_derivatives}/${file%%_RPI*}_RPI_r_labels-disc-manual.nii.gz"
+    sct_image -i ${FILELABELMANUAL} -setorient RPI -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_labels-disc-manual.nii.gz"
+    sct_resample -i ${FILELABELMANUAL} -mm $interp -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_r_labels-disc-manual.nii.gz"
     rsync -avzh $FILELABELMANUAL ${FILELABEL}.nii.gz
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${FILELABELMANUAL} -qc ${PATH_QC} -qc-subject ${SUBJECT}
