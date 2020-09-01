@@ -149,12 +149,16 @@ echo "+++++++++++ TIME: Duration of labelling:    $(($runtime / 3600))hrs $((($r
 
 # dilate segmentation (for cropping)
 sct_maths -i ${file_seg}.nii.gz -dilate 15 -shape cube -o ${file_seg}_dil.nii.gz
+file_seg_dil=${file_seg}_dil
 # crop image
-sct_crop_image -i ${file}.nii.gz -m ${file_seg}_dil.nii.gz
+sct_crop_image -i ${file}.nii.gz -m ${file_seg_dil}.nii.gz
 file=${file}_crop
 # crop segmentation
-sct_crop_image -i ${file_seg}.nii.gz -m ${file_seg}_dil.nii.gz
+sct_crop_image -i ${file_seg}.nii.gz -m ${file_seg_dil}.nii.gz
 file_seg=${file_seg}_crop
+# crop segmentation
+sct_crop_image -i ${file_label}.nii.gz -m ${file_seg_dil}.nii.gz
+file_label=${file_label}_crop
 cd ../
 
 
@@ -177,7 +181,7 @@ for r_coef in ${R_COEFS[@]}; do
   file_r=${file}_r${r_coef}
   affine_rescale -i ../anat/${file}.nii.gz -r ${r_coef} -o ${file_r}.nii.gz
   # rescale labeled segmentation
-  file_label_r=${file_r}_seg_labeled
+  file_label_r=${file_label}_r${r_coef}
   affine_rescale -i ../anat/${file_label}.nii.gz -r ${r_coef} -o ${file_label_r}.nii.gz
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
