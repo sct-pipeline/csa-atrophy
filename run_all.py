@@ -2,7 +2,7 @@
 # -*- coding: utf-8
 #########################################################################################
 #
-# Break down OpenMP jobs across sub-datasets
+# Break down multiprocessing jobs across sub-datasets
 # example: python run_all.py -config config_sct_run_batch.yml
 #
 #########################################################################################
@@ -15,7 +15,7 @@ import yaml
 def get_parser(mandatory=None):
     """parser function"""
     parser = argparse.ArgumentParser(
-        description="Break down OpenMP jobs across sub-datasets",
+        description="Break down multiprocessing jobs across sub-datasets",
         formatter_class=argparse.RawTextHelpFormatter,
         prog=os.path.basename(__file__).strip(".py")
     )
@@ -36,7 +36,7 @@ def get_parser(mandatory=None):
     )
     parser.add_argument(
         '-n',
-        help="Break down OpenMP jobs across sub-datasets of n subjects. Adjust 'n' based on the number of CPU cores "
+        help="Break down multiprocessing jobs across sub-datasets of n subjects. Adjust 'n' based on the number of CPU cores "
              "available",
         type=int,
         default=32
