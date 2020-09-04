@@ -67,7 +67,7 @@ Per-subject stat: Panda dataframe `df_sub`:
 - intra-subject MEAN: MEAN[CSA(sI, rX, :)] --> MEAN_intra(sI, rX): `df_sub['mean']`
 - intra-subject STD: STD[CSA(sI, rX, :)] --> STD_intra(sI, rX): `df_sub['std']`
 - intra-subject COV: STD[CSA(sI, rX, :)] / MEAN[CSA(sI, rX, :)] --> COV_intra(sI, rX): `df_sub['cov']`
-- rescale_estimated_subject MEAN: MEAN[CSA(sI, rX, :)] / MEAN[CSA(sI, 1, :)] --> MEAN_rescale_estimated_subject(sI, rX): `df_sub['rescale_estimated']`
+- rescale_estimated_subject MEAN: MEAN[CSA(sI, rX, :) / CSA(sI, 1, :)] --> MEAN_rescale_estimated_subject(sI, rX): `df_sub['rescale_estimated']`
 
 Across-subject stats: Panda dataframe `df_rescale`
 - intra-subject STD: MEAN[STD_intra(:, rX)] --> STD_intra(rX): `df_rescale['std_intra']`
