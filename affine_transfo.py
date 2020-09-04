@@ -18,10 +18,6 @@
 # About the license: see the file LICENSE
 ###################################################################
 
-# TODO: add feature to re-use transformation if csv file exists v
-# TODO: clarify what i_dir is. v
-# TODO: save image as FLOAT32 v
-# TODO: add flag interp to apply transfo to seg-labeled data --> in that case, interp=0 (nearestneighbor) v
 # TODO (less priority): check padding (seems unecessary)
 
 import glob, os, sys
