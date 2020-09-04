@@ -30,7 +30,7 @@ def get_parser(mandatory=None):
              #SBATCH --account=def-jcohen
              #SBATCH --time=0-08:00        # time (DD-HH:MM)
              #SBATCH --nodes=1
-             #SBATCH --cpus-per-task=32
+             #SBATCH --cpus-per-task=32    # number of OpenMP processes
              #SBATCH --mem=128G
              cd $SCRATCH""",
     )
@@ -74,7 +74,7 @@ def main():
         job_template = """#SBATCH --account=def-jcohen
 #SBATCH --time=0-08:00        # time (DD-HH:MM)
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=32    # number of OpenMP processes
 #SBATCH --mem=128G
 """
 
