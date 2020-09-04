@@ -73,8 +73,9 @@ def concatenate_csv_files(path_results):
     """
     files = []
     for file in os.listdir(path_results):
+        path = os.path.join(path_results, file)
         if ".csv" in file and "csa" and "sub" in file:
-            files.append(os.path.join(path_results, file))
+            files.append(path)
     if not files:
         raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
     #metrics = pd.concat(
@@ -144,7 +145,7 @@ def boxplot_atrophy(df, path_output):
     df['rescale_estimated'] = df['rescale_estimated'] * 100
     # round rescale area
     df['rescale_area'] = round(df['rescale_area'], ndigits=0).astype(int)
-    df.boxplot(column='rescale_estimated', by='rescale_area', positions=list(set(df['rescale_area'].values)), showmeans=True, meanline=True)
+    df.boxplot(column='rescale_estimated', by='rescale_area', positions=sorted(set(df['rescale_area'].values)), showmeans=True, meanline=True)
     min_rescale = min(df['rescale_area'].values)
     max_rescale = max(df['rescale_area'].values)
     plt.plot([min_rescale, max_rescale], [min_rescale, max_rescale], ls="--", c=".3")
@@ -281,7 +282,7 @@ def main():
     df_vert = pd.DataFrame(data)
     pd.set_option('display.max_rows', None)
 
-    # identify outliers
+    # identify rows with missing values
     print("Remove rows with missing values...")
     lines_to_drop = df_vert[df_vert['MEAN(area)'] == 'None'].index
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
@@ -353,7 +354,7 @@ def main():
     df_rescale['cov_intra'] = df_sub.groupby('rescale').mean()['cov'].values
     df_rescale['std_inter'] = df_sub.groupby('rescale').std()['mean'].values
     df_rescale['mean_rescale_estimated'] = df_sub.groupby('rescale').mean()['rescale_estimated'].values
-    df_rescale['mean_rescale_estimated'] = df_sub.groupby('rescale').std()['rescale_estimated'].values
+    df_rescale['std_rescale_estimated'] = df_sub.groupby('rescale').std()['rescale_estimated'].values
     df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
     df_rescale['std_perc_error'] = df_sub.groupby('rescale').std()['perc_error'].values
     df_rescale['sample_size'] = sample_size(df_rescale, config_param)
