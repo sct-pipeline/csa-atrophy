@@ -49,9 +49,10 @@ echo "transfo_file: $transfo_file"
 # not, perform automatic labeling.
 label_if_does_not_exist(){
   local file="$1"
-  local file_seg="$2"
-  local contrast="$3"
-  local contrast_str="$4"
+  local contrast="$2"
+  local contrast_str="$3"
+  segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
+  local file_seg=${FILESEG}
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels-disc"
   FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_labels-disc-manual.nii.gz"
@@ -60,7 +61,7 @@ label_if_does_not_exist(){
     # reorienting and resampling image
     sct_image -i ${FILELABELMANUAL} -setorient RPI -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_labels-disc-manual.nii.gz"
     sct_resample -i ${FILELABELMANUAL} -mm $interp -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_r_labels-disc-manual.nii.gz"
-    rsync -avzh $FILELABELMANUAL ${FILELABEL}.nii.gz
+    rsync -avzh "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_r_labels-disc-manual.nii.gz" ${FILELABEL}
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${FILELABELMANUAL} -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
@@ -69,6 +70,11 @@ label_if_does_not_exist(){
   fi
   # Create labels in the Spinal Cord
   sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
+
+  # dilate segmentation (for cropping)
+  sct_maths -i ${file_seg}.nii.gz -dilate 15 -shape cube -o ${file_seg}_dil.nii.gz
+  FILE_SEG_DIL=${file_seg}_dil
+  FILE_SEG_LABEL=${file_seg}_labeled
 }
 
 # Check if manual segmentation already exists. If it does, copy it locally. If
@@ -130,31 +136,20 @@ end=`date +%s`
 runtime=$((end-start))
 echo "+++++++++++ TIME: Duration of reorienting and resampling:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 
-# Segment spinal cord (only if it does not exist) in dir anat
-start=`date +%s`
-segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
-# name segmented file
-file_seg=${FILESEG}
-end=`date +%s`
-runtime=$((end-start))
-echo "+++++++++++ TIME: Duration of segmentation on non cropped image:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
-
 # Label spinal cord (only if it does not exist) in dir anat
 start=`date +%s`
-label_if_does_not_exist $file $file_seg $contrast $contrast_str
-file_label=${file_seg}_labeled
+label_if_does_not_exist $file $contrast $contrast_str
+file_label=${FILE_SEG_LABEL}
 end=`date +%s`
 runtime=$((end-start))
 echo "+++++++++++ TIME: Duration of labelling:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 
-# dilate segmentation (for cropping)
-sct_maths -i ${file_seg}.nii.gz -dilate 15 -shape cube -o ${file_seg}_dil.nii.gz
 # crop image
-sct_crop_image -i ${file}.nii.gz -m ${file_seg}_dil.nii.gz
+sct_crop_image -i ${file}.nii.gz -m ${FILE_SEG_DIL}.nii.gz
 file=${file}_crop
 # crop segmentation
-sct_crop_image -i ${file_seg}.nii.gz -m ${file_seg}_dil.nii.gz
-file_seg=${file_seg}_crop
+sct_crop_image -i ${file_label}.nii.gz -m ${FILE_SEG_DIL}.nii.gz
+file_label=${file_label}_crop
 cd ../
 
 
@@ -177,7 +172,7 @@ for r_coef in ${R_COEFS[@]}; do
   file_r=${file}_r${r_coef}
   affine_rescale -i ../anat/${file}.nii.gz -r ${r_coef} -o ${file_r}.nii.gz
   # rescale labeled segmentation
-  file_label_r=${file_r}_seg_labeled
+  file_label_r=${file_label}_r${r_coef}
   affine_rescale -i ../anat/${file_label}.nii.gz -r ${r_coef} -o ${file_label_r}.nii.gz
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
@@ -204,12 +199,12 @@ for r_coef in ${R_COEFS[@]}; do
     echo "+++++++++++ TIME: Duration of labelling transfo t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # Segment spinal cord (only if it does not exist)
     start=`date +%s`
-    segment_if_does_not_exist ${file_r_t} ${contrast}
+    sct_deepseg_sc -i ${file_r_t}.nii.gz -c ${contrast}
     end=`date +%s`
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of segmentation t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # name segmented file
-    file_r_t_seg=${FILESEG}
+    file_r_t_seg=${file_r_t}_seg
     # Compute average CSA between C2 and C5 levels (append across subjects)
     start=`date +%s`
     sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 3:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv
