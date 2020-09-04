@@ -26,6 +26,14 @@ stats:
     atrophy_sample: 7.7
     conf: 0.95
     power: 0.8
+fig:
+  sample_size:
+    atrophy_sample: 7.7
+    conf: 1.96
+    power:
+    - 0.84
+    - 1.282
+
 
 # affine_transfo.py
 # -----------------
