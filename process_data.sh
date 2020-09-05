@@ -37,10 +37,6 @@ n_transfo=$(yaml_parser -o n_transfo -i $config_script)
 rescaling=$(yaml_parser -o rescaling -i $config_script)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 contrast=$(yaml_parser -o contrast -i $config_script)
-# TODO: enable to input a list of contrast and loop across contrasts
-transfo_file=$(yaml_parser -o transfo_file -i $config_script)
-echo "transfo_file: $transfo_file"
-
 
 # FUNCTIONS
 # ==============================================================================
