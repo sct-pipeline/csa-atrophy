@@ -50,7 +50,7 @@ label_if_does_not_exist(){
   segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
   local file_seg=${FILESEG}
   # Update global variable with segmentation file name
-  FILELABEL="${file}_labels-disc.nii.gz"
+  FILELABEL="${file}_labels-disc"
   FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_labels-disc-manual"
   if [ -e "${FILELABELMANUAL}.nii.gz" ]; then
     echo "manual labeled file was found: ${FILELABELMANUAL}"
@@ -58,7 +58,7 @@ label_if_does_not_exist(){
     sct_image -i ${FILELABELMANUAL}.nii.gz -setorient RPI -o "${FILELABELMANUAL}_RPI.nii.gz"
     sct_maths -i ${FILELABELMANUAL}_RPI.nii.gz -dilate 3 -type uint8 -o ${FILELABELMANUAL}_RPI_dil.nii.gz
     sct_resample -i ${FILELABELMANUAL}_RPI_dil.nii.gz -mm $interp -x nn -o ${FILELABELMANUAL}_RPI_dil_r.nii.gz
-    rsync -avzh "${FILELABELMANUAL}_RPI_dil_r.nii.gz" ${FILELABEL}
+    rsync -avzh "${FILELABELMANUAL}_RPI_dil_r.nii.gz" ${FILELABEL}.nii.gz
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile "${FILELABELMANUAL}_RPI_dil_r.nii.gz" -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
@@ -66,7 +66,7 @@ label_if_does_not_exist(){
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
   fi
   # Create labels in the Spinal Cord
-  sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}
+  sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
 
   # dilate segmentation (for cropping)
   sct_maths -i ${file_seg}.nii.gz -dilate 15 -shape cube -o ${file_seg}_dil.nii.gz
