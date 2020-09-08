@@ -71,7 +71,7 @@ def main():
         path_job_template = os.path.abspath(os.path.expanduser(arguments.job_template))
         job_template = open(path_job_template, 'r').read()
     else:
-        job_template = """#SBATCH --account=def-jcohen
+        job_template = """#SBATCH --account=def-pabaua
 #SBATCH --time=0-08:00        # time (DD-HH:MM)
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=32    # number of OpenMP processes
