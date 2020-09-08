@@ -5,6 +5,5 @@
 #SBATCH --mem=128G
 #SBATCH --mail-user=paul.bautin@polymtl.ca
 #SBATCH --mail-type=ALL
-#SBATCH --mail-type=END
 
 cd $SCRATCH
