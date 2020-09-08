@@ -37,10 +37,6 @@ n_transfo=$(yaml_parser -o n_transfo -i $config_script)
 rescaling=$(yaml_parser -o rescaling -i $config_script)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 contrast=$(yaml_parser -o contrast -i $config_script)
-# TODO: enable to input a list of contrast and loop across contrasts
-transfo_file=$(yaml_parser -o transfo_file -i $config_script)
-echo "transfo_file: $transfo_file"
-
 
 # FUNCTIONS
 # ==============================================================================
@@ -55,15 +51,16 @@ label_if_does_not_exist(){
   local file_seg=${FILESEG}
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels-disc"
-  FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_labels-disc-manual.nii.gz"
-  if [ -e "${FILELABELMANUAL}" ]; then
+  FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_labels-disc-manual"
+  if [ -e "${FILELABELMANUAL}.nii.gz" ]; then
     echo "manual labeled file was found: ${FILELABELMANUAL}"
     # reorienting and resampling image
-    sct_image -i ${FILELABELMANUAL} -setorient RPI -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_labels-disc-manual.nii.gz"
-    sct_resample -i ${FILELABELMANUAL} -mm $interp -o "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_r_labels-disc-manual.nii.gz"
-    rsync -avzh "${path_derivatives}/${SUBJECT}_${contrast_str}_RPI_r_labels-disc-manual.nii.gz" ${FILELABEL}
+    sct_image -i ${FILELABELMANUAL}.nii.gz -setorient RPI -o "${FILELABELMANUAL}_RPI.nii.gz"
+    sct_maths -i ${FILELABELMANUAL}_RPI.nii.gz -dilate 2 -o ${FILELABELMANUAL}_RPI_dil.nii.gz
+    sct_resample -i ${FILELABELMANUAL}_RPI_dil.nii.gz -mm $interp -x nn -o ${FILELABELMANUAL}_RPI_dil_r.nii.gz
+    rsync -avzh "${FILELABELMANUAL}_RPI_dil_r.nii.gz" ${FILELABEL}.nii.gz
     # Generate labeled segmentation
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile ${FILELABELMANUAL} -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile "${FILELABELMANUAL}_RPI_dil_r.nii.gz" -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
