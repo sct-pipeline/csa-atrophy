@@ -57,6 +57,11 @@ def get_parser():
         help="Path to csv file that contains the transformation. If the transformation for the specific subject already "
              "exists, it will read the transformation instead of creating a new random one.",
     )
+    mandatory.add_argument(
+        "-r",
+        required=True,
+        help='rescaling coefficient',
+    )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-o',
@@ -119,37 +124,7 @@ def random_values(df, subject_name, config_param):
     return df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS
 
 
-def get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS):
-    """fetch nibabel image and calculate minimum padding necessary for transformed image,
-    minimum padding is computed to contain maximum rotation and shift.
-     :param img: nibabel image
-     :param angle_IS: angle of rotation around Inferior/Superior axis
-     :param angle_PA: angle of rotation around Posterior/Anterior axis
-     :param angle_LR: angle of rotation around Left/Right axis
-     :param shift_LR: value of shift along Left/Right axis
-     :param shift_PA: value of shift along Posterior/Anterior axis
-     :param shift_IS: value of shift along Inferior/Superior axis
-     :return data: image data with a padding
-     :return min_pad: number of voxels added on each side of the image
-     """
-    # upload and pad image to avoid edge overflow during transformation
-    data = img.get_fdata()
-    data = data.astype(np.int32)
-    max_shift = np.max(np.abs((shift_LR, shift_PA, shift_IS)))
-    max_axes = np.max(data.shape)
-    max_angle = np.deg2rad(np.max(np.abs((angle_IS, angle_PA, angle_LR))))
-    # estimate upper limit of largest frame increase due to transformation
-    increase_angle = (max_axes / 2) * (np.sqrt(2) * np.sin(((np.pi / 4) - max_angle)) - 1)
-    increase_axes = np.sqrt(2 * increase_angle ** 2)
-    min_pad = math.ceil(increase_axes + np.sqrt(3 * (max_shift ** 2)))
-    # padding choices: {‘constant’, ‘edge’, ‘symmetric’, ‘reflect’, ‘wrap’}
-    data = np.pad(data, min_pad, 'constant')
-    print('min padding:', min_pad)
-    print('data shape (image with padding):', data.shape)
-    return data, min_pad
-
-
-def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, interpolation):
+def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, interpolation, rescale):
     """apply rotation and translation on image
      :param angle_IS: angle of rotation around Inferior/Superior axis
      :param angle_PA: angle of rotation around Posterior/Anterior axis
@@ -158,6 +133,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, in
      :param shift_PA: value of shift along Posterior/Anterior axis
      :param shift_IS: value of shift along Inferior/Superior axis
      :param data: padded image data
+     :param rescale: image rescaling factor
      :return data: image data with a padding
      :return data_rot: return image data after random transformation
      """
@@ -174,7 +150,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, in
     rotation_affine_IS = np.array([[cos_theta, -sin_theta, 0],
                                    [sin_theta, cos_theta, 0],
                                    [0, 0, 1]])
-    affine_arr_rotIS = rotation_affine_IS.dot(np.eye(3))
+    affine_arr_rotIS = rotation_affine_IS.dot(np.eye(3)*(2-float(rescale)))
 
     # rotation matrix around PA
     cos_fi = np.cos(np.deg2rad(-angle_PA))
@@ -210,6 +186,7 @@ def main():
     arguments = parser.parse_args()
     suffix = arguments.o
     interpolation = arguments.interpolation
+    rescale = arguments.r
     # fetch parameters from config_script.yml file
     path_config_file = arguments.config
     config_param = yaml_parser(path_config_file)
@@ -248,8 +225,9 @@ def main():
                 subject].values
 
         # nibabel data follows the RAS+ convention (Right, Anterior, Superior in the ascending direction)
-        data, min_pad = get_image(img, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS)
-        data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, interpolation)
+        data = img.get_fdata()
+        print('data shape (image with padding):', data.shape)
+        data_shift_rot = transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, interpolation, rescale)
         # load data back to nifti format
         img_t = nib.Nifti1Image(data_shift_rot, img.affine)
         print('new image shape: ', img_t.shape)

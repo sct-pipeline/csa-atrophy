@@ -41,9 +41,9 @@ contrast=$(yaml_parser -o contrast -i $config_script)
 # FUNCTIONS
 # ==============================================================================
 
-# Check if manual label already exists. If it does, copy it locally. If it does
-# not, perform automatic labeling.
-label_if_does_not_exist(){
+# Check if manual segmentation and labels already exist. If they do, copy them locally. If they do
+# not, perform automatic segmentation and labeling.
+segment_and_label_if_does_not_exist(){
   local file="$1"
   local contrast="$2"
   local contrast_str="$3"
@@ -135,7 +135,7 @@ echo "+++++++++++ TIME: Duration of reorienting and resampling:    $(($runtime /
 
 # Label spinal cord (only if it does not exist) in dir anat
 start=`date +%s`
-label_if_does_not_exist $file $contrast $contrast_str
+segment_and_label_if_does_not_exist $file $contrast $contrast_str
 file_label=${FILE_SEG_LABEL}
 end=`date +%s`
 runtime=$((end-start))
@@ -144,7 +144,7 @@ echo "+++++++++++ TIME: Duration of labelling:    $(($runtime / 3600))hrs $((($r
 # crop image
 sct_crop_image -i ${file}.nii.gz -m ${FILE_SEG_DIL}.nii.gz
 file=${file}_crop
-# crop segmentation
+# crop labeled segmentation
 sct_crop_image -i ${file_label}.nii.gz -m ${FILE_SEG_DIL}.nii.gz
 file_label=${file_label}_crop
 cd ../
@@ -165,12 +165,9 @@ for r_coef in ${R_COEFS[@]}; do
   mkdir anat_r$r_coef
   cd anat_r${r_coef}
 
-  # Rescale header of native nifti file
-  file_r=${file}_r${r_coef}
-  affine_rescale -i ../anat/${file}.nii.gz -r ${r_coef} -o ${file_r}.nii.gz
-  # rescale labeled segmentation
-  file_label_r=${file_label}_r${r_coef}
-  affine_rescale -i ../anat/${file_label}.nii.gz -r ${r_coef} -o ${file_label_r}.nii.gz
+  # Copy image and labeled segmentation to current directory: anat_r${r_coef}
+  cp ../anat/${file}.nii.gz .
+  cp ../anat/${file_label}.nii.gz .
 
   # create list of array to iterate on (e.g.: seq_transfo = 1 2 3 4 5 if n_transfo=5)
   seq_transfo=$(seq ${n_transfo})
@@ -181,16 +178,16 @@ for r_coef in ${R_COEFS[@]}; do
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
     start=`date +%s`
-    affine_transfo -i ${file_r}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file_r} -config $config_script -o _t${i_transfo}
-    file_r_t=${file_r}_t${i_transfo}
+    affine_transfo -i ${file}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file_r} -config $config_script -o _r${r_coef}_t${i_transfo} -r ${r_coef}
+    file_r_t=${file}_r${r_coef}_t${i_transfo}
     end=`date +%s`
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of of image transfo t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # transform the labeled segmentation with same transfo values
 
     start=`date +%s`
-    affine_transfo -i ${file_label_r}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file_r} -config $config_script -o _t${i_transfo} -interpolation 0
-    file_label_r_t=${file_label_r}_t${i_transfo}
+    affine_transfo -i ${file_label}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file_r} -config $config_script -o _r${r_coef}_t${i_transfo} -r ${r_coef} -interpolation 0
+    file_label_r_t=${file_label}_r${r_coef}_t${i_transfo}
     end=`date +%s`
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of labelling transfo t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
@@ -202,7 +199,7 @@ for r_coef in ${R_COEFS[@]}; do
     echo "+++++++++++ TIME: Duration of segmentation t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # name segmented file
     file_r_t_seg=${file_r_t}_seg
-    # Compute average CSA between C2 and C5 levels (append across subjects)
+    # Compute average CSA between C3 and C5 levels (append across subjects)
     start=`date +%s`
     sct_process_segmentation -i $file_r_t_seg.nii.gz -vert 3:5 -perlevel 1 -vertfile $file_label_r_t.nii.gz -o $PATH_RESULTS/csa_perlevel_${SUBJECT}_t${i_transfo}_${r_coef}.csv
     end=`date +%s`
