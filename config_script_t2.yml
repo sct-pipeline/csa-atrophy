@@ -15,7 +15,7 @@ rescaling:
   - 0.94
   - 0.93
 # Contrasts on which to perform the analysis. Available values are: 't1', 't2'
-contrast: "t2"
+contrast: "t1"
 
 # csa_atrophy_stat.py
 # -------------------
