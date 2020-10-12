@@ -178,7 +178,7 @@ for r_coef in ${R_COEFS[@]}; do
     # We keep a transfo_values.csv file, so that after first pass of the pipeline and QC, if segmentations
     # need to be manually-corrected, we want the transformations to be the same for the 2nd pass of the pipeline.
     start=`date +%s`
-    affine_transfo -i ${file}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file_r} -config $config_script -o _r${r_coef}_t${i_transfo} -r ${r_coef}
+    affine_transfo -i ${file}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file} -config $config_script -o _r${r_coef}_t${i_transfo} -r ${r_coef}
     file_r_t=${file}_r${r_coef}_t${i_transfo}
     end=`date +%s`
     runtime=$((end-start))
@@ -186,7 +186,7 @@ for r_coef in ${R_COEFS[@]}; do
     # transform the labeled segmentation with same transfo values
 
     start=`date +%s`
-    affine_transfo -i ${file_label}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file_r} -config $config_script -o _r${r_coef}_t${i_transfo} -r ${r_coef} -interpolation 0
+    affine_transfo -i ${file_label}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file} -config $config_script -o _r${r_coef}_t${i_transfo} -r ${r_coef} -interpolation 0
     file_label_r_t=${file_label}_r${r_coef}_t${i_transfo}
     end=`date +%s`
     runtime=$((end-start))
