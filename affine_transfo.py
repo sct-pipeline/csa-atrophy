@@ -150,7 +150,7 @@ def transfo(angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS, data, in
     rotation_affine_IS = np.array([[cos_theta, -sin_theta, 0],
                                    [sin_theta, cos_theta, 0],
                                    [0, 0, 1]])
-    affine_arr_rotIS = rotation_affine_IS.dot(np.eye(3)*(2-float(rescale)))
+    affine_arr_rotIS = rotation_affine_IS.dot(np.eye(3)*(1/float(rescale)))
 
     # rotation matrix around PA
     cos_fi = np.cos(np.deg2rad(-angle_PA))
