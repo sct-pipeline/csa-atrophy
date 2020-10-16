@@ -1,3 +1,5 @@
+![csa-atrophy](https://github.com/sct-pipeline/csa-atrophy/blob/readme/csa_atrophy_scheme.png)
+
 # csa-atrophy
 
 Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as follows:
