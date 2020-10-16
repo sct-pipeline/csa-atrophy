@@ -1,4 +1,4 @@
-![csa-atrophy](https://github.com/sct-pipeline/csa-atrophy/blob/readme/csa_atrophy_scheme.png)
+![csa-atrophy](https://github.com/sct-pipeline/csa-atrophy/blob/readme/csa_atrophy_scheme2.png)
 
 # csa-atrophy
 
