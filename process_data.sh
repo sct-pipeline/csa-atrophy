@@ -117,7 +117,7 @@ cd anat
 # Reorient to RPI and resample file
 if [ $contrast == "t2" ]; then
   contrast_str="T2w"
-  interp="0.8x0.8x0.8"
+  interp="1x1x1"
 elif [ $contrast == "t1" ]; then
   contrast_str="T1w"
   interp="1x1x1"
