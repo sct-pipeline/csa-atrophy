@@ -1,6 +1,6 @@
 # config file for sct_run_batch
 path_data: /scratch/pabaua/data-multi-subject-p
-path_output: /scratch/pabaua/results_csa_t2_2
+path_output: /scratch/pabaua/results_csa_t2_3
 script: /home/pabaua/csa-atrophy/process_data.sh
 script_args: /home/pabaua/csa-atrophy/config_script_t2.yml
 jobs: -1
