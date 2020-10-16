@@ -145,7 +145,7 @@ def boxplot_atrophy(df, path_output):
     df['rescale_estimated'] = df['rescale_estimated'] * 100
     # round rescale area
     df['rescale_area'] = round(df['rescale_area'], ndigits=0).astype(int)
-    df.boxplot(column='rescale_estimated', by='rescale_area', positions=sorted(set(df['rescale_area'].values)), showmeans=True, meanline=True)
+    df.boxplot(column='rescale_estimated', by='rescale_area', positions=sorted(set(df['rescale_area'].values)), showmeans=True, meanline=True, figsize=(10,8))
     min_rescale = min(df['rescale_area'].values)
     max_rescale = max(df['rescale_area'].values)
     plt.plot([min_rescale, max_rescale], [min_rescale, max_rescale], ls="--", c=".3")
