@@ -67,10 +67,6 @@ segment_and_label_if_does_not_exist(){
   fi
   # Create labels in the Spinal Cord
   sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
-
-  # dilate segmentation (for cropping)
-  sct_maths -i ${file_seg}.nii.gz -dilate 15 -shape cube -o ${file_seg}_dil.nii.gz
-  FILE_SEG_DIL=${file_seg}_dil
   FILE_SEG_LABEL=${file_seg}_labeled
 }
 
@@ -140,13 +136,6 @@ file_label=${FILE_SEG_LABEL}
 end=`date +%s`
 runtime=$((end-start))
 echo "+++++++++++ TIME: Duration of labelling:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
-
-# crop image
-sct_crop_image -i ${file}.nii.gz -m ${FILE_SEG_DIL}.nii.gz
-file=${file}_crop
-# crop labeled segmentation
-sct_crop_image -i ${file_label}.nii.gz -m ${FILE_SEG_DIL}.nii.gz
-file_label=${file_label}_crop
 cd ../
 
 
@@ -184,13 +173,23 @@ for r_coef in ${R_COEFS[@]}; do
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of of image transfo t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
     # transform the labeled segmentation with same transfo values
-
     start=`date +%s`
     affine_transfo -i ${file_label}.nii.gz -transfo ${PATH_RESULTS}/transfo_${file} -config $config_script -o _r${r_coef}_t${i_transfo} -r ${r_coef} -interpolation 0
     file_label_r_t=${file_label}_r${r_coef}_t${i_transfo}
     end=`date +%s`
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of labelling transfo t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
+
+    # dilate labelled segmentation (for cropping)
+    file_label_dil=${file_label_r_t}_dil
+    sct_maths -i ${file_label_r_t}.nii.gz -dilate 15 -shape cube -o ${file_label_dil}.nii.gz
+    # crop image
+    sct_crop_image -i ${file_r_t}.nii.gz -m ${file_label_dil}.nii.gz
+    file_r_t=${file_r_t}_crop
+    # crop labelled segmentation
+    sct_crop_image -i ${file_label_r_t}.nii.gz -m ${file_label_dil}.nii.gz
+    file_label_r_t=${file_label_r_t}_crop
+
     # Segment spinal cord (only if it does not exist)
     start=`date +%s`
     sct_deepseg_sc -i ${file_r_t}.nii.gz -c ${contrast}
