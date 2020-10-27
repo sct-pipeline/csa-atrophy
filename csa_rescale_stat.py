@@ -357,7 +357,7 @@ def main():
     df_rescale['std_rescale_estimated'] = df_sub.groupby('rescale').std()['rescale_estimated'].values
     df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
     df_rescale['std_perc_error'] = df_sub.groupby('rescale').std()['perc_error'].values
-    #df_rescale['sample_size'] = sample_size(df_rescale, config_param)
+    df_rescale['sample_size'] = sample_size(df_rescale, config_param)
     print(df_rescale)
 
     # plot graph if verbose is present
