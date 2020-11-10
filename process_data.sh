@@ -82,7 +82,7 @@ segment_if_does_not_exist(){
   if [ -e $FILESEGMANUAL ]; then
     echo "Found! Using manual segmentation."
     sct_resample -i ${FILESEGMANUAL}.nii.gz -mm $interp -x nn -o ${FILESEGMANUAL}_r.nii.gz
-    rsync -avzh ${FILESEGMANUAL}.nii.gz ${FILESEG}.nii.gz
+    rsync -avzh ${FILESEGMANUAL}_r.nii.gz ${FILESEG}.nii.gz
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc $qc
   else
     # Segment spinal cord
