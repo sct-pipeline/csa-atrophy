@@ -78,10 +78,11 @@ segment_if_does_not_exist(){
   local qc=$3
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
-  FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual.nii.gz"
+  FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual"
   if [ -e $FILESEGMANUAL ]; then
     echo "Found! Using manual segmentation."
-    rsync -avzh $FILESEGMANUAL ${FILESEG}.nii.gz
+    sct_resample -i ${FILESEGMANUAL}.nii.gz -mm $interp -x nn -o ${FILESEGMANUAL}_r.nii.gz
+    rsync -avzh ${FILESEGMANUAL}_r.nii.gz ${FILESEG}.nii.gz
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc $qc
   else
     # Segment spinal cord
@@ -113,7 +114,7 @@ cd anat
 # Reorient to RPI and resample file
 if [ $contrast == "t2" ]; then
   contrast_str="T2w"
-  interp="0.8x0.8x0.8"
+  interp="1x1x1"
 elif [ $contrast == "t1" ]; then
   contrast_str="T1w"
   interp="1x1x1"
