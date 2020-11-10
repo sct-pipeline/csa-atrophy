@@ -294,7 +294,7 @@ def main():
 
     # add useful columns to dataframe
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
-    df_vert['rescale'] = list(float(b.split('crop_r')[1].split('_')[0]) for b in df_vert['basename'])
+    df_vert['rescale'] = list(float(b.split('RPI_r_r')[1].split('_')[0]) for b in df_vert['basename'])
     df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
 
     # verify if vertlevels of interest were given in input by user
