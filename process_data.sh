@@ -37,6 +37,8 @@ n_transfo=$(yaml_parser -o n_transfo -i $config_script)
 rescaling=$(yaml_parser -o rescaling -i $config_script)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 contrast=$(yaml_parser -o contrast -i $config_script)
+interp_t1=$(yaml_parser -o interp_t1 -i $config_script)
+interp_t2=$(yaml_parser -o interp_t2 -i $config_script)
 
 # FUNCTIONS
 # ==============================================================================
@@ -78,10 +80,11 @@ segment_if_does_not_exist(){
   local qc=$3
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
-  FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual.nii.gz"
+  FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual"
   if [ -e $FILESEGMANUAL ]; then
     echo "Found! Using manual segmentation."
-    rsync -avzh $FILESEGMANUAL ${FILESEG}.nii.gz
+    sct_resample -i ${FILESEGMANUAL}.nii.gz -mm $interp -x nn -o ${FILESEGMANUAL}_r.nii.gz
+    rsync -avzh ${FILESEGMANUAL}_r.nii.gz ${FILESEG}.nii.gz
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc $qc
   else
     # Segment spinal cord
@@ -111,12 +114,12 @@ rm -r dwi
 #=======================================================================
 cd anat
 # Reorient to RPI and resample file
-if [ $contrast == "t2" ]; then
-  contrast_str="T2w"
-  interp="0.8x0.8x0.8"
-elif [ $contrast == "t1" ]; then
+if [ $contrast == "t1" ]; then
   contrast_str="T1w"
-  interp="1x1x1"
+  interp=$interp_t1
+elif [ $contrast == "t2" ]; then
+  contrast_str="T2w"
+  interp=$interp_t2
 fi
 file=${SUBJECT}_${contrast_str}
 # Reorient image to RPI
