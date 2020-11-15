@@ -14,8 +14,12 @@ rescaling:
   - 0.95
   - 0.94
   - 0.93
+
 # Contrasts on which to perform the analysis. Available values are: 't1', 't2'
 contrast: "t2"
+# image resolution (generally T1w images have resolution 1mm isotropic and T2w images 0.8mm isotropic)
+interp_t1: "1x1x1"
+interp_t2: "0.8x0.8x0.8"
 
 # csa_atrophy_stat.py
 # -------------------

@@ -37,6 +37,8 @@ n_transfo=$(yaml_parser -o n_transfo -i $config_script)
 rescaling=$(yaml_parser -o rescaling -i $config_script)
 R_COEFS=$(echo $rescaling | tr '[]' ' ' | tr ',' ' ' | tr "'" ' ')
 contrast=$(yaml_parser -o contrast -i $config_script)
+interp_t1=$(yaml_parser -o interp_t1 -i $config_script)
+interp_t2=$(yaml_parser -o interp_t2 -i $config_script)
 
 # FUNCTIONS
 # ==============================================================================
@@ -112,12 +114,12 @@ rm -r dwi
 #=======================================================================
 cd anat
 # Reorient to RPI and resample file
-if [ $contrast == "t2" ]; then
-  contrast_str="T2w"
-  interp="1x1x1"
-elif [ $contrast == "t1" ]; then
+if [ $contrast == "t1" ]; then
   contrast_str="T1w"
-  interp="1x1x1"
+  interp=$interp_t1
+elif [ $contrast == "t2" ]; then
+  contrast_str="T2w"
+  interp=$interp_t2
 fi
 file=${SUBJECT}_${contrast_str}
 # Reorient image to RPI
