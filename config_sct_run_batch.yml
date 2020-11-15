@@ -2,7 +2,7 @@
 path_data: /scratch/pabaua/data-multi-subject-p
 path_output: /scratch/pabaua/results_csa_t2
 script: /home/pabaua/csa-atrophy/process_data.sh
-script_args: /home/pabaua/csa-atrophy/config_script_t2.yml
+script_args: /home/pabaua/csa-atrophy/config_script.yml
 jobs: -1
 batch_log: sct_run_batch_log.txt
 continue_on_error: 1
