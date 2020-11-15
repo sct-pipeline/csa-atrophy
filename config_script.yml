@@ -17,7 +17,7 @@ rescaling:
 
 # Contrasts on which to perform the analysis. Available values are: 't1', 't2'
 contrast: "t2"
-# image resolution (generally T1w images have resolution 1mm isotropic and T2w images 0.8mm isotropic)
+# Resampling resolution in mm. Native resolutions for the spine-generic project are 1mm isotropic for T1w images and 0.8mm isotropic for T2w images. 
 interp_t1: "1x1x1"
 interp_t2: "0.8x0.8x0.8"
 
