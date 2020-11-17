@@ -18,8 +18,8 @@ rescaling:
 # Contrasts on which to perform the analysis. Available values are: 't1', 't2'
 contrast: "t2"
 # Resampling resolution in mm. Native resolutions for the spine-generic project are 1mm isotropic for T1w images and 0.8mm isotropic for T2w images. 
-interp_t1: "1x1x1"
-interp_t2: "1x1x1"
+interp_t1: "0.5x0.5x0.5"
+interp_t2: "0.5x0.5x0.5"
 
 # csa_atrophy_stat.py
 # -------------------
