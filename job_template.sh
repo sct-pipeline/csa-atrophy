@@ -1,5 +1,5 @@
 #SBATCH --account=def-jcohen
-#SBATCH --time=0-12:00        # time (DD-HH:MM)
+#SBATCH --time=0-20:00        # time (DD-HH:MM)
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=32    # number of OpenMP processes
 #SBATCH --mem=128G
