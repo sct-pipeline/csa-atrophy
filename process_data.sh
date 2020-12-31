@@ -188,10 +188,15 @@ for r_coef in ${R_COEFS[@]}; do
     sct_maths -i ${file_label_r_t}.nii.gz -dilate 15 -shape cube -o ${file_label_dil}.nii.gz
     # crop image
     sct_crop_image -i ${file_r_t}.nii.gz -m ${file_label_dil}.nii.gz
+    # remove the non-cropped transformed image
+    rm ${file_r_t}.nii.gz
     file_r_t=${file_r_t}_crop
     # crop labelled segmentation
     sct_crop_image -i ${file_label_r_t}.nii.gz -m ${file_label_dil}.nii.gz
+    # remove the non-cropped transformed labelled segmentation
+    rm ${file_label_r_t}.nii.gz
     file_label_r_t=${file_label_r_t}_crop
+
 
     # Segment spinal cord (only if it does not exist)
     start=`date +%s`
