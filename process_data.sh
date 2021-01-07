@@ -185,7 +185,7 @@ for r_coef in ${R_COEFS[@]}; do
 
     # dilate labelled segmentation (for cropping)
     file_label_dil=${file_label_r_t}_dil
-    sct_maths -i ${file_label_r_t}.nii.gz -dilate 15 -shape cube -o ${file_label_dil}.nii.gz
+    sct_maths -i ${file_label_r_t}.nii.gz -dilate 45 -shape cube -o ${file_label_dil}.nii.gz
     # crop image
     sct_crop_image -i ${file_r_t}.nii.gz -m ${file_label_dil}.nii.gz
     # remove the non-cropped transformed image
