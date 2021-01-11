@@ -359,24 +359,17 @@ def main():
     lines_to_drop = df_vert[df_vert['MEAN(area)'] == 'None'].index
     df_vert['subject'] = list(sub.split('data_processed/')[1].split('/anat')[0] for sub in df_vert['Filename'])
 
-    # identify and drop subjects with missing CSA values
-    lines_to_drop_subject = []
-    subjects_to_remove = []
-    for subject in df_vert.index[lines_to_drop]:
-        lines_to_drop_subject.append(df_vert[df_vert['subject'] == df_vert.iloc[subject]['subject']].index)
-        subjects_to_remove.append(df_vert.iloc[subject]['subject'])
-    lines_to_drop_subject = np.concatenate(lines_to_drop_subject, axis=0)
-    print("Rows removed: {}".format(lines_to_drop_subject))
-    print("Subjects removed: {}".format(set(subjects_to_remove)))
-    df_vert = df_vert.drop(df_vert.index[lines_to_drop_subject])
+    # remove rows with missing values
+    df_vert = df_vert.drop(df_vert.index[lines_to_drop])
     df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
+    print("  Rows removed: {}".format(lines_to_drop))
 
     # fetch parameters from config.yaml file
     config_param = yaml_parser(arguments.config)
 
     # add useful columns to dataframe
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
-    df_vert['rescale'] = list(float(b.split('crop_r')[1].split('_')[0]) for b in df_vert['basename'])
+    df_vert['rescale'] = list(float(b.split('RPI_r_r')[1].split('_')[0]) for b in df_vert['basename'])
     df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
 
     # verify if vertlevels of interest were given in input by user
