@@ -236,6 +236,77 @@ def sample_size(df, config_param):
             sample_size.append('inf')
     return sample_size
 
+def error_function_of_intra_cov(df, path_output):
+    """Scatter plot of intra-subject COV in function of error %
+    :param df: dataframe for computing stats per subject: df_sub
+    :param path_output: directory in which plot is saved
+    """
+    fig, ax = plt.subplots(figsize=(7, 7))
+    # remove rescale=1 because error=0
+    df = df[df['rescale'] != 1]
+    # compute linear regression
+    z = np.polyfit(x=df.loc[:, 'perc_error'], y=df.loc[:, 'cov'], deg=1)
+    p = np.poly1d(z)
+    # plot
+    df.plot.scatter(x='perc_error', y='cov', c='rescale', colormap='viridis')
+    min_err = min(df['perc_error'].values)
+    max_err = max(df['perc_error'].values)
+    plt.plot([min_err, max_err], [min_err*z[0]+z[1], max_err*z[0]+z[1]], ls="--", c=".3")
+    ax.set_xlabel('perc_error')
+    ax.set_ylabel('cov')
+    plt.title('COV in function of % error,\n linear regression: {}'.format(p))
+    plt.title("COV in function of % error")
+    ax.legend(loc='upper right')
+    plt.grid()
+    output_file = os.path.join(path_output, "fig_err_in_function_of_cov.png")
+    plt.savefig(output_file, bbox_inches='tight')
+    print("--> Created figure: {}".format(output_file))
+
+
+def error_function_of_intra_cov_outlier(df, path_output):
+    """Scatter plot of intra-subject COV in function of error % to identify outliers with either high error %
+     or high intra-subject COV
+    :param df: dataframe for computing stats per subject: df_sub
+    :param path_output: directory in which plot is saved
+    """
+    fig, ax = plt.subplots(figsize=(7, 7))
+    # identified outliers either high error % or high intra-subject COV of t1 images
+    outliers_t1_all = ['sub-brnoUhb01', 'sub-brnoUhb02', 'sub-brnoUhb03', 'sub-brnoUhb06', 'sub-brnoUhb07', 'sub-brnoUhb08',
+                       'sub-barcelona04', 'sub-barcelona06', 'sub-beijingPrisma03', 'sub-milan03', 'sub-oxfordFmrib01',
+                       'sub-tokyo750w03', 'sub-pavia04']
+    # identified t1 outliers remaining after subjects removed due to missing vertebrae levels missing CSA
+    outliers_t1 = ['sub-brnoUhb01', 'sub-brnoUhb08', 'sub-milan03', 'sub-oxfordFmrib01', 'sub-cmrrb05',
+                   'sub-tokyo750w03', 'sub-pavia04']
+    # identified outliers either high error % or high intra-subject COV of t2 images
+    outliers_t2_all = ['sub-tokyo750w02', 'sub-tokyo750w04', 'sub-tokyo750w06', 'sub-beijingVerio02',
+                       'sub-beijingVerio03', 'sub-ubc02', 'sub-vuiisIngenia05']
+    # identified t2 outliers remaining after subjects removed due to missing vertebrae levels missing CSA
+    outliers_t2 = ['sub-tokyo750w02', 'sub-tokyo750w04', 'sub-tokyo750w06', 'sub-beijingVerio02', 'sub-beijingVerio03',
+                   'sub-ubc02', 'sub-vuiisIngenia05']
+    # remove rescale=1 because error=0
+    df = df[df['rescale'] != 1]
+    ax.scatter(df['perc_error'], df['cov'], color='tab:blue', label='others')
+    # plot scatter outliers of t1w images
+    for outlier_t1 in outliers_t1:
+        df_t1 = df.groupby(['subject']).get_group(outlier_t1)
+        ax.scatter(df_t1['perc_error'], df_t1['cov'], color='tab:red', label=outlier_t1)
+        df_t1 = []
+    # plot scatter outliers of t2w images
+    for outlier_t2 in outliers_t2:
+        df_t2 = df.groupby(['subject']).get_group(outlier_t2)
+        ax.scatter(df_t2['perc_error'], df_t2['cov'], color='tab:olive', label=outlier_t2)
+        df_t2 = []
+    # plot
+    ax.set_xlabel('perc_error')
+    ax.set_ylabel('cov')
+    plt.title("COV in function of error %")
+    ax.legend(loc='upper right')
+    plt.grid()
+    # save image
+    output_file = os.path.join(path_output, "fig_err_in_function_of_cov_outlier.png")
+    plt.savefig(output_file, bbox_inches='tight')
+    print("--> Created figure: {}".format(output_file))
+
 
 def add_columns_df_sub(df):
     """  Add columns theoretic CSA values (rX^2 * MEAN(area)) and CSA without rescaling to dataframe
@@ -256,6 +327,7 @@ def add_columns_df_sub(df):
             if subject in csa_without_rescale.index.values:
                 group.loc[subject, 'theoretic_csa'] = csa_without_rescale.loc[subject, 'mean'] * (rescale ** 2)
         df.loc[rescale, 'theoretic_csa'] = group['theoretic_csa'].values
+        df.loc[rescale, 'csa_without_rescale'] = csa_without_rescale['mean'].values
         df.loc[rescale, 'csa_without_rescale'] = csa_without_rescale['mean'].values
     df = df.reset_index()
     return df
@@ -285,6 +357,9 @@ def main():
     # identify rows with missing values
     print("Remove rows with missing values...")
     lines_to_drop = df_vert[df_vert['MEAN(area)'] == 'None'].index
+    df_vert['subject'] = list(sub.split('data_processed/')[1].split('/anat')[0] for sub in df_vert['Filename'])
+
+    # remove rows with missing values
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
     df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
     print("  Rows removed: {}".format(lines_to_drop))
@@ -338,8 +413,10 @@ def main():
     df_sub = add_columns_df_sub(df_sub)
     df_sub['rescale_estimated'] = df_sub['mean'].div(df_sub['csa_without_rescale'])
     df_sub['error'] = (df_sub['mean'] - df_sub['theoretic_csa']).abs()
-    df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).abs().div(df_sub['mean'])
+    df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).abs().div(df_sub['theoretic_csa'])
     print(df_sub)
+    # save dataframe in a csv file
+    df_sub.to_csv(os.path.join(path_output, r'csa_sub.csv'))
 
     # Create dataframe for computing stats across subject: df_rescale
     print("\n==================== rescaling_dataframe ==========================\n")
@@ -356,9 +433,12 @@ def main():
     df_rescale['mean_rescale_estimated'] = df_sub.groupby('rescale').mean()['rescale_estimated'].values
     df_rescale['std_rescale_estimated'] = df_sub.groupby('rescale').std()['rescale_estimated'].values
     df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
+    df_rescale['mean_error'] = df_sub.groupby('rescale').mean()['error'].values
     df_rescale['std_perc_error'] = df_sub.groupby('rescale').std()['perc_error'].values
     df_rescale['sample_size'] = sample_size(df_rescale, config_param)
     print(df_rescale)
+    # save dataframe in a csv file
+    df_sub.to_csv(os.path.join(path_output, r'csa_transfo.csv'))
 
     # plot graph if verbose is present
     if arguments.fig:
@@ -382,7 +462,10 @@ def main():
         # std = STD of subjects without rescaling CSA values
         # mean_csa =  mean CSA value of subjects without rescaling
         plot_sample_size(z_conf=z_score_confidence, z_power=z_score_power, std=df_rescale.loc[1, 'std_inter'], mean_csa=df_rescale.loc[1, 'mean_inter'], path_output=path_output)
-
+        # scatter plot of COV in function of error %
+        error_function_of_intra_cov(df_sub, path_output=path_output)
+        # scatter plot of COV in function of error % to identify outliers
+        error_function_of_intra_cov_outlier(df_sub, path_output=path_output)
 
 if __name__ == "__main__":
     main()
