@@ -24,7 +24,10 @@ csa-atrophy requires specific python packages for computing statistics and proce
 pip install -e .
 ~~~
 
-Download the [Spine Generic Multi-Subject dataset](https://github.com/spine-generic/data-multi-subject#download). 
+Download the [Spine Generic Multi-Subject dataset](https://github.com/spine-generic/data-multi-subject#download). To access specific repository tag use command:
+~~~
+git clone -b r20200907 https://github.com/spine-generic/data-multi-subject
+~~~
 
 Edit the file `config_sct_run_batch.yml` according to your setup. Notable flags include:
 - `path_data`: If you downloaded the spine-generic data at another location, make sure to update the path;
