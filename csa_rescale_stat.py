@@ -128,8 +128,8 @@ def boxplot_csa(df, path_output):
     df.boxplot(column=['mean'], by='rescale_area', showmeans=True, meanline=True)
     plt.title('Boxplot of CSA in function of area rescaling')
     plt.suptitle("")
-    plt.ylabel('csa in mm^2')
-    plt.xlabel('area rescaling in %')
+    plt.ylabel('CSA in mm^2')
+    plt.xlabel('CSA scaling')
     output_file = os.path.join(path_output, "fig_boxplot_csa.png")
     plt.savefig(output_file)
     print("--> Created figure: {}".format(output_file))
@@ -149,55 +149,76 @@ def boxplot_atrophy(df, path_output):
     min_rescale = min(df['rescale_area'].values)
     max_rescale = max(df['rescale_area'].values)
     plt.plot([min_rescale, max_rescale], [min_rescale, max_rescale], ls="--", c=".3")
-    plt.title('boxplot of measured atrophy in function of area rescaling')
-    plt.ylabel('measured atrophy in %')
-    plt.xlabel('area rescaling in %')
-    plt.suptitle("")
-    # TODO: scale x and y similarly
-    # TODO: add diagonal (remove horizontal lines)
+    plt.title('Boxplot of measured atrophy in function of CSA scaling')
+    plt.ylabel('Atrophied CSA in % of the un-rescaled CSA')
+    plt.xlabel('CSA scaling')
+    plt.axis('scaled')
     output_file = os.path.join(path_output, "fig_boxplot_atrophy.png")
     plt.savefig(output_file)
     print("--> Created figure: {}".format(output_file))
 
 
-def plot_sample_size(z_conf, z_power, std, mean_csa, path_output):
+def plot_sample_size(z_conf, z_power, std_arr, mean_csa, path_output):
     """plot minimum number of patients required to detect an atrophy of a given value
     :param z_conf: z score for X % uncertainty. Example: z_conf=1.96
     :param z_power: z score for X % Power. Example: z_power=(0.84, 1.282)
-    :param std: STD around mean CSA of control subjects (without rescaling),
+    :param std_arr: STD around mean CSA of control subjects (without rescaling),
     CSA STD for atrophied subjects and control subjects are considered equal
     :param mean_csa: mean value of CSA to compute the atrophy percentage. Example: 80
     :param path_output: directory in which plot is saved
     """
     fig_sample, ax = plt.subplots()
     # data for plotting
-    n = []
+    n_t1 = []
+    n_t2 =[]
     for z_p in z_power:
-        atrophy = np.arange(1.5, 8.0, 0.05)  # x_axis values ranging from 1.5 to 8.0 mm^2
-        num_n = 2 * ((z_conf + z_p) ** 2) * (std ** 2)  # numerator of sample size equation
-        n.append(num_n / ((atrophy) ** 2))
+        # x_axis values ranging from 1.5 to 8.0 mm^2
+        atrophy = np.arange(1.5, 8.0, 0.05)
+        # numerator of sample size equation T1w
+        num_n_t1 = 2 * ((z_conf + z_p) ** 2) * (std_arr[0] ** 2)
+        n_t1.append(num_n_t1 / (atrophy ** 2))
+        # numerator of sample size equation T2w
+        num_n_t2 = 2 * ((z_conf + z_p) ** 2) * (std_arr[1] ** 2)
+        n_t2.append(num_n_t2 / (atrophy ** 2))
     # plot
-    ax.plot(atrophy, n[0], label='80% power')
-    ax.plot(atrophy, n[1], label='90% power')
+    ax.plot(atrophy / mean_csa[0] * 100, n_t1[0], 'b.', markevery=3, markersize=10, label='t1 80% power')
+    ax.plot(atrophy / mean_csa[0] * 100, n_t1[1], 'r.', markevery=3, markersize=10, label='t1 90% power')
+    ax.plot(atrophy / mean_csa[1] * 100, n_t2[0], 'c', label='t2 80% power')
+    ax.plot(atrophy / mean_csa[1] * 100, n_t2[1], 'm', label='t2 90% power')
     ax.set_ylabel('number of participants per group of study \n(patients or controls) with ratio 1:1')
-    ax.set_xlabel('atrophy in mm^2')
-    # create global variable for secax (second axis) functions
-    global mean_csa_sample
-    mean_csa_sample = mean_csa
-
-    ax.set_title('minimum number of participants to detect an atrophy with 5% uncertainty\n std = ' + str(
-        round(std, 2)) + 'mm², mean_csa = ' + str(mean_csa_sample) + 'mm²')
+    ax.set_xlabel('atrophy in %')
+    plt.suptitle('minimum number of participants to detect an atrophy with 5% uncertainty', fontsize=16, y=1.05)
+    ax.set_title('T1w (1.0 mm iso): SD = {} mm², mean CSA= {} mm² \nT2w (0.8 mm iso): SD = {} mm², mean CSA= {} mm²'.format(
+            str(
+                round(std_arr[0], 2)), str(mean_csa[0]), str(round(std_arr[1], 2)) , str(mean_csa[1])))
     ax.legend()
     ax.grid()
-    def forward(atrophy):
-        return atrophy / mean_csa_sample * 100
-
-    def inverse(atrophy):
-        return atrophy / 100 * mean_csa_sample
-
-    secax = ax.secondary_xaxis('top', functions=(forward, inverse))
-    secax.set_xlabel('atrophy in %')
     output_file = os.path.join(path_output, "fig_min_subj.png")
+    plt.savefig(output_file, bbox_inches='tight')
+    print("--> Created figure: {}".format(output_file))
+
+
+def error_function_of_csa(df, path_output):
+    """Scatter plot of CSA in function of error %
+    :param df: dataframe for computing stats per subject: df_sub
+    :param path_output: directory in which plot is saved
+    """
+    fig, ax = plt.subplots(figsize=(7, 7))
+    df['Normalized CSA in mm2'] = df['mean'].div(df['rescale'])
+    df['error %'] = df['perc_error']
+    # compute linear regression
+    z = np.polyfit(x=df.loc[:, 'error %'], y=df.loc[:, 'Normalized CSA in mm2'], deg=1)
+    p = np.poly1d(z)
+    # plot
+    df.plot.scatter(x='error %', y='Normalized CSA in mm2', c='rescale', colormap='viridis')
+    min_err = min(df['error %'].values)
+    max_err = max(df['error %'].values)
+    plt.plot([min_err, max_err], [min_err*z[0]+z[1], max_err*z[0]+z[1]], ls="--", c=".3")
+    plt.title('Normalized CSA in function of error %,\n linear regression: {}'.format(p))
+    # plt.title("CSA in function of % error")
+    ax.legend(loc='upper right')
+    plt.grid()
+    output_file = os.path.join(path_output, "fig_err_in_function_of_csa.png")
     plt.savefig(output_file, bbox_inches='tight')
     print("--> Created figure: {}".format(output_file))
 
@@ -430,6 +451,8 @@ def main():
     df_rescale['std_intra'] = df_sub.groupby('rescale').mean()['std'].values
     df_rescale['cov_intra'] = df_sub.groupby('rescale').mean()['cov'].values
     df_rescale['std_inter'] = df_sub.groupby('rescale').std()['mean'].values
+    df_rescale['cov_inter'] = df_sub.groupby('rescale').std()['mean'].div(
+        df_sub.groupby('rescale').mean()['mean']).values
     df_rescale['mean_rescale_estimated'] = df_sub.groupby('rescale').mean()['rescale_estimated'].values
     df_rescale['std_rescale_estimated'] = df_sub.groupby('rescale').std()['rescale_estimated'].values
     df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
@@ -438,7 +461,7 @@ def main():
     df_rescale['sample_size'] = sample_size(df_rescale, config_param)
     print(df_rescale)
     # save dataframe in a csv file
-    df_sub.to_csv(os.path.join(path_output, r'csa_transfo.csv'))
+    df_rescale.to_csv(os.path.join(path_output, r'csa_rescale.csv'))
 
     # plot graph if verbose is present
     if arguments.fig:
@@ -461,11 +484,14 @@ def main():
         z_score_power = config_param['fig']['sample_size']['power']
         # std = STD of subjects without rescaling CSA values
         # mean_csa =  mean CSA value of subjects without rescaling
-        plot_sample_size(z_conf=z_score_confidence, z_power=z_score_power, std=df_rescale.loc[1, 'std_inter'], mean_csa=df_rescale.loc[1, 'mean_inter'], path_output=path_output)
+        plot_sample_size(z_conf=z_score_confidence , z_power=z_score_power , std_arr=[7.56 , 8.29] ,
+                         mean_csa=[69.70 , 76.12] , path_output=path_output)
         # scatter plot of COV in function of error %
         error_function_of_intra_cov(df_sub, path_output=path_output)
         # scatter plot of COV in function of error % to identify outliers
         error_function_of_intra_cov_outlier(df_sub, path_output=path_output)
+        # scatter plot of CSA in function of error %
+        error_function_of_csa(df_sub, path_output=path_output)
 
 if __name__ == "__main__":
     main()
