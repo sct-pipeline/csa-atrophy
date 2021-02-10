@@ -81,7 +81,7 @@ segment_if_does_not_exist(){
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
   FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual"
-  if [ -e $FILESEGMANUAL ]; then
+  if [ -e "${FILESEGMANUAL}.nii.gz" ]; then
     echo "Found! Using manual segmentation."
     sct_resample -i ${FILESEGMANUAL}.nii.gz -mm $interp -x nn -o ${FILESEGMANUAL}_r.nii.gz
     rsync -avzh ${FILESEGMANUAL}_r.nii.gz ${FILESEG}.nii.gz
