@@ -69,7 +69,7 @@ Per-subject stat: Panda dataframe `df_sub`:
 - intra-subject MEAN: MEAN[CSA(sI, rX, :)] --> MEAN_intra(sI, rX): `df_sub['mean']`
 - intra-subject STD: STD[CSA(sI, rX, :)] --> STD_intra(sI, rX): `df_sub['std']`
 - intra-subject COV: STD[CSA(sI, rX, :)] / MEAN[CSA(sI, rX, :)] --> COV_intra(sI, rX): `df_sub['cov']`
-- rescale_estimated_subject MEAN: MEAN[CSA(sI, rX, :) / CSA(sI, 1, :)] --> MEAN_rescale_estimated_subject(sI, rX): `df_sub['rescale_estimated']`
+- rescale_estimated_subject MEAN: MEAN[ CSA(sI, rX, :) ] / MEAN[ CSA(sI, 1, :) ] --> MEAN_rescale_estimated_subject(sI, rX): `df_sub['rescale_estimated']`
 - intra-subject error MEAN: MEAN[CSA(sI, rX, :)] - (rX^2 * MEAN[CSA(sI, 1, :)]) --> MEAN_error_intra(sI, rX): `df_sub['error']`
 - intra-subject error in percentage MEAN: [MEAN[CSA(sI, rX, :)] - (rX^2 * MEAN[CSA(sI, 1, :)])] / MEAN[CSA(sI, rX, :)] --> MEAN_error_intra_perc(sI, rX): `df_sub['perc_error']`
 - intra-subject difference MEAN: [MEAN[CSA(sI, 1, :)] - (rX^2 * MEAN[CSA(sI, rX, :)])] --> MEAN_diff(sI, rX): `df_sub['diff']`
