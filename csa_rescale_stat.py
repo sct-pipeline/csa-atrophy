@@ -339,6 +339,7 @@ def sample_size(df, df_rescale):
     """  Minimum sample size ( number of subjects) necessary to detect an atrophy in a between-subject (based on a
     two-sample bilateral t-test) and minimum sample size necessary to detect an atrophy in a
     within-subject ( repeated-measures in longitudinal study: based on a two-sample bilateral paired t-test).
+    ref. https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3148614/
     :param df: dataframe for computing stats per subject: df_sub :param df_rescale: dataframe for computing stats per
     subject: df_rescale :return df_rescale: modified dataframe with added sample_size_80 (between subjects at 80%
     power), sample_size_90 (between subjects at 90% power), sample_size_long_80 (within subjects at 80% power) and
