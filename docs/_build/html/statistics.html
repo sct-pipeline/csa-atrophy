@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>STATISTICS &mdash; csa-atrophy v1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to csa-atrophy’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> csa-atrophy
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">STATISTICS</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">csa-atrophy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>STATISTICS</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/statistics.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <p># statistics.rst</p>
+<div class="section" id="statistics">
+<h1>STATISTICS<a class="headerlink" href="#statistics" title="Permalink to this headline">¶</a></h1>
+<p>A module about statistics.</p>
+<span class="target" id="module-csa_rescale_stat"></span><dl class="py function">
+<dt id="csa_rescale_stat.add_columns_df_sub">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">add_columns_df_sub</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.add_columns_df_sub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add columns theoretic CSA values (rX^2 * MEAN(area)) and CSA without rescaling to dataframe
+:param df: dataframe for computing stats per subject: df_sub
+:return df: modified dataframe with added theoretic_csa and csa_without_rescale</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.boxplot_atrophy">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">boxplot_atrophy</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.boxplot_atrophy" title="Permalink to this definition">¶</a></dt>
+<dd><p>boxplot error for different rescaling values
+:param df: dataframe for computing stats per subject: df_sub
+:param path_output: directory in which plot is saved</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.boxplot_csa">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">boxplot_csa</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.boxplot_csa" title="Permalink to this definition">¶</a></dt>
+<dd><p>boxplot CSA for different rescaling values
+:param df: dataframe with csv files data: df_sub
+:param path_output: directory in which plot is saved</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.concatenate_csv_files">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">concatenate_csv_files</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_results</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.concatenate_csv_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch and concatenate data from all csv files in results/csa_data to compute statistics with pandas
+:param path_results: path to folder containing csv files for statistics</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.error_function_of_csa">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">error_function_of_csa</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.error_function_of_csa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scatter plot of CSA as a function of Mean error %
+:param df: dataframe for computing stats per subject: df_sub
+:param path_output: directory in which plot is saved</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.error_function_of_intra_cov">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">error_function_of_intra_cov</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.error_function_of_intra_cov" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scatter plot of intra-subject COV in function of error %
+:param df: dataframe for computing stats per subject: df_sub
+:param path_output: directory in which plot is saved</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.error_function_of_intra_cov_outlier">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">error_function_of_intra_cov_outlier</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.error_function_of_intra_cov_outlier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scatter plot of intra-subject COV in function of error % to identify the worst outliers (outside the interval
+[Q1-10IQR, Q3+10IQR] of percentage error)
+:param df: dataframe for computing stats per subject: df_sub
+:param path_output: directory in which plot is saved</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.get_parser">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">get_parser</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.get_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>parser function</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.main">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">main</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>main function, gather stats and call plots</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.pearson">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">pearson</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_rescale</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.pearson" title="Permalink to this definition">¶</a></dt>
+<dd><p>The associated Pearson’s coefficients and p-value between subject’s CSA and the associated Pearson’s
+coefficients and p-value between COV across Monte Carlo transformations (i.e. intra-subject variability) and mean
+CSA error :param df: dataframe for computing stats per subject: df_sub :param df_rescale: dataframe for computing
+stats per rescale: df_rescale :return df_rescale: modified dataframe with added theoretic_csa and
+csa_without_rescale</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.plot_perc_err">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">plot_perc_err</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.plot_perc_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>plot percentage difference between measured rescaling and rescaling
+:param df: dataframe for computing stats across subject: df_rescale
+:param path_output: directory in which plot is saved</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.plot_sample_size">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">plot_sample_size</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z_conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std_arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_csa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.plot_sample_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>plot minimum number of patients required to detect an atrophy of a given value
+:param z_conf: z score for X % uncertainty. Example: z_conf=1.96
+:param z_power: z score for X % Power. Example: z_power=(0.84, 1.282)
+:param std_arr: STD around mean CSA of control subjects (without rescaling),
+CSA STD for atrophied subjects and control subjects are considered equal
+:param mean_csa: mean value of CSA to compute the atrophy percentage. Example: 80 mm^2
+:param path_output: directory in which plot is saved</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.sample_size">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">sample_size</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_rescale</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.sample_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimum sample size ( number of subjects) necessary to detect an atrophy in a between-subject (based on a
+two-sample bilateral t-test) and minimum sample size necessary to detect an atrophy in a
+within-subject ( repeated-measures in longitudinal study: based on a two-sample bilateral paired t-test).
+ref. <a class="reference external" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3148614/">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3148614/</a>
+:param df: dataframe for computing stats per subject: df_sub :param df_rescale: dataframe for computing stats per
+subject: df_rescale :return df_rescale: modified dataframe with added sample_size_80 (between subjects at 80%
+power), sample_size_90 (between subjects at 90% power), sample_size_long_80 (within subjects at 80% power) and
+sample_size_long_90 (within subjects at 90% power)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="csa_rescale_stat.yaml_parser">
+<code class="sig-prename descclassname"><span class="pre">csa_rescale_stat.</span></code><code class="sig-name descname"><span class="pre">yaml_parser</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#csa_rescale_stat.yaml_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>parse config_script.yml file containing pipeline’s parameters</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to csa-atrophy’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2021, Paul Bautin
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
