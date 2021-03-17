@@ -1,5 +1,7 @@
 ![csa-atrophy](https://github.com/sct-pipeline/csa-atrophy/blob/master/csa_atrophy_scheme3.png)
 
+[![Documentation Status](https://readthedocs.org/projects/sphinx/badge/?version=master)](https://csa-atrophy.readthedocs.io/en/latest/)
+   
 # csa-atrophy
 
 Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as follows:
