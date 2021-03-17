@@ -353,6 +353,8 @@ def sample_size(df, df_rescale):
     for rescale_area , group in df.groupby('rescale_area'):
         if rescale_area != 100:
             # sample size between-subject
+            # TODO include non-100% aread in computation of STD
+            # TODO: rename std as var
             std_2 = df_rescale.groupby('rescale_area').get_group(100)['std_inter'].values[0] ** 2
             sample_size_80.append(np.ceil((2 * ((1.96 + 0.84) ** 2) * (std_2)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
             sample_size_90.append(np.ceil((2 * ((1.96 + 1.28) ** 2) * (std_2)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
