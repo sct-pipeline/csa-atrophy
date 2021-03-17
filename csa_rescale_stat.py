@@ -384,8 +384,11 @@ def main():
     vertlevels_input = arguments.l
     path_output = os.path.abspath(arguments.o)
 
+    # Create output folder
+    os.makedirs(path_output, exist_ok=True)
+
     # aggregate all csv results files
-    concatenate_csv_files(path_results)
+    # concatenate_csv_files(path_results)
 
     # read data
     data = pd.read_csv(os.path.join(path_results, r'csa_all.csv'), decimal=".")
