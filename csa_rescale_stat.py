@@ -358,9 +358,9 @@ def sample_size(df, df_rescale):
             sample_size_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
             # sample size within-subject
             var_diff = df_rescale.groupby('rescale_area').get_group(rescale_area)['std_diff'].values ** 2
-            # mean_diff_2 = df_rescale.groupby('rescale_area').get_group(rescale_area)['mean_diff'].values[0] ** 2
-            sample_size_long_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var_diff)) / ((0.1*((100 - rescale_area) / 100) * CSA) ** 2)))
-            sample_size_long_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var_diff)) / ((0.1* ((100 - rescale_area) / 100) * CSA) ** 2)))
+            # mean_diff = df_rescale.groupby('rescale_area').get_group(rescale_area)['mean_diff'].values[0]
+            sample_size_long_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var_diff)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
+            sample_size_long_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var_diff)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
         else:
             sample_size_80.append('inf')
             sample_size_90.append('inf')
