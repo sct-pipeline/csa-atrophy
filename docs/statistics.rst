@@ -137,14 +137,14 @@ error in percentage (across subjects) STD: STD[MEAN_error_intra(:, rX)]
 Power analysis
 =====================
    
-Between group minimum sample size
+Between-group minimum sample size
 """""""""""""""""""""""""""""""""""
 
-the minimum sample size (number of subjects per study arm) necessary to detect an atrophy between groups was computed based on a two-sample (unpaired) bilateral t-test using the following formula (Wang and Ji 2020; Wittes 2002):
+The minimum sample size (number of subjects per study arm) necessary to detect an atrophy between groups was computed based on a two-sample (unpaired) bilateral t-test using the following formula (Wang and Ji 2020; Wittes 2002):
 
 :math:`n_{unpaired} = (z_{α/2} + z_{β})^2(SD + SD)^2 / diff_{group}^2`.
 
-Where n_{unpaired} is the minimum sample size required to differentiate between groups with a given power (z_{β} corresponds to the power z score, e.g. 80% power gives β=0.2 and z_{β}= -0.84) and level of significance (z_{α/2} corresponds to the significance level z score, e.g. 5% level of significance gives 𝛂=0.05 and z_{α/2}=-1.96), SD is the inter-subject standard deviation of the mean CSA (which was calculated by taking the mean CSA across Monte Carlo samples). diff_{group} group is the difference of the mean CSA between the groups.
+Where :math:`n_{unpaired}` is the minimum sample size required to differentiate between groups with a given power (z_{β} corresponds to the power z score, e.g. 80% power gives β=0.2 and z_{β}= -0.84) and level of significance (z_{α/2} corresponds to the significance level z score, e.g. 5% level of significance gives 𝛂=0.05 and z_{α/2}=-1.96), SD is the inter-subject standard deviation of the mean CSA (which was calculated by taking the mean CSA across Monte Carlo samples). diff_{group} group is the difference of the mean CSA between the groups.
 
 .. autofunction:: csa_rescale_stat.sample_size  
 
@@ -152,5 +152,19 @@ Where n_{unpaired} is the minimum sample size required to differentiate between 
    :language: python
    :lines: 352-363
    :emphasize-lines: 5-7
+
+Within-subject minimum sample size
+"""""""""""""""""""""""""""""""""""
+
+the minimum sample size necessary to detect an atrophy in a within-subject (repeated-measures) study was computed based on a two-sample bilateral paired t-test using the following formula (Altmann et al. 2009):
+
+:math:`n_{within_sub} = (z_{α/2} + z_{β})^2(SD_{D})^2 / diff_{group}^2`
    
-   
+Where :math:`SD_{D}' is the standard deviation between longitudinal CSA measures across  subjects and :math:`diff_{group}' is the mean of the difference between longitudinal CSA measures.
+
+.. autofunction:: csa_rescale_stat.sample_size
+
+.. literalinclude:: ../csa_rescale_stat.py
+   :language: python
+   :lines: 352-363
+   :emphasize-lines: 9-10
