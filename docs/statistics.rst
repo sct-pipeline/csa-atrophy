@@ -17,7 +17,7 @@ Per-subject statistics are regrouped in Panda dataframe ``df_sub``:
 Intra-subject CSA (CSA estimation)
 """"""""""""""""""""""""""""""""""""
 
-Per subject mean CSA across transformations: :math:`MEAN[CSA(sI, rX, :)] \to \overline{CSA}_{tY}`
+Per subject mean CSA across transformations: :math:`MEAN[CSA(sI, rX, :)] \to (\overline{CSA}_{tY})_{sI}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -27,7 +27,7 @@ Per subject mean CSA across transformations: :math:`MEAN[CSA(sI, rX, :)] \to \ov
 Intra-subject SD
 """"""""""""""""""
 
-Per subject SD of CSA across transformations: :math:`STD[CSA(sI, rX, :)] \to \sigma_{intra\_sub}`
+Per subject SD of CSA across transformations: :math:`STD[CSA(sI, rX, :)] \to \sigma_{intra\_{sI}}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -38,7 +38,7 @@ Per subject SD of CSA across transformations: :math:`STD[CSA(sI, rX, :)] \to \si
 Intra-subject COV
 """"""""""""""""""
 
-Per subject COV of CSA across transformations: :math:`\frac{STD[CSA(sI, rX, :)]}{MEAN[CSA(sI, rX, :)]} \to COV_{intra\_sub}`
+Per subject COV of CSA across transformations: :math:`\frac{STD[CSA(sI, rX, :)]}{MEAN[CSA(sI, rX, :)]} \to COV_{intra\_sI}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -48,7 +48,7 @@ Per subject COV of CSA across transformations: :math:`\frac{STD[CSA(sI, rX, :)]}
 Rescale estimation (RE)
 """""""""""""""""""""""""
 
-Per subject mean ratio of atrophied CSA in function of the un-rescaled across transformations: :math:`MEAN \left[\frac{CSA(sI, rX, :)}{CSA(sI, 1, :)}\right] \to \overline{RE}_{tY}`
+Per subject mean ratio of atrophied CSA in function of the un-rescaled across transformations: :math:`MEAN \left[\frac{CSA(sI, rX, :)}{CSA(sI, 1, :)}\right] \to (\overline{RE}_{tY})_{sI}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -58,7 +58,7 @@ Per subject mean ratio of atrophied CSA in function of the un-rescaled across tr
 Error
 """"""""""""""""""
 
-Per subject mean absolute error on CSA estimation across transformations: :math:`MEAN[CSA(sI, rX, :)] - rX^2  \times MEAN[CSA(sI, 1, :)] \to Error_{sub}`
+Per subject mean absolute error on CSA estimation across transformations: :math:`MEAN[CSA(sI, rX, :)] - rX^2  \times MEAN[CSA(sI, 1, :)] \to Error_{sI}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -73,7 +73,7 @@ Across-subject statistics are regrouped in Panda dataframe ``df_rescale``
 Mean intra-subject SD
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling mean intra-subject SD: :math:`MEAN[STD_intra(:, rX)] \to \overline{\sigma}_{intra\_sub}`
+Per scaling mean intra-subject SD: :math:`MEAN[\sigma_{intra\_sI}(:, rX)] \to (\overline{\sigma}_{intra\_sI})_{rX}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -83,7 +83,7 @@ Per scaling mean intra-subject SD: :math:`MEAN[STD_intra(:, rX)] \to \overline{\
 Mean intra-subject COV
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling mean intra-subject COV: :math:`MEAN[COV_{intra\_sub}(:, rX)] \to \overline{COV}_{intra\_sub}`
+Per scaling mean intra-subject COV: :math:`MEAN[COV_{intra\_sI}(:, rX)] \to (\overline{COV}_{intra\_sI})_{rX}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -93,7 +93,7 @@ Per scaling mean intra-subject COV: :math:`MEAN[COV_{intra\_sub}(:, rX)] \to \ov
 Inter-subject SD
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling SD of intra-subject CSA: :math:`STD[MEAN_{intra}(:, rX)] \to \sigma_{inter\_sub}`
+Per scaling SD of intra-subject CSA: :math:`STD[\overline{CSA}_{tY}(:, rX)] \to \sigma_{inter\_sI\_{rX}}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -103,7 +103,7 @@ Per scaling SD of intra-subject CSA: :math:`STD[MEAN_{intra}(:, rX)] \to \sigma_
 Mean rescale estimated (RE)
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling mean subject rescale_estimated: :math:`MEAN[MEAN_{rescale\_estimated\_subject}(:, rX)] \to \overline{RE}_{sub}`
+Per scaling mean subject rescale_estimated: :math:`MEAN[\overline{RE}_{tY}(:, rX)] \to (\overline{RE}_{sI})_{rX}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -113,7 +113,7 @@ Per scaling mean subject rescale_estimated: :math:`MEAN[MEAN_{rescale\_estimated
 SD of rescale estimated
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling SD of subject rescale_estimated: :math:`STD[MEAN_{rescale\_estimated\_subject}(:, rX)] \to \sigma_{RE_{sub}}`
+Per scaling SD of subject rescale_estimated: :math:`STD[\overline{RE}_{tY}(:, rX)] \to (\sigma_{RE_{sI}})_{rX}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -123,7 +123,7 @@ Per scaling SD of subject rescale_estimated: :math:`STD[MEAN_{rescale\_estimated
 Mean error
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling mean error on intra-subject CSA estimation : :math:`MEAN[MEAN_{error\_intra}(:, rX)] \to \overline{Error}_{sub}`
+Per scaling mean error on intra-subject CSA estimation : :math:`MEAN[Error_{sI}(:, rX)] \to (\overline{Error}_{sI})_{rX}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -133,7 +133,7 @@ Per scaling mean error on intra-subject CSA estimation : :math:`MEAN[MEAN_{error
 SD of error
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling SD of error on intra-subject CSA estimation: :math:`STD[MEAN_{error\_intra}(:, rX)] \to \sigma_{Error_{sub}}`
+Per scaling SD of error on intra-subject CSA estimation: :math:`STD[Error_{sI}(:, rX)] \to (\sigma_{Error_{sI}})_{rX}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -149,7 +149,7 @@ Between-group minimum sample size
 
 The minimum sample size (number of subjects per study arm) necessary to detect an atrophy between groups was computed based on a two-sample (unpaired) bilateral t-test using the following formula (Wang and Ji 2020; Wittes 2002):
 
-:math:`n_{unpaired} = \frac{(z_{α/2} + z_{β})^2(\sigma_{100}+\sigma_{rX})^2}{\Delta_{sub} ^2}`
+:math:`n_{unpaired} = \frac{(z_{α/2} + z_{β})^2(\sigma_{inter\_sI\_r1}+\sigma_{inter\_sI\_rX})^2}{\Delta_{sub} ^2}`
 
 Where :math:`n_{unpaired}` is the minimum sample size required to differentiate between groups with a given power (:math:`z_{β}` corresponds to the power z score, e.g. 80% power gives β=0.2 and :math:`z_{β}`= -0.84) and level of significance (:math:`z_{α/2}` corresponds to the significance level z score, e.g. 5% level of significance gives 𝛂=0.05 and :math:`z_{α/2}`=-1.96), SD is the inter-subject standard deviation of the mean CSA (which was calculated by taking the mean CSA across Monte Carlo samples). :math:`diff_{group}` group is the difference of the mean CSA between the groups.
 
