@@ -133,7 +133,7 @@ Per scaling mean error on intra-subject CSA estimation : :math:`MEAN[MEAN_{error
 SD of error
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling SD of error on intra-subject CSA estimation: :math:`STD[MEAN_{error\_intra}(:, rX)] \to \sigma_{Error}_{sub}`
+Per scaling SD of error on intra-subject CSA estimation: :math:`STD[MEAN_{error\_intra}(:, rX)] \to \sigma_{Error_{sub}}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
