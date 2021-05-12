@@ -6,7 +6,7 @@ Across-subject statistics are regrouped in the Panda dataframe ``df_rescale``
 Mean intra-subject SD
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling mean intra-subject SD: :math:`MEAN[\sigma_{(sI, rX, :)}(:, rX)] \to \overline{\sigma}_{(:,rX)}`
+Per scaling, computation of the mean intra-subject SD: :math:`MEAN[\sigma_{(sI, rX, :)}(:, rX)] \to \overline{\sigma}_{(:,rX)}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -16,7 +16,7 @@ Per scaling mean intra-subject SD: :math:`MEAN[\sigma_{(sI, rX, :)}(:, rX)] \to 
 Mean intra-subject COV
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling mean intra-subject COV: :math:`MEAN[COV_{(sI, rX, :)}(:, rX)] \to \overline{COV}_{(:,rX)}`
+Per scaling, computation of the mean intra-subject COV: :math:`MEAN[COV_{(sI, rX, :)}(:, rX)] \to \overline{COV}_{(:,rX)}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -26,7 +26,7 @@ Per scaling mean intra-subject COV: :math:`MEAN[COV_{(sI, rX, :)}(:, rX)] \to \o
 Inter-subject SD
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling SD of the intra-subject CSA: :math:`STD[\overline{CSA}_{(sI, rX, :)}(:, rX)] \to \sigma_{(:,rX)}`
+Per scaling, SD computation of the intra-subject CSA: :math:`STD[\overline{CSA}_{(sI, rX, :)}(:, rX)] \to \sigma_{(:,rX)}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -36,7 +36,7 @@ Per scaling SD of the intra-subject CSA: :math:`STD[\overline{CSA}_{(sI, rX, :)}
 Mean rescale estimated (RE)
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling mean rescale_estimated across subjects: :math:`MEAN[\overline{RE}_{(sI, rX, :)}(:, rX)] \to \overline{RE}_{(:, rX)}`
+Per scaling, computation of the mean rescale_estimated across subjects: :math:`MEAN[\overline{RE}_{(sI, rX, :)}(:, rX)] \to \overline{RE}_{(:, rX)}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -46,7 +46,7 @@ Per scaling mean rescale_estimated across subjects: :math:`MEAN[\overline{RE}_{(
 SD of rescale estimated
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling SD of the rescale_estimated across subjects: :math:`STD[\overline{RE}_{(sI, rX, :)}(:, rX)] \to \sigma_{RE_{(:, rX)}}`
+Per scaling, SD computation of the rescale_estimated across subjects: :math:`STD[\overline{RE}_{(sI, rX, :)}(:, rX)] \to \sigma_{RE_{(:, rX)}}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -56,7 +56,7 @@ Per scaling SD of the rescale_estimated across subjects: :math:`STD[\overline{RE
 Mean error
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling mean error on intra-subject CSA estimation: :math:`MEAN[Error_{(sI, rX, :)}(:, rX)] \to \overline{Error}_{(:, rX)}`
+Per scaling, computation of the mean error on intra-subject CSA estimation: :math:`MEAN[Error_{(sI, rX, :)}(:, rX)] \to \overline{Error}_{(:, rX)}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -66,7 +66,7 @@ Per scaling mean error on intra-subject CSA estimation: :math:`MEAN[Error_{(sI, 
 SD of error
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling SD of error on intra-subject CSA estimation: :math:`STD[Error_{(sI, rX, :)}(:, rX)] \to \sigma_{Error_{(:, rX)}}`
+Per scaling, SD computation of error on intra-subject CSA estimation: :math:`STD[Error_{(sI, rX, :)}(:, rX)] \to \sigma_{Error_{(:, rX)}}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
