@@ -46,7 +46,7 @@ Per scaling mean rescale_estimated across subjects: :math:`MEAN[\overline{RE}_{(
 SD of rescale estimated
 """"""""""""""""""""""""""""""""""""""""""""
 
-Per scaling SD of the rescale_estimated across subjects: :math:`STD[\overline{RE}_{(sI, rX, :)}(:, rX)] \to (\sigma_{RE_{(:, rX)}`
+Per scaling SD of the rescale_estimated across subjects: :math:`STD[\overline{RE}_{(sI, rX, :)}(:, rX)] \to \sigma_{RE_{(:, rX)}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
