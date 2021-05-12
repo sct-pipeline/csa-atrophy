@@ -7,16 +7,17 @@ A module about statistics to evaluate the sensitivity of atrophy detection with 
 - Applies random affine transformation :math:`\to tY`
 - Segment the cord
 - Compute CSA :math:`\to CSA(sI, rX, tY)`
+After everything is done, compute stats:
 
 Subject dataframe
 ==================
 
-After everything is done, compute stats: Per-subject stat: Panda dataframe ``df_sub``:
+Per-subject statistics are regrouped in Panda dataframe ``df_sub``:
 
-CSA estimation
-"""""""""""""""
+Intra-subject CSA (CSA estimation)
+""""""""""""""""""""""""""""""""""""
 
-intra-subject MEAN: :math:`MEAN[CSA(sI, rX, :)] \to MEAN_{intra}(sI, rX)`
+Per subject mean CSA across transformations: :math:`MEAN[CSA(sI, rX, :)] \to \overline{CSA}_{tY}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -26,7 +27,7 @@ intra-subject MEAN: :math:`MEAN[CSA(sI, rX, :)] \to MEAN_{intra}(sI, rX)`
 Intra-subject SD
 """"""""""""""""""
 
-intra-subject STD: :math:`STD[CSA(sI, rX, :)] \to STD_{intra}(sI, rX)`
+Per subject SD of CSA across transformations: :math:`STD[CSA(sI, rX, :)] \to \sigma_{intra\_sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -37,17 +38,17 @@ intra-subject STD: :math:`STD[CSA(sI, rX, :)] \to STD_{intra}(sI, rX)`
 Intra-subject COV
 """"""""""""""""""
 
-intra-subject COV: :math:`\frac{STD[CSA(sI, rX, :)]}{MEAN[CSA(sI, rX, :)]} \to COV_{intra}(sI, rX)`
+Per subject COV of CSA across transformations: :math:`\frac{STD[CSA(sI, rX, :)]}{MEAN[CSA(sI, rX, :)]} \to COV_{intra\_sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
    :lines: 401-419
    :emphasize-lines: 12
     
-Rescale estimation
-""""""""""""""""""""
+Rescale estimation (RE)
+"""""""""""""""""""""""""
 
-rescale_estimated_subject MEAN: :math:`MEAN \left[\frac{CSA(sI, rX, :)}{CSA(sI, 1, :)}\right] \to MEAN_{rescale\_estimated\_subject}(sI, rX)`
+Per subject mean ratio of atrophied CSA in function of the un-rescaled across transformations: :math:`MEAN \left[\frac{CSA(sI, rX, :)}{CSA(sI, 1, :)}\right] \to \overline{RE}_{tY}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -57,7 +58,7 @@ rescale_estimated_subject MEAN: :math:`MEAN \left[\frac{CSA(sI, rX, :)}{CSA(sI, 
 Error
 """"""""""""""""""
 
-intra-subject error MEAN: :math:`MEAN[CSA(sI, rX, :)] - rX^2  \times MEAN[CSA(sI, 1, :)] \to MEAN_{error\_intra}(sI, rX)`
+Per subject mean absolute error on CSA estimation across transformations: :math:`MEAN[CSA(sI, rX, :)] - rX^2  \times MEAN[CSA(sI, 1, :)] \to Error_{sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -67,72 +68,72 @@ intra-subject error MEAN: :math:`MEAN[CSA(sI, rX, :)] - rX^2  \times MEAN[CSA(sI
 Rescale dataframe
 =====================
 
-Across-subject stats: Panda dataframe ``df_rescale``
+Across-subject statistics are regrouped in Panda dataframe ``df_rescale``
  
-Mean SD of CSA across Monte-Carlo samples
+Mean intra-subject SD
 """"""""""""""""""""""""""""""""""""""""""""
 
-intra-subject STD: :math:`MEAN[STD_intra(:, rX)] \to STD_{intra}(rX)`
+Per scaling mean intra-subject SD: :math:`MEAN[STD_intra(:, rX)] \to \overline{\sigma}_{intra\_sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
    :lines: 422-439
    :emphasize-lines: 9
    
-Mean COV of CSA across Monte-Carlo samples
+Mean intra-subject COV
 """"""""""""""""""""""""""""""""""""""""""""
 
-intra-subject COV: :math:`MEAN[COV_{intra\_sub}(:, rX)] \to COV_{intra}(rX)`
+Per scaling mean intra-subject COV: :math:`MEAN[COV_{intra\_sub}(:, rX)] \to \overline{COV}_{intra\_sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
    :lines: 422-439
    :emphasize-lines: 10
    
-Mean COV of CSA across subjects
+Inter-subject SD
 """"""""""""""""""""""""""""""""""""""""""""
 
-inter-subject STD: :math:`STD[MEAN_{intra}(:, rX)] \to STD_{inter}(rX)`
+Per scaling SD of intra-subject CSA: :math:`STD[MEAN_{intra}(:, rX)] \to \sigma_{inter\_sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
    :lines: 422-439
    :emphasize-lines: 11
    
-Mean rescale estimated (across subjects)
+Mean rescale estimated (RE)
 """"""""""""""""""""""""""""""""""""""""""""
 
-rescale_estimated (across subjects) MEAN: :math:`MEAN[MEAN_{rescale\_estimated\_subject}(:, rX)] \to MEAN_{rescale\_estimated}(rX)`
+Per scaling mean subject rescale_estimated: :math:`MEAN[MEAN_{rescale\_estimated\_subject}(:, rX)] \to \overline{RE}_{sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
    :lines: 422-439
    :emphasize-lines: 12
    
-SD of rescale estimated (across subjects)
+SD of rescale estimated
 """"""""""""""""""""""""""""""""""""""""""""
 
-rescale_estimated (across subjects) STD: :math:`STD[MEAN_{rescale\_estimated\_subject}(:, rX)] \to STD_{rescale\_estimated}(rX)`
+Per scaling SD of subject rescale_estimated: :math:`STD[MEAN_{rescale\_estimated\_subject}(:, rX)] \to \sigma_{RE_{sub}}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
    :lines: 422-439
    :emphasize-lines: 13
    
-Mean error in percentage (across subjects)
+Mean error
 """"""""""""""""""""""""""""""""""""""""""""
 
-error in percentage (across subjects) MEAN: :math:`MEAN[MEAN_{error\_intra}(:, rX)]`
+Per scaling mean error on intra-subject CSA estimation : :math:`MEAN[MEAN_{error\_intra}(:, rX)] \to \overline{Error}_{sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
    :lines: 422-439
    :emphasize-lines: 14
    
-SD of error in percentage (across subjects)
+SD of error
 """"""""""""""""""""""""""""""""""""""""""""
 
-error in percentage (across subjects) STD: :math:`STD[MEAN_{error\_intra}(:, rX)]`
+Per scaling SD of error on intra-subject CSA estimation: :math:`STD[MEAN_{error\_intra}(:, rX)] \to \sigma_{Error}_{sub}`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -174,3 +175,8 @@ Where :math:`\sigma_{diff}` is the standard deviation between longitudinal CSA m
    :language: python
    :lines: 352-363
    :emphasize-lines: 9-10
+
+
+RESULTS
+============
+
