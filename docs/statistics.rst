@@ -16,7 +16,7 @@ After everything is done, compute stats: Per-subject stat: Panda dataframe ``df_
 CSA estimation
 """""""""""""""
 
-intra-subject MEAN: :math:`MEAN[CSA(sI, rX, :)] \to MEAN_intra(sI, rX)`
+intra-subject MEAN: :math:`MEAN[CSA(sI, rX, :)] \to MEAN_{intra}(sI, rX)`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -26,7 +26,7 @@ intra-subject MEAN: :math:`MEAN[CSA(sI, rX, :)] \to MEAN_intra(sI, rX)`
 Intra-subject SD
 """"""""""""""""""
 
-intra-subject STD: :math:`STD[CSA(sI, rX, :)] \to STD_intra(sI, rX)`
+intra-subject STD: :math:`STD[CSA(sI, rX, :)] \to STD_{intra}(sI, rX)`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -37,7 +37,7 @@ intra-subject STD: :math:`STD[CSA(sI, rX, :)] \to STD_intra(sI, rX)`
 Intra-subject COV
 """"""""""""""""""
 
-intra-subject COV: :math:`\frac{STD[CSA(sI, rX, :)]}{MEAN[CSA(sI, rX, :)]} \to COV_intra(sI, rX)`
+intra-subject COV: :math:`\frac{STD[CSA(sI, rX, :)]}{MEAN[CSA(sI, rX, :)]} \to COV_{intra}(sI, rX)`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -72,7 +72,7 @@ Across-subject stats: Panda dataframe ``df_rescale``
 Mean SD of CSA across Monte-Carlo samples
 """"""""""""""""""""""""""""""""""""""""""""
 
-intra-subject STD: :math:`MEAN[STD_intra(:, rX)] \to STD_intra(rX)`
+intra-subject STD: :math:`MEAN[STD_intra(:, rX)] \to STD_{intra}(rX)`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -82,7 +82,7 @@ intra-subject STD: :math:`MEAN[STD_intra(:, rX)] \to STD_intra(rX)`
 Mean COV of CSA across Monte-Carlo samples
 """"""""""""""""""""""""""""""""""""""""""""
 
-intra-subject COV: :math:`MEAN[COV_{intra\_sub}(:, rX)] \to COV_intra(rX)`
+intra-subject COV: :math:`MEAN[COV_{intra\_sub}(:, rX)] \to COV_{intra}(rX)`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -92,7 +92,7 @@ intra-subject COV: :math:`MEAN[COV_{intra\_sub}(:, rX)] \to COV_intra(rX)`
 Mean COV of CSA across subjects
 """"""""""""""""""""""""""""""""""""""""""""
 
-inter-subject STD: :math:`STD[MEAN_intra(:, rX)] \to STD_inter(rX)`
+inter-subject STD: :math:`STD[MEAN_{intra}(:, rX)] \to STD_{inter}(rX)`
 
 .. literalinclude:: ../csa_rescale_stat.py
    :language: python
@@ -164,7 +164,7 @@ Within-subject minimum sample size
 
 the minimum sample size necessary to detect an atrophy in a within-subject (repeated-measures) study was computed based on a two-sample bilateral paired t-test using the following formula (Altmann et al. 2009):
 
-:math:`n_{within-sub} = \frac{(z_{α/2} + z_{β})^2(\sigma_{diff})^2}{\Delta_{sub} ^2}`
+:math:`n_{within\_sub} = \frac{(z_{α/2} + z_{β})^2(\sigma_{diff})^2}{\Delta_{sub} ^2}`
    
 Where :math:`\sigma_{diff}` is the standard deviation between longitudinal CSA measures across  subjects and :math:`\Delta_{sub}` is the mean of the difference between longitudinal CSA measures.
 
