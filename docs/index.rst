@@ -9,7 +9,9 @@ Welcome to csa-atrophy's documentation!
 .. toctree::
    About <README.md>
    statistics
+   subject_dataframe
    rescale_dataframe
+   sample_size
    :maxdepth: 2
    :caption: Contents:
    
