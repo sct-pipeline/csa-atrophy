@@ -456,9 +456,8 @@ def main():
     df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).div(df_sub['theoretic_csa'])
     diff = []
     for rescale, group in df.groupby('rescale'):
-        for sub, subgroup in group.groupby('subject'):
-            diff.append((df.groupby('rescale').get_group(1).groupby('subject').get_group(sub).sample(n=100, replace=True)['MEAN(area)'].values - group.groupby('subject').get_group(sub).sample(n=100, replace=True)['MEAN(area)'].values).mean())
-    df_sub['diff'] = diff
+        diff.append(df.groupby('rescale').get_group(1).groupby('subject').sample(n=1)['MEAN(area)'].values - group.groupby('subject').sample(n=1)['MEAN(area)'].values)
+    df_sub['diff'] = np.concatenate(diff, axis=0)
     # save dataframe in a csv file
     df_sub.to_csv(os.path.join(path_output, r'csa_sub.csv'))
 
