@@ -456,8 +456,10 @@ def main():
     df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).div(df_sub['theoretic_csa'])
     diff = []
     for rescale, group in df.groupby('rescale'):
-        diff.append(df.groupby('rescale').get_group(1).groupby('subject').sample(n=1)['MEAN(area)'].values - group.groupby('subject').sample(n=1)['MEAN(area)'].values)
+        for sub, subgroup in group.groupby('subject'):
+            diff.append((df.groupby('rescale').get_group(1).groupby('subject').get_group(sub).sample(n=1)['MEAN(area)'].values - group.groupby('subject').get_group(sub).sample(n=1)['MEAN(area)']).values)
     df_sub['diff'] = np.concatenate(diff, axis=0)
+    df_sub['diff_abs'] = np.abs(np.concatenate(diff, axis=0))
     # save dataframe in a csv file
     df_sub.to_csv(os.path.join(path_output, r'csa_sub.csv'))
 
@@ -480,7 +482,7 @@ def main():
     df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
     df_rescale['mean_error'] = df_sub.groupby('rescale').mean()['error'].values
     df_rescale['std_perc_error'] = df_sub.groupby('rescale').std()['perc_error'].values
-    df_rescale['mean_diff'] = df_sub.groupby('rescale').mean()['diff'].values
+    df_rescale['mean_diff'] = df_sub.groupby('rescale').mean()['diff_abs'].values
     df_rescale['std_diff'] = df_sub.groupby('rescale').std()['diff'].values
     df_rescale = pearson(df_sub, df_rescale)
     df_rescale = sample_size(df_sub, df_rescale)
