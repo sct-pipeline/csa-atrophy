@@ -457,7 +457,7 @@ def main():
     diff = []
     for rescale, group in df.groupby('rescale'):
         for sub, subgroup in group.groupby('subject'):
-            diff.append((df.groupby('rescale').get_group(1).groupby('subject').get_group(sub).sample(n=len(subgroup))['MEAN(area)'].values - group.groupby('subject').get_group(sub).sample(n=len(subgroup))['MEAN(area)'].values).mean())
+            diff.append((df.groupby('rescale').get_group(1).groupby('subject').get_group(sub).sample(n=100, replace=True)['MEAN(area)'].values - group.groupby('subject').get_group(sub).sample(n=100, replace=True)['MEAN(area)'].values).mean())
     df_sub['diff'] = diff
     # save dataframe in a csv file
     df_sub.to_csv(os.path.join(path_output, r'csa_sub.csv'))
