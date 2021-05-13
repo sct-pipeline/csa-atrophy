@@ -349,18 +349,17 @@ def sample_size(df, df_rescale):
     sample_size_90 = []
     sample_size_long_80 = []
     sample_size_long_90 = []
-    CSA = df.groupby('rescale').mean()['mean'].values[-1]
     for rescale_area , group in df.groupby('rescale_area'):
         if rescale_area != 100:
             # sample size between-subject
+            CSA_mean_diff = df_rescale.groupby('rescale_area').get_group(rescale_area)['mean_diff'].values[0]
             var = df_rescale.groupby('rescale_area').get_group(100)['std_inter'].values[0] ** 2 + df_rescale.groupby('rescale_area').get_group(rescale_area)['std_inter'].values[0] ** 2
-            sample_size_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
-            sample_size_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
+            sample_size_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var)) / (CSA_mean_diff ** 2)))
+            sample_size_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var)) / (CSA_mean_diff ** 2)))
             # sample size within-subject
-            var_diff = df_rescale.groupby('rescale_area').get_group(rescale_area)['std_diff'].values ** 2
-            # mean_diff = df_rescale.groupby('rescale_area').get_group(rescale_area)['mean_diff'].values[0]
-            sample_size_long_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var_diff)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
-            sample_size_long_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var_diff)) / ((((100 - rescale_area) / 100) * CSA) ** 2)))
+            var_diff = df_rescale.groupby('rescale_area').get_group(rescale_area)['std_diff'].values[0] ** 2
+            sample_size_long_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
+            sample_size_long_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
         else:
             sample_size_80.append('inf')
             sample_size_90.append('inf')
@@ -453,10 +452,13 @@ def main():
     df_sub['cov'] = df_sub['std'].div(df_sub['mean'])
     df_sub = add_columns_df_sub(df_sub)
     df_sub['rescale_estimated'] = df_sub['mean'].div(df_sub['csa_without_rescale'])
-    df_sub['diff'] = df_sub['csa_without_rescale'] - df_sub['mean']
     df_sub['error'] = (df_sub['mean'] - df_sub['theoretic_csa'])
     df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).div(df_sub['theoretic_csa'])
-    print(df_sub)
+    diff = []
+    for rescale, group in df.groupby('rescale'):
+        for sub, subgroup in group.groupby('subject'):
+            diff.append((df.groupby('rescale').get_group(1).groupby('subject').get_group(sub).sample(n=len(subgroup))['MEAN(area)'].values - group.groupby('subject').get_group(sub).sample(n=len(subgroup))['MEAN(area)'].values).mean())
+    df_sub['diff'] = diff
     # save dataframe in a csv file
     df_sub.to_csv(os.path.join(path_output, r'csa_sub.csv'))
 
@@ -485,7 +487,6 @@ def main():
     df_rescale = sample_size(df_sub, df_rescale)
     # save dataframe in a csv file
     df_rescale.to_csv(os.path.join(path_output, r'csa_rescale.csv'))
-
     # plot graph if verbose is present
     if arguments.fig:
         if path_output:
