@@ -4,9 +4,15 @@
    contain the root `toctree` directive.
 
 .. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Overview
+   Overview
+
+.. toctree::
    :maxdepth: 2
    :caption: Statistics:
-   Intro.rst
-   Intra_subject.rst
-   Inter_subject.rst
-   Sample_size.rst
+   Intro
+   Intra_subject
+   Inter_subject
+   Sample_size
