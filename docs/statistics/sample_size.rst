@@ -10,7 +10,6 @@ The minimum sample size, number of subjects per group (study arm), necessary to 
 
 Where :math:`n_{unpaired}` is the minimum sample size required to differentiate between groups with a given power (:math:`z_{β}` corresponds to the power z score, e.g. 80% power gives β=0.2 and :math:`z_{β}`= -0.84) and level of significance (:math:`z_{α/2}` corresponds to the significance level z score, e.g. 5% level of significance gives 𝛂=0.05 and :math:`z_{α/2}`=-1.96), SD is the inter-subject standard deviation of the mean CSA (which was calculated by taking the mean CSA across Monte Carlo samples). :math:`diff_{group}` group is the difference of the mean CSA between the groups.
 
-.. autofunction:: csa_rescale_stat.sample_size  
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -25,8 +24,6 @@ the minimum sample size necessary to detect an atrophy in a within-subject (repe
 :math:`n_{within\_sub} = \frac{(z_{α/2} + z_{β})^2(\sigma_{diff})^2}{\Delta_{sub} ^2}`
    
 Where :math:`\sigma_{diff}` is the standard deviation between longitudinal CSA measures across  subjects and :math:`\Delta_{sub}` is the mean of the difference between longitudinal CSA measures.
-
-.. autofunction:: csa_rescale_stat.sample_size
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
