@@ -12,7 +12,7 @@ Where :math:`n_{unpaired}` is the minimum sample size required to differentiate 
 
 .. autofunction:: csa_rescale_stat.sample_size  
 
-.. literalinclude:: ../csa_rescale_stat.py
+.. literalinclude:: ../../csa_rescale_stat.py
    :language: python
    :lines: 352-363
    :emphasize-lines: 5-7
@@ -28,7 +28,7 @@ Where :math:`\sigma_{diff}` is the standard deviation between longitudinal CSA m
 
 .. autofunction:: csa_rescale_stat.sample_size
 
-.. literalinclude:: ../csa_rescale_stat.py
+.. literalinclude:: ../../csa_rescale_stat.py
    :language: python
    :lines: 352-363
    :emphasize-lines: 9-10
