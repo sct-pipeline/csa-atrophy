@@ -1,5 +1,5 @@
 Intro
-=====
+======
 Documentation on statistics to evaluate the sensitivity of atrophy detection with SCT. Average CSA of each image is indexed as :math:`CSA(sI, rX, tY)` where:
 
 - :math:`(sI)` corresponds to subject :math:`I`
