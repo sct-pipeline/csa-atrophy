@@ -5,12 +5,6 @@ CSA-atrophy evaluates the robustness and the sensitivity of an automated analysi
 .. image:: csa_atrophy_scheme3.png
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Overview
-
-   overview.rst
-
-.. toctree::
    :hidden:
    :maxdepth: 1
    :caption: Statistics
