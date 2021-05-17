@@ -66,27 +66,6 @@ sct_run_batch -config config_sct_run_batch.yml
 
 # Statistics
 
-After everything is done, compute stats:
-Per-subject stat: Panda dataframe `df_sub`:
-- intra-subject MEAN: MEAN[CSA(sI, rX, :)] --> MEAN_intra(sI, rX): `df_sub['mean']`
-- intra-subject STD: STD[CSA(sI, rX, :)] --> STD_intra(sI, rX): `df_sub['std']`
-- intra-subject COV: STD[CSA(sI, rX, :)] / MEAN[CSA(sI, rX, :)] --> COV_intra(sI, rX): `df_sub['cov']`
-- rescale_estimated_subject MEAN: MEAN[CSA(sI, rX, :) / CSA(sI, 1, :)] --> MEAN_rescale_estimated_subject(sI, rX): `df_sub['rescale_estimated']`
-- intra-subject error MEAN: MEAN[CSA(sI, rX, :)] - (rX^2 * MEAN[CSA(sI, 1, :)]) --> MEAN_error_intra(sI, rX): `df_sub['error']`
-- intra-subject error in percentage MEAN: [MEAN[CSA(sI, rX, :)] - (rX^2 * MEAN[CSA(sI, 1, :)])] / MEAN[CSA(sI, rX, :)] --> MEAN_error_intra_perc(sI, rX): `df_sub['perc_error']`
-
-Across-subject stats: Panda dataframe `df_rescale`
-- intra-subject STD: MEAN[STD_intra(:, rX)] --> STD_intra(rX): `df_rescale['std_intra']`
-- intra-subject COV: MEAN[COV_intra_sub(:, rX)] --> COV_intra(rX): `df_rescale['cov']`
-- inter-subject STD: STD[MEAN_intra(:, rX)] --> STD_inter(rX): `df_rescale['std_inter']`
-- rescale_estimated (across subjects) MEAN: MEAN[MEAN_rescale_estimated_subject(:, rX)] --> MEAN_rescale_estimated(rX): `df_rescale['mean_rescale_estimated']`
-- rescale_estimated (across subjects) STD: STD[MEAN_rescale_estimated_subject(:, rX)] --> STD_rescale_estimated(rX): `df_rescale['std_rescale_estimated']`
-- error in percentage (across subjects) MEAN: MEAN[MEAN_error_intra(:, rX)]
-- error in percentage (across subjects) STD: STD[MEAN_error_intra(:, rX)]
-
-Power analysis:
-- sample size: [(z(uncertainty) + z(power))^2 * (2 * STD[MEAN(:, rX)]^2)] / [MEAN[CSA(sI, 1, :)] - MEAN[CSA(sI, rX, :)]] 
-
 Plot results:
 - STD_intersub
 - Mean and STD inter-subject error percentage in function of rescaling

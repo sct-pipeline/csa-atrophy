@@ -10,15 +10,9 @@ csa-atrophy evaluates the robustness and the sensitivity of an automated analysi
 .. image:: csa_atrophy_scheme3.png
 
 .. toctree::
-   About <README.md>
-   statistics
    :maxdepth: 2
-   :caption: Contents:
-   
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   :caption: Statistics:
+   Intro.rst
+   Intra_subject.rst
+   Inter_subject.rst
+   Sample_size.rst

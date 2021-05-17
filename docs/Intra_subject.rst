@@ -1,5 +1,5 @@
-Subject dataframe
-==================
+Intra-subject
+=============
 
 Per-subject statistics are regrouped in the Panda dataframe ``df_sub``:
 

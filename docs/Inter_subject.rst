@@ -1,5 +1,5 @@
-Rescale dataframe
-=====================
+Inter-subject
+=============
 
 Across-subject statistics are regrouped in the Panda dataframe ``df_rescale``
  
