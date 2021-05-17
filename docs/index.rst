@@ -1,16 +1,14 @@
-
-
 .. toctree::
    :hidden:
    :maxdepth: 1
    :caption: Overview
-   Overview
+   overview.rst
 
 .. toctree::
    :hidden:
    :maxdepth: 1
    :caption: Statistics:
-   Intro
-   Intra_subject
-   Inter_subject
-   Sample_size
+   statistics/intro.rst
+   statistics/intra_subject.rst
+   statistics/inter_subject.rst
+   statistics/sample_size.rst
