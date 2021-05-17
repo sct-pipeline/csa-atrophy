@@ -9,7 +9,7 @@ CSA-atrophy evaluates the robustness and the sensitivity of an automated analysi
    :maxdepth: 1
    :caption: Statistics
 
-   statistics/intro.rst
+   statistics/introduction.rst
    statistics/intra_subject.rst
    statistics/inter_subject.rst
    statistics/sample_size.rst
