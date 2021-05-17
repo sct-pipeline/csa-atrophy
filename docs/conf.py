@@ -66,4 +66,4 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 # The master toctree document.
-master_doc = 'overview.rst'
+master_doc = 'overview'
