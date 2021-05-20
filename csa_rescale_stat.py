@@ -335,7 +335,7 @@ def pearson(df, df_rescale):
     df_rescale['p_value_csa'] = p_value_csa
     return df_rescale
 
-def sample_size(df, df_sub, df_rescale, itt = 300):
+def sample_size(df, df_sub, df_rescale, itt = 30):
     """  Minimum sample size ( number of subjects) necessary to detect an atrophy in a between-subject (based on a
     two-sample bilateral t-test) and minimum sample size necessary to detect an atrophy in a
     within-subject ( repeated-measures in longitudinal study: based on a two-sample bilateral paired t-test).
@@ -354,15 +354,18 @@ def sample_size(df, df_sub, df_rescale, itt = 300):
         for rescale_r, group_r in df.groupby('rescale'):
             for sub, subgroup in group_r.groupby('subject'):
                 # for each scaling and each subject pick one transformation (Monte-Carlo sample)
+                df_sub.loc[(df_sub['rescale'] == rescale_r) & (df_sub['subject'] == sub), 'sample'] = \
+                df.loc[(df['rescale'] == rescale_r) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0]
                 df_sub.loc[(df_sub['rescale'] == rescale_r) & (df_sub['subject'] == sub), 'diff'] = df.loc[(df['rescale'] == 1) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0] - df.loc[(df['rescale'] == rescale_r) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0]
         df_rescale['mean_diff'] = df_sub.groupby('rescale').mean()['diff'].values
         df_rescale['std_diff'] = df_sub.groupby('rescale').std()['diff'].values
+        df_rescale['std_sample'] = df_sub.groupby('rescale').std()['sample'].values
 
         for rescale, group in df_sub.groupby('rescale'):
             if rescale != 1:
                 CSA_mean_diff = df_sub.groupby('rescale').get_group(1).mean()['mean']*(1-(rescale**2))
                 # sample size between-subject
-                var = df_rescale.groupby('rescale').get_group(1)['std_inter'].values[0] ** 2 + df_rescale.groupby('rescale').get_group(rescale)['std_inter'].values[0] ** 2
+                var = df_rescale.groupby('rescale').get_group(1)['std_sample'].values[0] ** 2 + df_rescale.groupby('rescale').get_group(rescale)['std_sample'].values[0] ** 2
                 sample_size_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var)) / (CSA_mean_diff ** 2)))
                 sample_size_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var)) / (CSA_mean_diff ** 2)))
                 # sample size within-subject
