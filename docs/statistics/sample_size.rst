@@ -1,8 +1,8 @@
 Power analysis
-=====================
+==============
    
 Between-group minimum sample size
-"""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""
 
 The minimum sample size, number of subjects per group (study arm), necessary to detect an atrophy between groups was computed based on a two-sample (unpaired) bilateral t-test using the following formula (Wang and Ji 2020; Wittes 2002):
 
@@ -17,7 +17,7 @@ Where :math:`n_{unpaired}` is the minimum sample size required to differentiate 
    :emphasize-lines: 5-7
 
 Within-subject minimum sample size
-"""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""
 
 the minimum sample size necessary to detect an atrophy in a within-subject (repeated-measures) study was computed based on a two-sample bilateral paired t-test using the following formula (Altmann et al. 2009):
 
