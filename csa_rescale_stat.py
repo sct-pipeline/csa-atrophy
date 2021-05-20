@@ -335,7 +335,7 @@ def pearson(df, df_rescale):
     df_rescale['p_value_csa'] = p_value_csa
     return df_rescale
 
-def sample_size(df, df_rescale):
+def sample_size(df, df_sub, df_rescale, itt = 300):
     """  Minimum sample size ( number of subjects) necessary to detect an atrophy in a between-subject (based on a
     two-sample bilateral t-test) and minimum sample size necessary to detect an atrophy in a
     within-subject ( repeated-measures in longitudinal study: based on a two-sample bilateral paired t-test).
@@ -349,26 +349,40 @@ def sample_size(df, df_rescale):
     sample_size_90 = []
     sample_size_long_80 = []
     sample_size_long_90 = []
-    for rescale_area , group in df.groupby('rescale_area'):
-        if rescale_area != 100:
-            # sample size between-subject
-            CSA_mean_diff = df_rescale.groupby('rescale_area').get_group(rescale_area)['mean_diff'].values[0]
-            var = df_rescale.groupby('rescale_area').get_group(100)['std_inter'].values[0] ** 2 + df_rescale.groupby('rescale_area').get_group(rescale_area)['std_inter'].values[0] ** 2
-            sample_size_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var)) / (CSA_mean_diff ** 2)))
-            sample_size_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var)) / (CSA_mean_diff ** 2)))
-            # sample size within-subject
-            var_diff = df_rescale.groupby('rescale_area').get_group(rescale_area)['std_diff'].values[0] ** 2
-            sample_size_long_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
-            sample_size_long_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
-        else:
-            sample_size_80.append('inf')
-            sample_size_90.append('inf')
-            sample_size_long_80.append('inf')
-            sample_size_long_90.append('inf')
-    df_rescale['sample_size_80'] = sample_size_80
-    df_rescale['sample_size_90'] = sample_size_90
-    df_rescale['sample_size_long_80'] = sample_size_long_80
-    df_rescale['sample_size_long_90'] = sample_size_long_90
+    # Compute mean sample size using a Monte Carlo simulation to evaluate variability of measures
+    for n in range(itt):
+        for rescale_r, group_r in df.groupby('rescale'):
+            for sub, subgroup in group_r.groupby('subject'):
+                # for each scaling and each subject pick one transformation (Monte-Carlo sample)
+                df_sub.loc[(df_sub['rescale'] == rescale_r) & (df_sub['subject'] == sub), 'diff'] = df.loc[(df['rescale'] == 1) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0] - df.loc[(df['rescale'] == rescale_r) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0]
+        df_rescale['mean_diff'] = df_sub.groupby('rescale').mean()['diff'].values
+        df_rescale['std_diff'] = df_sub.groupby('rescale').std()['diff'].values
+
+        for rescale, group in df_sub.groupby('rescale'):
+            if rescale != 1:
+                CSA_mean_diff = df_sub.groupby('rescale').get_group(1).mean()['mean']*(1-(rescale**2))
+                # sample size between-subject
+                var = df_rescale.groupby('rescale').get_group(1)['std_inter'].values[0] ** 2 + df_rescale.groupby('rescale').get_group(rescale)['std_inter'].values[0] ** 2
+                sample_size_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var)) / (CSA_mean_diff ** 2)))
+                sample_size_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var)) / (CSA_mean_diff ** 2)))
+                # sample size within-subject
+                var_diff = df_rescale.groupby('rescale').get_group(rescale)['std_diff'].values[0] ** 2
+                sample_size_long_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
+                sample_size_long_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
+            else:
+                sample_size_80.append(np.inf)
+                sample_size_90.append(np.inf)
+                sample_size_long_80.append(np.inf)
+                sample_size_long_90.append(np.inf)
+    # Compute mean and SD of computed sample sizes
+    df_rescale['sample_size_80'] = np.mean(np.reshape(sample_size_80, (itt, -1)), axis=0)
+    df_rescale['std_sample_size_80'] = np.std(np.reshape(sample_size_80, (itt, -1)), axis=0)
+    df_rescale['sample_size_90'] = np.mean(np.reshape(sample_size_90, (itt, -1)), axis=0)
+    df_rescale['std_sample_size_90'] = np.std(np.reshape(sample_size_90, (itt, -1)), axis=0)
+    df_rescale['sample_size_long_80'] = np.mean(np.reshape(sample_size_long_80, (itt, -1)), axis=0)
+    df_rescale['std_sample_size_long_80'] = np.std(np.reshape(sample_size_long_80, (itt, -1)), axis=0)
+    df_rescale['sample_size_long_90'] = np.mean(np.reshape(sample_size_long_90, (itt, -1)), axis=0)
+    df_rescale['std_sample_size_long_90'] = np.std(np.reshape(sample_size_long_90, (itt, -1)), axis=0)
     return df_rescale
 
 
@@ -454,11 +468,10 @@ def main():
     df_sub['rescale_estimated'] = df_sub['mean'].div(df_sub['csa_without_rescale'])
     df_sub['error'] = (df_sub['mean'] - df_sub['theoretic_csa'])
     df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).div(df_sub['theoretic_csa'])
-    diff = []
+    sample = []
     for rescale, group in df.groupby('rescale'):
         for sub, subgroup in group.groupby('subject'):
-            diff.append((df.groupby('rescale').get_group(1).groupby('subject').get_group(sub).sample(n=1)['MEAN(area)'].values - group.groupby('subject').get_group(sub).sample(n=1)['MEAN(area)']).values)
-    df_sub['diff'] = np.concatenate(diff, axis=0)
+            df_sub.loc[(df_sub['rescale'] == rescale) & (df_sub['subject'] == sub), 'sample'] = subgroup.sample(n=1)['MEAN(area)'].values
     # save dataframe in a csv file
     df_sub.to_csv(os.path.join(path_output, r'csa_sub.csv'))
 
@@ -481,10 +494,8 @@ def main():
     df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
     df_rescale['mean_error'] = df_sub.groupby('rescale').mean()['error'].values
     df_rescale['std_perc_error'] = df_sub.groupby('rescale').std()['perc_error'].values
-    df_rescale['mean_diff'] = df_sub.groupby('rescale').mean()['diff'].values
-    df_rescale['std_diff'] = df_sub.groupby('rescale').std()['diff'].values
     df_rescale = pearson(df_sub, df_rescale)
-    df_rescale = sample_size(df_sub, df_rescale)
+    df_rescale = sample_size(df, df_sub, df_rescale)
     # save dataframe in a csv file
     df_rescale.to_csv(os.path.join(path_output, r'csa_rescale.csv'))
     # plot graph if verbose is present
