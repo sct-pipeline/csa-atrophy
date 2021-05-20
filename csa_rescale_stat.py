@@ -353,16 +353,21 @@ def sample_size(df, df_sub, df_rescale, itt = 30):
     for n in range(itt):
         for rescale_r, group_r in df.groupby('rescale'):
             for sub, subgroup in group_r.groupby('subject'):
-                # for each scaling and each subject pick one transformation (Monte-Carlo sample)
+                # for each subject in each scaling pick one transformation (Monte-Carlo sample) and add value in new column "sample" of df_sub
                 df_sub.loc[(df_sub['rescale'] == rescale_r) & (df_sub['subject'] == sub), 'sample'] = \
                 df.loc[(df['rescale'] == rescale_r) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0]
-                df_sub.loc[(df_sub['rescale'] == rescale_r) & (df_sub['subject'] == sub), 'diff'] = df.loc[(df['rescale'] == 1) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0] - df.loc[(df['rescale'] == rescale_r) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0]
+                # for each subject in each scaling compute difference between one scaled and one un-scaled transformation (Monte-Carlo sample) and add value in new column "diff" of df_sub
+                df_sub.loc[(df_sub['rescale'] == rescale_r) & (df_sub['subject'] == sub), 'diff'] = \
+                df.loc[(df['rescale'] == 1) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0] - \
+                df.loc[(df['rescale'] == rescale_r) & (df['subject'] == sub)].sample(n=1)['MEAN(area)'].values[0]
+        # regroup results per scaling
         df_rescale['mean_diff'] = df_sub.groupby('rescale').mean()['diff'].values
         df_rescale['std_diff'] = df_sub.groupby('rescale').std()['diff'].values
         df_rescale['std_sample'] = df_sub.groupby('rescale').std()['sample'].values
 
         for rescale, group in df_sub.groupby('rescale'):
             if rescale != 1:
+                # compute difference between groups using theoretic scaling and average un-scaled CSA
                 CSA_mean_diff = df_sub.groupby('rescale').get_group(1).mean()['mean']*(1-(rescale**2))
                 # sample size between-subject
                 var = df_rescale.groupby('rescale').get_group(1)['std_sample'].values[0] ** 2 + df_rescale.groupby('rescale').get_group(rescale)['std_sample'].values[0] ** 2
@@ -373,6 +378,7 @@ def sample_size(df, df_sub, df_rescale, itt = 30):
                 sample_size_long_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
                 sample_size_long_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
             else:
+                # to avoid dividing by zero
                 sample_size_80.append(np.inf)
                 sample_size_90.append(np.inf)
                 sample_size_long_80.append(np.inf)
