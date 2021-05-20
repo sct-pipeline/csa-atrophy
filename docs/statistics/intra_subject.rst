@@ -1,12 +1,13 @@
 Intra-subject
 =============
 
-Per-subject statistics are regrouped in the Panda dataframe ``df_sub``:
+Intra-subject statistics. These statistics are gathered in the Panda dataframe ``df_sub``:
 
 Intra-subject CSA (CSA estimation)
-""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""
 
-Per rescaling and per subject, computation of the mean CSA across transformations: :math:`MEAN[CSA(sI, rX, :)] \to \overline{CSA}_{(sI,rX,:)}`
+Mean CSA across transformations, per rescaling and per subject.
+:math:`MEAN[CSA(sI, rX, :)] \to \overline{CSA}_{(sI,rX,:)}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python

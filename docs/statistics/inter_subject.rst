@@ -1,7 +1,7 @@
 Inter-subject
 =============
 
-Across-subject statistics are regrouped in the Panda dataframe ``df_rescale``
+Inter-subject statistics. These statistics are gathered in the Panda dataframe ``df_rescale``
  
 Mean intra-subject SD
 """"""""""""""""""""""""""""""""""""""""""""
