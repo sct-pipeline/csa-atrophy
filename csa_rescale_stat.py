@@ -79,8 +79,6 @@ def concatenate_csv_files(path_results):
             files.append(path)
     if not files:
         raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
-    #metrics = pd.concat(
-       #[pd.read_csv(f).assign(rescale=os.path.basename(f).split('_')[4].split('.csv')[0]) for f in files])
     print("Concatenate csv files. This will take a few seconds...")
     metrics = pd.concat(pd.read_csv(f) for f in files)
     # output csv file in PATH_RESULTS
@@ -125,7 +123,7 @@ def boxplot_csa(df, path_output):
     meanpointprops = dict(marker='x' , markeredgecolor='red' ,
                           markerfacecolor='red')
     # round rescale area
-    df['rescale_area'] = round(df['rescale_area'], ndigits=0).astype(int)
+    df['rescale_area'] = round(100*(df['rescale']**2), ndigits=0).astype(int)
     df.boxplot(column=['mean'], by='rescale_area', positions=sorted(set(df['rescale_area'].values)), showmeans=True, meanprops=meanpointprops)
     min_rescale = min(df['rescale_area'].values)
     max_rescale = max(df['rescale_area'].values)
@@ -324,7 +322,7 @@ def pearson(df, df_rescale):
     p_value_cov = []
     pearson_csa = []
     p_value_csa = []
-    for rescale_area, group in df.groupby('rescale_area'):
+    for rescale, group in df.groupby('rescale'):
         pearson_cov.append(stats.pearsonr(group['cov'], group['perc_error'])[0])
         p_value_cov.append(stats.pearsonr(group['cov'], group['perc_error'])[1])
         pearson_csa.append(stats.pearsonr(group['mean'], group['perc_error'])[0])
@@ -335,7 +333,7 @@ def pearson(df, df_rescale):
     df_rescale['p_value_csa'] = p_value_csa
     return df_rescale
 
-def sample_size(df, df_sub, df_rescale, itt = 30):
+def sample_size(df, df_sub, df_rescale, itt = 2):
     """  Minimum sample size ( number of subjects) necessary to detect an atrophy in a between-subject (based on a
     two-sample bilateral t-test) and minimum sample size necessary to detect an atrophy in a
     within-subject ( repeated-measures in longitudinal study: based on a two-sample bilateral paired t-test).
