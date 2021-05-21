@@ -122,13 +122,12 @@ def boxplot_csa(df, path_output):
     fig2 = plt.figure()
     meanpointprops = dict(marker='x' , markeredgecolor='red' ,
                           markerfacecolor='red')
-    # round rescale area
-    df['rescale_area'] = round(100*(df['rescale']**2), ndigits=0).astype(int)
-    df.boxplot(column=['mean'], by='rescale_area', positions=sorted(set(df['rescale_area'].values)), showmeans=True, meanprops=meanpointprops)
+    df.boxplot(column=['mean'], by=df['rescale_area'].round(1), positions=sorted(set(df['rescale_area'].values)), showmeans=True, meanprops=meanpointprops)
     min_rescale = min(df['rescale_area'].values)
+    min_rescale_r = min(df['rescale'].values)
     max_rescale = max(df['rescale_area'].values)
     max_y = df.groupby('rescale').get_group(1).mean()['mean']
-    plt.plot([min_rescale, max_rescale], [max_y * (0.93 ** 2) , max_y] , ls="--" , c=".3")
+    plt.plot([min_rescale, max_rescale], [max_y * (min_rescale_r ** 2), max_y], ls="--", c=".3")
     plt.title('Boxplot of CSA in function of area rescaling')
     plt.suptitle("")
     plt.ylabel('CSA in mm^2')
@@ -146,11 +145,9 @@ def boxplot_atrophy(df, path_output):
     fig = plt.figure()
     # convert to percentage
     df['rescale_estimated'] = df['rescale_estimated'] * 100
-    # round rescale area
-    df['rescale_area'] = round(df['rescale_area'], ndigits=0).astype(int)
     meanpointprops = dict(marker='x' , markeredgecolor='red' ,
                           markerfacecolor='red')
-    df.boxplot(column='rescale_estimated', by='rescale_area', positions=sorted(set(df['rescale_area'].values)), showmeans=True, meanline=False, figsize=(10,8), meanprops=meanpointprops)
+    df.boxplot(column='rescale_estimated', by=df['rescale_area'].round(1), positions=sorted(set(df['rescale_area'].values)), showmeans=True, meanline=False, figsize=(10, 8), meanprops=meanpointprops)
     min_rescale = min(df['rescale_area'].values)
     max_rescale = max(df['rescale_area'].values)
     plt.plot([min_rescale, max_rescale], [min_rescale, max_rescale], ls="--", c=".3")
@@ -210,7 +207,7 @@ def error_function_of_csa(df, path_output):
     :param path_output: directory in which plot is saved
     """
     fig, ax = plt.subplots(figsize=(7, 7))
-    df['Normalized CSA in mm²'] = df['mean'].div(df['rescale'])
+    df['Normalized CSA in mm²'] = df['mean'].div(df['rescale']**2)
     # compute linear regression
     z = np.polyfit(x=df.loc[:, 'perc_error'], y=df.loc[:, 'Normalized CSA in mm²'], deg=1)
     p = np.poly1d(z)
@@ -218,7 +215,7 @@ def error_function_of_csa(df, path_output):
     df.plot.scatter(x='perc_error', y='Normalized CSA in mm²', c='rescale', colormap='viridis')
     min_err = min(df['perc_error'].values)
     max_err = max(df['perc_error'].values)
-    plt.plot([min_err, max_err], [min_err*z[0]+z[1], max_err*z[0]+z[1]], ls="--", c=".3")
+    plt.plot([min_err, max_err], [p(min_err), p(max_err)], ls="--", c=".3")
     plt.title('Normalized CSA in function of error %,\n linear regression: {}'.format(p))
     plt.xlabel('Mean error %')
     ax.legend(loc='upper right')
@@ -243,7 +240,7 @@ def error_function_of_intra_cov(df, path_output):
     df.plot.scatter(x='perc_error', y='cov', c='rescale', colormap='viridis')
     min_err = min(df['perc_error'].values)
     max_err = max(df['perc_error'].values)
-    plt.plot([min_err, max_err], [min_err*z[0]+z[1], max_err*z[0]+z[1]], ls="--", c=".3")
+    plt.plot([min_err, max_err], [p(min_err), p(max_err)], ls="--", c=".3")
     plt.xlabel('Mean error %')
     plt.ylabel('COV')
     plt.title('COV in function of % error,\n linear regression: {}'.format(p))
