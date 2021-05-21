@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 from math import ceil
 from ruamel.yaml import YAML
 from scipy import stats
+from matplotlib import cm
 
 
 # Parser
@@ -212,13 +213,13 @@ def error_function_of_csa(df, path_output):
     z = np.polyfit(x=df.loc[:, 'perc_error'], y=df.loc[:, 'Normalized CSA in mm²'], deg=1)
     p = np.poly1d(z)
     # plot
-    df.plot.scatter(x='perc_error', y='Normalized CSA in mm²', c='rescale', colormap='viridis')
+    viridis = cm.get_cmap('viridis', 6)
+    df.plot.scatter(x='perc_error', y='Normalized CSA in mm²', c='rescale', colormap=viridis)
     min_err = min(df['perc_error'].values)
     max_err = max(df['perc_error'].values)
     plt.plot([min_err, max_err], [p(min_err), p(max_err)], ls="--", c=".3")
     plt.title('Normalized CSA in function of error %,\n linear regression: {}'.format(p))
     plt.xlabel('Mean error %')
-    ax.legend(loc='upper right')
     plt.grid()
     output_file = os.path.join(path_output, "fig_err_in_function_of_csa.png")
     plt.savefig(output_file, bbox_inches='tight')
@@ -237,14 +238,14 @@ def error_function_of_intra_cov(df, path_output):
     z = np.polyfit(x=df.loc[:, 'perc_error'], y=df.loc[:, 'cov'], deg=1)
     p = np.poly1d(z)
     # plot
-    df.plot.scatter(x='perc_error', y='cov', c='rescale', colormap='viridis')
+    viridis = cm.get_cmap('viridis', 6)
+    df.plot.scatter(x='perc_error', y='cov', c='rescale', colormap=viridis)
     min_err = min(df['perc_error'].values)
     max_err = max(df['perc_error'].values)
     plt.plot([min_err, max_err], [p(min_err), p(max_err)], ls="--", c=".3")
     plt.xlabel('Mean error %')
     plt.ylabel('COV')
     plt.title('COV in function of % error,\n linear regression: {}'.format(p))
-    ax.legend(loc='upper right')
     plt.grid()
     output_file = os.path.join(path_output, "fig_err_in_function_of_cov.png")
     plt.savefig(output_file, bbox_inches='tight')
@@ -320,10 +321,16 @@ def pearson(df, df_rescale):
     pearson_csa = []
     p_value_csa = []
     for rescale, group in df.groupby('rescale'):
-        pearson_cov.append(stats.pearsonr(group['cov'], group['perc_error'])[0])
-        p_value_cov.append(stats.pearsonr(group['cov'], group['perc_error'])[1])
-        pearson_csa.append(stats.pearsonr(group['mean'], group['perc_error'])[0])
-        p_value_csa.append(stats.pearsonr(group['mean'], group['perc_error'])[1])
+        if rescale != 1:
+            pearson_cov.append(stats.pearsonr(group['cov'], group['perc_error'])[0])
+            p_value_cov.append(stats.pearsonr(group['cov'], group['perc_error'])[1])
+            pearson_csa.append(stats.pearsonr(group['mean'], group['perc_error'])[0])
+            p_value_csa.append(stats.pearsonr(group['mean'], group['perc_error'])[1])
+        else:
+            pearson_cov.append(1)
+            p_value_cov.append(0)
+            pearson_csa.append(1)
+            p_value_csa.append(0)
     df_rescale['pearson_cov'] = pearson_cov
     df_rescale['p_value_cov'] = p_value_cov
     df_rescale['pearson_csa'] = pearson_csa
@@ -504,6 +511,7 @@ def main():
     df_rescale = sample_size(df, df_sub, df_rescale)
     # save dataframe in a csv file
     df_rescale.to_csv(os.path.join(path_output, r'csa_rescale.csv'))
+
     # plot graph if verbose is present
     if arguments.fig:
         if path_output:
