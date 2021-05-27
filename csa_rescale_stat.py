@@ -185,10 +185,10 @@ def plot_sample_size(z_conf, z_power, std_arr, mean_csa, path_output):
         num_n_t2 = 2 * ((z_conf + z_p) ** 2) * (std_arr[1] ** 2)
         n_t2.append(num_n_t2 / ((0.01*atrophy*mean_csa[1]) ** 2))
     # plot
-    ax.plot(atrophy / mean_csa[0] * 100, n_t1[0], 'b.', markevery=3, markersize=10, label='t1 80% power')
-    ax.plot(atrophy / mean_csa[0] * 100, n_t1[1], 'r.', markevery=3, markersize=10, label='t1 90% power')
-    ax.plot(atrophy / mean_csa[1] * 100, n_t2[0], 'c', label='t2 80% power')
-    ax.plot(atrophy / mean_csa[1] * 100, n_t2[1], 'm', label='t2 90% power')
+    ax.plot(atrophy / mean_csa[0] * 100, n_t1[0], 'tab:blue',  label='T1w 80% power')
+    ax.plot(atrophy / mean_csa[0] * 100, n_t1[1], 'tab:blue', linestyle='--', label='T1w 90% power')
+    ax.plot(atrophy / mean_csa[1] * 100, n_t2[0], 'tab:red', label='T2w 80% power')
+    ax.plot(atrophy / mean_csa[1] * 100, n_t2[1], 'tab:red', linestyle='--', label='T2w 90% power')
     ax.set_ylabel('number of participants per group of study \n(patients or controls) with ratio 1:1')
     ax.set_xlabel('atrophy in %')
     plt.suptitle('minimum number of participants to detect an atrophy with 5% uncertainty', fontsize=16, y=1.05)
@@ -337,7 +337,7 @@ def pearson(df, df_rescale):
     df_rescale['p_value_csa'] = p_value_csa
     return df_rescale
 
-def sample_size(df, df_sub, df_rescale, itt = 500):
+def sample_size(df, df_sub, df_rescale, itt = 50):
     """  Minimum sample size ( number of subjects) necessary to detect an atrophy in a between-subject (based on a
     two-sample bilateral t-test) and minimum sample size necessary to detect an atrophy in a
     within-subject ( repeated-measures in longitudinal study: based on a two-sample bilateral paired t-test).
@@ -351,6 +351,7 @@ def sample_size(df, df_sub, df_rescale, itt = 500):
     sample_size_90 = []
     sample_size_long_80 = []
     sample_size_long_90 = []
+    print("Computing sample size using Monte Carlo simulation with {} iterations. This might take a while...".format(itt))
     # Compute mean sample size using a Monte Carlo simulation to evaluate variability of measures
     for n in range(itt):
         for rescale_r, group_r in df.groupby('rescale'):
