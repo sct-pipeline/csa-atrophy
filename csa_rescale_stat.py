@@ -337,7 +337,7 @@ def pearson(df, df_rescale):
     df_rescale['p_value_csa'] = p_value_csa
     return df_rescale
 
-def sample_size(df, df_sub, df_rescale, itt = 2):
+def sample_size(df, df_sub, df_rescale, itt = 500):
     """  Minimum sample size ( number of subjects) necessary to detect an atrophy in a between-subject (based on a
     two-sample bilateral t-test) and minimum sample size necessary to detect an atrophy in a
     within-subject ( repeated-measures in longitudinal study: based on a two-sample bilateral paired t-test).
@@ -412,7 +412,7 @@ def main():
     path_output = os.path.abspath(arguments.o)
 
     # aggregate all csv results files
-    # concatenate_csv_files(path_results)
+    concatenate_csv_files(path_results)
 
     # read data
     data = pd.read_csv(os.path.join(path_results, r'csa_all.csv'), decimal=".")
@@ -438,6 +438,7 @@ def main():
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
     df_vert['rescale'] = list(float(b.split('RPI_r_r')[1].split('_')[0]) for b in df_vert['basename'])
     df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
+
 
     # verify if vertlevels of interest were given in input by user
     if vertlevels_input is None:
