@@ -375,13 +375,13 @@ def sample_size(df, df_sub, df_rescale, itt = 50):
                 # sample size between-subject
                 # var is the sum of the variances of un-scaled and scaled CSA across subjects (simulating two unpaired study arms)
                 var = df_rescale.groupby('rescale').get_group(1)['std_sample'].values[0] ** 2 + df_rescale.groupby('rescale').get_group(rescale)['std_sample'].values[0] ** 2
-                sample_size_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var)) / (CSA_mean_diff ** 2)))
-                sample_size_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var)) / (CSA_mean_diff ** 2)))
+                sample_size_80.append((((1.96 + 0.84) ** 2) * (var)) / (CSA_mean_diff ** 2))
+                sample_size_90.append((((1.96 + 1.28) ** 2) * (var)) / (CSA_mean_diff ** 2))
                 # sample size within-subject
                 # var_diff is the variance of the difference between un-scaled and scaled CSA across subjects (simulating longitudinal CSA measures)
                 var_diff = df_rescale.groupby('rescale').get_group(rescale)['std_diff'].values[0] ** 2
-                sample_size_long_80.append(np.ceil((((1.96 + 0.84) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
-                sample_size_long_90.append(np.ceil((((1.96 + 1.28) ** 2) * (var_diff)) / (CSA_mean_diff ** 2)))
+                sample_size_long_80.append((((1.96 + 0.84) ** 2) * (var_diff)) / (CSA_mean_diff ** 2))
+                sample_size_long_90.append((((1.96 + 1.28) ** 2) * (var_diff)) / (CSA_mean_diff ** 2))
             else:
                 # to avoid dividing by zero
                 sample_size_80.append(np.inf)
