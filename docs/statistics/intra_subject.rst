@@ -45,7 +45,7 @@ Rescale estimation (RE)
 
 ratio of the atrophied CSA divided by the un-rescaled CSA averaged across transformations (gives an estimation of the applied scaling).
 
-:math:`\mu_t \left\{ \frac{CSA_{sI, rX}}{CSA_{sI, rX}} \right\}`
+:math:`\mu_t \left\{ \frac{CSA_{sI, rX}}{CSA_{sI, r1}} \right\}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -57,7 +57,7 @@ Error
 
 mean absolute error on CSA estimation averaged across transformations.
 
-:math:`\mu_t \{{CSA_{sI, rX}}} - \mu_t\{{CSA_{sI, r1}}} \dot (rX)^2`
+:math:`\mu_t \{{CSA_{sI, rX}}\} - \mu_t\{CSA_{sI, r1} \cdot (rX)^2 \}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
