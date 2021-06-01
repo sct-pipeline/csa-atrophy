@@ -1,8 +1,5 @@
-# csa-atrophy
-
-The csa-atrophy framework aims to evaluate the robustness and the sensitivity of an automated analysis pipeline for detecting SC atrophy.
-
-# How to run
+How to run?
+============
 
 This code has been tested using Python 3.7.
 
