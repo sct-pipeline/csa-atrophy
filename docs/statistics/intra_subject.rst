@@ -8,7 +8,7 @@ Intra-subject CSA (CSA estimation)
 
 CSA averaged across transformations.
 
-:math:`MEAN[CSA(sI, rX, :)] \to \overline{CSA}_{(sI,rX,:)}`
+:math:`\mu_t \{{CSA_{sI, rX}}}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -20,7 +20,7 @@ Intra-subject SD
 
 SD of CSA across transformations.
 
-:math:`STD[CSA(sI, rX, :)] \to \sigma_{(sI,rX,:)}`
+:math:`\sigma_t \{CSA_{sI,rX}}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -33,7 +33,7 @@ Intra-subject COV
 
 COV of CSA across transformations.
 
-:math:`\frac{STD[CSA(sI, rX, :)]}{MEAN[CSA(sI, rX, :)]} \to COV_{(sI,rX,:)}`
+:math:`COV_t \{CSA_{sI,rX}}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -45,7 +45,7 @@ Rescale estimation (RE)
 
 ratio of the atrophied CSA divided by the un-rescaled CSA averaged across transformations (gives an estimation of the applied scaling).
 
-:math:`MEAN \left[\frac{CSA(sI, rX, :)}{CSA(sI, r1, :)}\right] \to \overline{RE}_{(sI,rX,:)}`
+:math:`\mu_t \left\{ \frac{CSA_{sI, rX}}{CSA_{sI, rX}} \right\}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -57,7 +57,7 @@ Error
 
 mean absolute error on CSA estimation averaged across transformations.
 
-:math:`MEAN[CSA(sI, rX, :)] - rX^2  \times MEAN[CSA(sI, r1, :)] \to Error_{(sI,rX,:)}`
+:math:`\mu_t \{{CSA_{sI, rX}}} - \mu_t\{{CSA_{sI, r1}}} \dot (rX)^2`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
