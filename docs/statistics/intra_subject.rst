@@ -8,7 +8,7 @@ Intra-subject CSA (CSA estimation)
 
 CSA averaged across transformations.
 
-:math:`\mu_t \{{CSA_{sI, rX}}}`
+:math:`\mu_t \{{CSA_{sI, rX}}\}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -20,7 +20,7 @@ Intra-subject SD
 
 SD of CSA across transformations.
 
-:math:`\sigma_t \{CSA_{sI,rX}}`
+:math:`\sigma_t \{CSA_{sI,rX}\}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -33,7 +33,7 @@ Intra-subject COV
 
 COV of CSA across transformations.
 
-:math:`COV_t \{CSA_{sI,rX}}`
+:math:`COV_t \{CSA_{sI,rX}\}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
