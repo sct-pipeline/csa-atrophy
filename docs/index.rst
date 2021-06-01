@@ -6,18 +6,19 @@ CSA-atrophy evaluates the robustness and the sensitivity of an automated analysi
 
 
 .. toctree::
-   :hidden:
-   :maxdepth: 2
-   :caption: Statistics
+    :hidden:
+    :maxdepth: 1
+    :caption: Statistics
 
-   statistics/introduction.rst
-   statistics/intra_subject.rst
-   statistics/inter_subject.rst
-   statistics/sample_size.rst
+    statistics/introduction.rst
+    statistics/intra_subject.rst
+    statistics/inter_subject.rst
+    statistics/sample_size.rst
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Quality Control
+    :hidden:
+    :maxdepth: 1
+    :caption: Quality Control
 
     statistics/quality_control.rst
