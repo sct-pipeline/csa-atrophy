@@ -43,13 +43,3 @@ csa_rescale_stat -i csa_atrophy_results/results -o csa_atrophy_results -config c
 ~~~
 
 
-
-# Statistics
-
-Plot results:
-- STD_intersub
-- Mean and STD inter-subject error percentage in function of rescaling
-- sample size: minimum number of patients to detect an atrophy of X with Y% power and Z% uncertainty
-- CSA values boxplot in function of rescaling
-- Error values boxplot in function of rescaling
-
