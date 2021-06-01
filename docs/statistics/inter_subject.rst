@@ -7,7 +7,7 @@ Mean intra-subject SD
 """""""""""""""""""""
 
 Intra-subject SD averaged across subjects.
-:math:`\mu_s \{{\sigma_t}\{CSA_{rX}\}\}`
+:math:`\mu_s \{ \sigma_t \{ CSA_{rX} \} \}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -18,7 +18,7 @@ Mean intra-subject COV
 """"""""""""""""""""""
 
 Intra-subject COV averaged across subjects.
-:math:`\mu_s \{{COV_t}\{CSA_{rX}\}\}`
+:math:`\mu_s \{ COV_t \{ CSA_{rX} \} \}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -29,7 +29,7 @@ Inter-subject SD
 """"""""""""""""
 
 SD of intra-subject CSA across subjects.
-:math:`\sigma_s \{{\mu_t}\{CSA_{rX}\}\}`
+:math:`\sigma_s \{ \mu_t \{ CSA_{rX} \} \}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -40,7 +40,7 @@ Mean rescale estimated (RE)
 """""""""""""""""""""""""""
 
 rescale_estimated averaged across subjects.
-:math:`\mu_s \left\{\mu_t \left\{ \frac{CSA_{rX}}{CSA_{r1}} \right\}\right\}`
+:math:`\mu_s \left \{ \mu_t \left\{ \frac{CSA_{rX}}{CSA_{r1}} \right\}\right\}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -62,7 +62,7 @@ Mean error
 """"""""""
 
 error on the intra-subject CSA estimation averaged across subjects.
-:math:`\mu_s \{\mu_t \{CSA_{rX}\} - \mu_t \{CSA_{r1} \cdot (rX)^2 \}\}`
+:math:`\mu_s \{ \mu_t \{ CSA_{rX} \} - \mu_t \{ CSA_{r1} \cdot (rX)^2 \} \}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python
@@ -73,7 +73,7 @@ SD of error
 """""""""""
 
 SD of error on intra-subject CSA estimation across subjects.
-:math:`\sigma_s \{\mu_t \{CSA_{rX}\} - \mu_t \{CSA_{r1} \cdot (rX)^2 \}\}`
+:math:`\sigma_s \{ \mu_t \{ CSA_{rX} \} - \mu_t \{ CSA_{r1} \cdot (rX)^2 \} \}`
 
 .. literalinclude:: ../../csa_rescale_stat.py
    :language: python

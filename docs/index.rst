@@ -17,7 +17,6 @@ CSA-atrophy evaluates the robustness and the sensitivity of an automated analysi
 
 
 .. toctree::
-   :hidden:
    :maxdepth: 1
    :caption: Quality Control
 
