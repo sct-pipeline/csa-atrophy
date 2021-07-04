@@ -10,4 +10,7 @@ argparse~=1.4.0
 setuptools~=49.6.0
 PyYAML~=5.3.1
 coloredlogs~=14.0
-
+Sphinx
+sphinx_rtd_theme
+recommonmark
+sphinx-jsonschema
