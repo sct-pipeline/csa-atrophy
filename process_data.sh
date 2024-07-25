@@ -49,7 +49,10 @@ segment_and_label_if_does_not_exist(){
   local file="$1"
   local contrast="$2"
   local contrast_str="$3"
-  segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
+  FILESEG="${file}_seg"
+  sct_deepseg -i ${file}.nii.gz -task seg_sc_contrast_agnostic $qc
+  sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc $qc
+  #segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
   local file_seg=${FILESEG}
   # Update global variable with segmentation file name
   FILELABEL="${file}_labels-disc"
@@ -74,23 +77,23 @@ segment_and_label_if_does_not_exist(){
 
 # Check if manual segmentation already exists. If it does, copy it locally. If
 # it does not, perform seg.
-segment_if_does_not_exist(){
-  local file="$1"
-  local contrast="$2"
-  local qc=$3
-  # Update global variable with segmentation file name
-  FILESEG="${file}_seg"
-  FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual"
-  if [ -e "${FILESEGMANUAL}.nii.gz" ]; then
-    echo "Found! Using manual segmentation."
-    sct_resample -i ${FILESEGMANUAL}.nii.gz -mm $interp -x nn -o ${FILESEGMANUAL}_r.nii.gz
-    rsync -avzh ${FILESEGMANUAL}_r.nii.gz ${FILESEG}.nii.gz
-    sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc $qc
-  else
-    # Segment spinal cord
-    sct_deepseg_sc -i ${file}.nii.gz -c ${contrast} $qc
-  fi
-}
+# segment_if_does_not_exist(){
+#   local file="$1"
+#   local contrast="$2"
+#   local qc=$3
+#   # Update global variable with segmentation file name
+#   FILESEG="${file}_seg"
+#   FILESEGMANUAL="${path_derivatives}/${FILESEG}-manual"
+#   if [ -e "${FILESEGMANUAL}.nii.gz" ]; then
+#     echo "Found! Using manual segmentation."
+#     sct_resample -i ${FILESEGMANUAL}.nii.gz -mm $interp -x nn -o ${FILESEGMANUAL}_r.nii.gz
+#     rsync -avzh ${FILESEGMANUAL}_r.nii.gz ${FILESEG}.nii.gz
+#     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc $qc
+#   else
+#     # Segment spinal cord
+#     sct_deepseg_sc -i ${file}.nii.gz -c ${contrast} $qc
+#   fi
+# }
 
 
 # SCRIPT STARTS HERE
