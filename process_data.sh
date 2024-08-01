@@ -50,28 +50,28 @@ segment_and_label_if_does_not_exist(){
   local contrast="$2"
   local contrast_str="$3"
   FILESEG="${file}_seg"
-  sct_deepseg -i ${file}.nii.gz -task seg_sc_contrast_agnostic $qc
-  sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc $qc
+  sct_deepseg -i ${file}.nii.gz -task seg_sc_contrast_agnostic -qc $PATH_QC -qc-subject ${SUBJECT}
+  sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
   #segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
   local file_seg=${FILESEG}
   # Update global variable with segmentation file name
-  FILELABEL="${file}_labels-disc"
-  FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_labels-disc-manual"
+  FILELABEL="${file}_label-discs_dlabel"  # TODO change for updated names
+  FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_label-discs_dlabel"
   if [ -e "${FILELABELMANUAL}.nii.gz" ]; then
     echo "manual labeled file was found: ${FILELABELMANUAL}"
     # reorienting and resampling image
-    sct_image -i ${FILELABELMANUAL}.nii.gz -setorient RPI -o "${FILELABELMANUAL}_RPI.nii.gz"
-    sct_maths -i ${FILELABELMANUAL}_RPI.nii.gz -dilate 2 -o ${FILELABELMANUAL}_RPI_dil.nii.gz
-    sct_resample -i ${FILELABELMANUAL}_RPI_dil.nii.gz -mm $interp -x nn -o ${FILELABELMANUAL}_RPI_dil_r.nii.gz
-    rsync -avzh "${FILELABELMANUAL}_RPI_dil_r.nii.gz" ${FILELABEL}.nii.gz
+    #sct_image -i ${FILELABELMANUAL}.nii.gz -setorient RPI -o "${FILELABELMANUAL}_RPI.nii.gz"
+    #sct_maths -i ${FILELABELMANUAL}_RPI.nii.gz -dilate 2 -o ${FILELABELMANUAL}_RPI_dil.nii.gz
+    #sct_resample -i ${FILELABELMANUAL}_RPI_dil.nii.gz -mm $interp -x nn -o ${FILELABELMANUAL}_RPI_dil_r.nii.gz
+    #rsync -avzh "${FILELABELMANUAL}_RPI_dil_r.nii.gz" ${FILELABEL}.nii.gz
     # Generate labeled segmentation
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile "${FILELABELMANUAL}_RPI_dil_r.nii.gz" -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile "${FILELABELMANUAL}.nii.gz" -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Generate labeled segmentation
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
   fi
   # Create labels in the Spinal Cord
-  sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
+  #sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
   FILE_SEG_LABEL=${file_seg}_labeled
 }
 
@@ -101,9 +101,7 @@ segment_and_label_if_does_not_exist(){
 # Display useful info for the log, such as SCT version, RAM and CPU cores available
 sct_check_dependencies -short
 # copy derivatives directory containing manual corrections to PATH_DATA_PROCESSED
-mkdir -p "${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}/anat/"
-cp -r "${PATH_DATA}/derivatives/labels/${SUBJECT}/anat" "${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}"
-path_derivatives="${PATH_DATA_PROCESSED}/derivatives/labels/${SUBJECT}/anat"
+path_derivatives="${PATH_DATA}/derivatives/labels/${SUBJECT}/anat"
 # Go to results folder, where most of the outputs will be located
 cd $PATH_DATA_PROCESSED
 # Copy source images
@@ -127,13 +125,13 @@ fi
 file=${SUBJECT}_${contrast_str}
 # Reorient image to RPI
 sct_image -i ${file}.nii.gz -setorient RPI -o ${file}_RPI.nii.gz
-file=${file}_RPI
 # Resample image isotropically
-sct_resample -i ${file}.nii.gz -mm $interp -o ${file}_r.nii.gz
-file=${file}_r
-end=`date +%s`
-runtime=$((end-start))
-echo "+++++++++++ TIME: Duration of reorienting and resampling:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
+sct_resample -i ${file}_RPI.nii.gz -mm $interp -o ${file}_RPI_r.nii.gz
+mv "${file}_RPI_r.nii.gz" "${SUBJECT}_space-other_${contrast_str}.nii.gz"
+file=${SUBJECT}_space-other_${contrast_str}
+# end=`date +%s`
+# runtime=$((end-start))
+# echo "+++++++++++ TIME: Duration of reorienting and resampling:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 
 # Label spinal cord (only if it does not exist) in dir anat
 start=`date +%s`
@@ -201,9 +199,13 @@ for r_coef in ${R_COEFS[@]}; do
     file_label_r_t=${file_label_r_t}_crop
 
 
-    # Segment spinal cord (only if it does not exist)
+    # Segment spinal cord
     start=`date +%s`
-    sct_deepseg_sc -i ${file_r_t}.nii.gz -c ${contrast}
+    #sct_deepseg_sc -i ${file_r_t}.nii.gz -c ${contrast}
+    sct_deepseg -i ${file_r_t}.nii.gz -task seg_sc_contrast_agnostic -qc $PATH_QC -qc-subject ${SUBJECT}
+    # TODO: soft csa?
+    sct_qc -i ${file_r_t}.nii.gz -s ${file_r_t}_seg.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
+
     end=`date +%s`
     runtime=$((end-start))
     echo "+++++++++++ TIME: Duration of segmentation t${i_transfo}:    $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
