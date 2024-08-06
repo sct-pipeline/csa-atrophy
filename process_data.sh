@@ -65,6 +65,9 @@ segment_and_label_if_does_not_exist(){
     #sct_resample -i ${FILELABELMANUAL}_RPI_dil.nii.gz -mm $interp -x nn -o ${FILELABELMANUAL}_RPI_dil_r.nii.gz
     #rsync -avzh "${FILELABELMANUAL}_RPI_dil_r.nii.gz" ${FILELABEL}.nii.gz
     # Generate labeled segmentation
+    sct_image -i ${file_seg}.nii.gz -set-sform-to-qform
+    sct_image -i ${file}.nii.gz -set-sform-to-qform
+    sct_image -i "${FILELABELMANUAL}.nii.gz" -set-sform-to-qform
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile "${FILELABELMANUAL}.nii.gz" -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Generate labeled segmentation
