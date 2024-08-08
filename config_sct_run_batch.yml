@@ -1,10 +1,10 @@
 # config file for sct_run_batch
-path_data: /scratch/pabaua/data-multi-subject-p
-path_output: /scratch/pabaua/results_csa_t2
-script: /home/pabaua/csa-atrophy/process_data.sh
-script_args: /home/pabaua/csa-atrophy/config_script.yml
-jobs: -1
+path_data: ~/datasets/data-multi-subject
+path_output: ~/process_results/results_csa-atrophy_t2-all-2024-08-08
+script: ~/code/csa-atrophy/process_data.sh
+script_args: /home/GRAMES.POLYMTL.CA/sebeda/code/csa-atrophy/config_script.yml
+jobs: 4
 batch_log: sct_run_batch_log.txt
 continue_on_error: 1
 subject_prefix: sub-
-zip: true
+email_to: sandrine.bedard@polymtl.ca
