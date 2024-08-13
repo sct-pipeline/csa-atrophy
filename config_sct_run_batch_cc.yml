@@ -1,0 +1,10 @@
+# config file for sct_run_batch
+path_data: /home/sabeda/scratch/data-multi-subject
+path_output: /home/sabeda/scratch/results_csa-atrophy_t2-all
+script: /home/sabeda/csa-atrophy/process_data.sh
+script_args: /home/sabeda/csa-atrophy/config_script.yml
+jobs: -1
+batch_log: sct_run_batch_log.txt
+continue_on_error: 1
+subject_prefix: sub-
+zip: true
