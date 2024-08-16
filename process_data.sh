@@ -59,7 +59,7 @@ segment_and_label_if_does_not_exist(){
   FILELABELMANUAL="${path_derivatives}/${SUBJECT}_${contrast_str}_label-discs_dlabel"
   if [ -e "${FILELABELMANUAL}.nii.gz" ]; then
     echo "manual labeled file was found: ${FILELABELMANUAL}"
-    rsync -avzh $FILELABELMANUAL ${FILELABEL}.nii.gz
+    rsync -avzh ${FILELABELMANUAL}.nii.gz ${FILELABEL}.nii.gz
     # reorienting and resampling image
     #sct_image -i ${FILELABELMANUAL}.nii.gz -setorient RPI -o "${FILELABELMANUAL}_RPI.nii.gz"
     #sct_maths -i ${FILELABELMANUAL}_RPI.nii.gz -dilate 2 -o ${FILELABELMANUAL}_RPI_dil.nii.gz
