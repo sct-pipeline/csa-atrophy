@@ -69,10 +69,10 @@ segment_and_label_if_does_not_exist(){
     sct_image -i ${file_seg}.nii.gz -set-sform-to-qform
     sct_image -i ${file}.nii.gz -set-sform-to-qform
     sct_image -i "${FILELABEL}.nii.gz" -set-sform-to-qform
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile "${FILELABEL}.nii.gz" -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile "${FILELABEL}.nii.gz" #-qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Generate labeled segmentation
-    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -qc ${PATH_QC} -qc-subject ${SUBJECT}
+    sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} #-qc ${PATH_QC} -qc-subject ${SUBJECT}
   fi
   # Create labels in the Spinal Cord
   #sct_label_utils -i ${file_seg}_labeled.nii.gz -vert-body 0 -o ${FILELABEL}.nii.gz
