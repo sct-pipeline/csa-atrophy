@@ -208,7 +208,7 @@ for r_coef in ${R_COEFS[@]}; do
     #sct_deepseg_sc -i ${file_r_t}.nii.gz -c ${contrast}
     sct_deepseg -i ${file_r_t}.nii.gz -task seg_sc_contrast_agnostic # -qc $PATH_QC -qc-subject ${SUBJECT}
     # TODO: soft csa?
-    sct_qc -i ${file_r_t}.nii.gz -s ${file_r_t}_seg.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
+    #sct_qc -i ${file_r_t}.nii.gz -s ${file_r_t}_seg.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
 
     end=`date +%s`
     runtime=$((end-start))
