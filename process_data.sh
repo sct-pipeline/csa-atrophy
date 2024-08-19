@@ -50,7 +50,7 @@ segment_and_label_if_does_not_exist(){
   local contrast="$2"
   local contrast_str="$3"
   FILESEG="${file}_seg"
-  sct_deepseg -i ${file}.nii.gz -task seg_sc_contrast_agnostic -qc $PATH_QC -qc-subject ${SUBJECT}
+  sct_deepseg -i ${file}.nii.gz -task seg_sc_contrast_agnostic #-qc $PATH_QC -qc-subject ${SUBJECT}
   #sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
   #segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
   local file_seg=${FILESEG}
@@ -206,9 +206,9 @@ for r_coef in ${R_COEFS[@]}; do
     # Segment spinal cord
     start=`date +%s`
     #sct_deepseg_sc -i ${file_r_t}.nii.gz -c ${contrast}
-    sct_deepseg -i ${file_r_t}.nii.gz -task seg_sc_contrast_agnostic -qc $PATH_QC -qc-subject ${SUBJECT}
+    sct_deepseg -i ${file_r_t}.nii.gz -task seg_sc_contrast_agnostic # -qc $PATH_QC -qc-subject ${SUBJECT}
     # TODO: soft csa?
-    #sct_qc -i ${file_r_t}.nii.gz -s ${file_r_t}_seg.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
+    sct_qc -i ${file_r_t}.nii.gz -s ${file_r_t}_seg.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
 
     end=`date +%s`
     runtime=$((end-start))
