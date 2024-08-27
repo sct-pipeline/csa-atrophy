@@ -17,14 +17,25 @@ from __future__ import division
 
 import pandas as pd
 import numpy as np
+import logging
 import os
+import sys
 import argparse
+import matplotlib
 import matplotlib.pyplot as plt
 from math import ceil
 from ruamel.yaml import YAML
 from scipy import stats
 from matplotlib import cm
 
+
+# Initialize logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)  # default: logging.DEBUG, logging.INFO
+hdlr = logging.StreamHandler(sys.stdout)
+logging.root.addHandler(hdlr)
+
+FNAME_LOG = 'log_stats.txt'
 
 # Parser
 #########################################################################################
@@ -80,7 +91,7 @@ def concatenate_csv_files(path_results):
             files.append(path)
     if not files:
         raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
-    print("Concatenate csv files. This will take a few seconds...")
+    logger.info("Concatenate csv files. This will take a few seconds...")
     metrics = pd.concat(pd.read_csv(f) for f in files)
     # output csv file in PATH_RESULTS
     metrics.to_csv(os.path.join(path_results, r'csa_all.csv'))
@@ -109,10 +120,10 @@ def plot_perc_err(df, path_output):
     plt.xlabel('area rescaling in %')
     plt.ylabel('STD in %')
     plt.grid()
-    plt.tight_layout()
+    #plt.tight_layout()
     output_file = os.path.join(path_output, "fig_err.png")
     plt.savefig(output_file)
-    print("--> Created figure: {}".format(output_file))
+    logger.info(f"--> Created figure: {output_file}")
 
 
 def boxplot_csa(df, path_output):
@@ -135,7 +146,7 @@ def boxplot_csa(df, path_output):
     plt.xlabel('CSA scaling')
     output_file = os.path.join(path_output, "fig_boxplot_csa.png")
     plt.savefig(output_file)
-    print("--> Created figure: {}".format(output_file))
+    logger.info("--> Created figure: {}".format(output_file))
 
 
 def boxplot_atrophy(df, path_output):
@@ -159,7 +170,7 @@ def boxplot_atrophy(df, path_output):
     plt.axis('scaled')
     output_file = os.path.join(path_output, "fig_boxplot_atrophy.png")
     plt.savefig(output_file)
-    print("--> Created figure: {}".format(output_file))
+    logger.info("--> Created figure: {}".format(output_file))
 
 
 def plot_sample_size(z_conf, z_power, std_arr, mean_csa, path_output):
@@ -190,6 +201,7 @@ def plot_sample_size(z_conf, z_power, std_arr, mean_csa, path_output):
     ax.plot(atrophy / mean_csa[1] * 100, n_t2[0], 'tab:red', label='T2w 80% power')
     ax.plot(atrophy / mean_csa[1] * 100, n_t2[1], 'tab:red', linestyle='--', label='T2w 90% power')
     ax.set_ylabel('number of participants per group of study \n(patients or controls) with ratio 1:1')
+
     ax.set_xlabel('atrophy in %')
     plt.suptitle('minimum number of participants to detect an atrophy with 5% uncertainty', fontsize=16, y=1.05)
     ax.set_title('T1w (1.0 mm iso): SD = {} mm², mean CSA= {} mm² \nT2w (0.8 mm iso): SD = {} mm², mean CSA= {} mm²'.format(
@@ -199,7 +211,7 @@ def plot_sample_size(z_conf, z_power, std_arr, mean_csa, path_output):
     ax.grid()
     output_file = os.path.join(path_output, "fig_min_subj.png")
     plt.savefig(output_file, bbox_inches='tight')
-    print("--> Created figure: {}".format(output_file))
+    logger.info("--> Created figure: {}".format(output_file))
 
 
 def error_function_of_csa(df, path_output):
@@ -249,7 +261,7 @@ def error_function_of_intra_cov(df, path_output):
     plt.grid()
     output_file = os.path.join(path_output, "fig_err_in_function_of_cov.png")
     plt.savefig(output_file, bbox_inches='tight')
-    print("--> Created figure: {}".format(output_file))
+    logger.info("--> Created figure: {}".format(output_file))
 
 
 def error_function_of_intra_cov_outlier(df, path_output):
@@ -282,7 +294,7 @@ def error_function_of_intra_cov_outlier(df, path_output):
     # save image
     output_file = os.path.join(path_output, "fig_err_in_function_of_cov_outlier.png")
     plt.savefig(output_file, bbox_inches='tight')
-    print("--> Created figure: {}".format(output_file))
+    logger.info("--> Created figure: {}".format(output_file))
 
 
 def add_columns_df_sub(df):
@@ -411,6 +423,14 @@ def main():
     path_results = os.path.abspath(os.path.expanduser(arguments.i))
     vertlevels_input = arguments.l
     path_output = os.path.abspath(arguments.o)
+    if not os.path.exists(path_output):
+        os.mkdir(path_output)
+
+    # Dump log file there
+    if os.path.exists(FNAME_LOG):
+        os.remove(FNAME_LOG)
+    fh = logging.FileHandler(os.path.join(path_output, FNAME_LOG))
+    logging.root.addHandler(fh)
 
     # aggregate all csv results files
     concatenate_csv_files(path_results)
@@ -423,21 +443,21 @@ def main():
     pd.set_option('display.max_rows', None)
 
     # identify rows with missing values
-    print("Remove rows with missing values...")
+    logger.info("Remove rows with missing values...")
     lines_to_drop = df_vert[df_vert['MEAN(area)'] == 'None'].index
     df_vert['subject'] = list(sub.split('data_processed/')[1].split('/anat')[0] for sub in df_vert['Filename'])
 
     # remove rows with missing values
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
     df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
-    print("  Rows removed: {}".format(lines_to_drop))
+    logger.info("  Rows removed: {}".format(lines_to_drop))
 
     # fetch parameters from config.yaml file
     config_param = yaml_parser(arguments.config)
 
     # add useful columns to dataframe
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
-    df_vert['rescale'] = list(float(b.split('RPI_r_r')[1].split('_')[0]) for b in df_vert['basename'])
+    df_vert['rescale'] = list(float(b.split('_r')[1].split('_')[0]) for b in df_vert['basename'])
     df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
 
 
@@ -449,7 +469,7 @@ def main():
         if not all(elem in set(list(df_vert['VertLevel'].values)) for elem in vertlevels):
             raise ValueError("\nInput vertebral levels '{}' do not exist in csv files".format(vertlevels))
     # register vertebrae levels of interest (Default: all vertebrae levels in csv files)
-    print("Stats are averaged across vertebral levels: {}".format(vertlevels))
+    logger.info(f"Stats are averaged across vertebral levels: {vertlevels}")
 
     # Create new dataframe with only selected vertebral levels
     df = df_vert[df_vert['VertLevel'].isin(vertlevels)]
@@ -467,7 +487,7 @@ def main():
     df = df.drop('basename', 1)
 
     # Create dataframe for computing stats per subject: df_sub
-    print("\n==================== subject_dataframe ==========================\n")
+    logger.info("\n==================== subject_dataframe ==========================\n")
     df_sub = pd.DataFrame()
     # add necessary columns to df_sub dataframe
     df_sub['rescale'] = df.groupby(['rescale', 'subject']).mean().reset_index()['rescale']
@@ -481,17 +501,19 @@ def main():
     df_sub['cov'] = df_sub['std'].div(df_sub['mean'])
     df_sub = add_columns_df_sub(df_sub)
     df_sub['rescale_estimated'] = df_sub['mean'].div(df_sub['csa_without_rescale'])
+
     df_sub['error'] = (df_sub['mean'] - df_sub['theoretic_csa'])
     df_sub['perc_error'] = 100 * (df_sub['mean'] - df_sub['theoretic_csa']).div(df_sub['theoretic_csa'])
     sample = []
     for rescale, group in df.groupby('rescale'):
         for sub, subgroup in group.groupby('subject'):
             df_sub.loc[(df_sub['rescale'] == rescale) & (df_sub['subject'] == sub), 'sample'] = subgroup.sample(n=1)['MEAN(area)'].values
+
     # save dataframe in a csv file
     df_sub.to_csv(os.path.join(path_output, r'csa_sub.csv'))
 
     # Create dataframe for computing stats across subject: df_rescale
-    print("\n==================== rescaling_dataframe ==========================\n")
+    logger.info("\n==================== rescaling_dataframe ==========================\n")
     df_rescale = pd.DataFrame()
     df_rescale['rescale'] = df_sub.groupby(['rescale']).mean().reset_index()['rescale']
     df_rescale['rescale_area'] = df_sub.groupby('rescale_area').mean().reset_index()['rescale_area']
@@ -509,6 +531,7 @@ def main():
     df_rescale['mean_perc_error'] = df_sub.groupby('rescale').mean()['perc_error'].values
     df_rescale['mean_error'] = df_sub.groupby('rescale').mean()['error'].values
     df_rescale['std_perc_error'] = df_sub.groupby('rescale').std()['perc_error'].values
+
     df_rescale = pearson(df_sub, df_rescale)
     df_rescale = sample_size(df, df_sub, df_rescale)
     # save dataframe in a csv file
