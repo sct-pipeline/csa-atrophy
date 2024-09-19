@@ -10,3 +10,5 @@ qc/
 *.jpg
 *.png
 .gitignore
+*.egg-info/
+dist/

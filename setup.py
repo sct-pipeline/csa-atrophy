@@ -29,6 +29,7 @@ setup(
     ],
     keywords='',
     install_requires=install_reqs,
+    packages = [],
     entry_points={
         'console_scripts': [
             'affine_transfo=affine_transfo:main',

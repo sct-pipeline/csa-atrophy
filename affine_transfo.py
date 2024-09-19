@@ -120,7 +120,11 @@ def random_values(df, subject_name, config_param):
         'shift_PA': shift_PA,
         'shift_IS': shift_IS
     }
-    df = df.append(transfo_dict, ignore_index=True)
+    #df = df.append(transfo_dict, ignore_index=True)
+    print(df)
+    print(transfo_dict)
+    df_new_row = pd.DataFrame(transfo_dict, index=[0])
+    df = pd.concat([df, df_new_row], ignore_index=True)#.reset_index()
     return df, angle_IS, angle_PA, angle_LR, shift_LR, shift_PA, shift_IS
 
 
