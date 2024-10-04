@@ -97,6 +97,41 @@ def concatenate_csv_files(path_results):
     metrics.to_csv(os.path.join(path_results, r'csa_all.csv'))
 
 
+def concatenate_csv_files_perslice(path_results, levels=[3, 4, 5], nb_slices=3):
+    """Fetch and concatenate data from all csv files in results/csa_data to compute statistics with pandas
+    :param path_results: path to folder containing csv files for statistics
+    """
+    files = []
+    for file in os.listdir(path_results):
+        path = os.path.join(path_results, file)
+        if ".csv" in file and "csa" and "sub" and "perslice" in file:
+            files.append(path)
+    if not files:
+        raise FileExistsError("Folder {} does not contain any results csv file.".format(path_results))
+    logger.info("Concatenate csv files. This will take a few seconds...")
+    metrics_list = []
+    for f in files:
+        subfile = pd.read_csv(f)
+        #csa = pd.DataFrame(sc_data[['Filename', 'MEAN(area)']]).rename(columns={'Filename': 'Subject'})
+        newdf = pd.DataFrame()
+        csa = []
+        filenames = []
+        slices = []
+        for level in levels:
+            csa.append(subfile.loc[subfile['VertLevel']== level, 'MEAN(area)'][0:nb_slices].mean())
+            filenames.append(subfile['Filename'][0])
+            sl = np.array(subfile.loc[subfile['VertLevel']== level, 'Slice (I->S)'])
+            slices.append(str(sl[0]) + ':' + str(sl[nb_slices-1]))
+        newdf['Filename'] = filenames
+        newdf['VertLevel'] = levels
+        newdf['MEAN(area)'] = csa
+        newdf['Slice (I->S)'] = slices
+        metrics_list.append(newdf)
+    metrics = pd.concat(metrics_list)
+    # output csv file in PATH_RESULTS
+    metrics.to_csv(os.path.join(path_results, r'csa_all.csv'))
+
+
 def yaml_parser(config_file):
     """parse config_script.yml file containing pipeline's parameters"""
     with open(config_file, 'r') as config_var:
@@ -235,7 +270,7 @@ def error_function_of_csa(df, path_output):
     plt.grid()
     output_file = os.path.join(path_output, "fig_err_in_function_of_csa.png")
     plt.savefig(output_file, bbox_inches='tight')
-    print("--> Created figure: {}".format(output_file))
+    logger.info("--> Created figure: {}".format(output_file))
 
 
 def error_function_of_intra_cov(df, path_output):
@@ -363,7 +398,7 @@ def sample_size(df, df_sub, df_rescale, itt = 50):
     sample_size_90 = []
     sample_size_long_80 = []
     sample_size_long_90 = []
-    print("Computing sample size using Monte Carlo simulation with {} iterations. This might take a while...".format(itt))
+    logger.info("Computing sample size using Monte Carlo simulation with {} iterations. This might take a while...".format(itt))
     # Compute mean sample size using a Monte Carlo simulation to evaluate variability of measures
     for n in range(itt):
         for rescale_r, group_r in df.groupby('rescale'):
@@ -433,7 +468,8 @@ def main():
     logging.root.addHandler(fh)
 
     # aggregate all csv results files
-    concatenate_csv_files(path_results)
+    #concatenate_csv_files(path_results)
+    concatenate_csv_files_perslice(path_results)#, levels=vertlevels_input)
 
     # read data
     data = pd.read_csv(os.path.join(path_results, r'csa_all.csv'), decimal=".")
@@ -536,7 +572,7 @@ def main():
     df_rescale = sample_size(df, df_sub, df_rescale)
     # save dataframe in a csv file
     df_rescale.to_csv(os.path.join(path_output, r'csa_rescale.csv'))
-
+    logger.info(df_rescale)
     # plot graph if verbose is present
     if arguments.fig:
         if path_output:

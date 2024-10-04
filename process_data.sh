@@ -50,7 +50,7 @@ segment_and_label_if_does_not_exist(){
   local contrast="$2"
   local contrast_str="$3"
   FILESEG="${file}_seg"
-  sct_deepseg -i ${file}.nii.gz -task seg_sc_contrast_agnostic #-qc $PATH_QC -qc-subject ${SUBJECT}
+  sct_deepseg -i ${file}.nii.gz -task seg_sc_contrast_agnostic -thr 0 #-qc $PATH_QC -qc-subject ${SUBJECT}
   #sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
   #segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
   local file_seg=${FILESEG}
@@ -69,6 +69,8 @@ segment_and_label_if_does_not_exist(){
     sct_image -i ${file_seg}.nii.gz -set-sform-to-qform
     sct_image -i ${file}.nii.gz -set-sform-to-qform
     sct_image -i "${FILELABEL}.nii.gz" -set-sform-to-qform
+    # Remove label disc 1 to avoid errors if seg doesn't cover C1 label
+    sct_label_utils -i "${FILELABEL}.nii.gz" -remove 1 -o "${FILELABEL}.nii.gz"
     sct_label_vertebrae -i ${file}.nii.gz -s ${file_seg}.nii.gz -c ${contrast} -discfile "${FILELABEL}.nii.gz" #-qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Generate labeled segmentation
@@ -206,7 +208,7 @@ for r_coef in ${R_COEFS[@]}; do
     # Segment spinal cord
     start=`date +%s`
     #sct_deepseg_sc -i ${file_r_t}.nii.gz -c ${contrast}
-    sct_deepseg -i ${file_r_t}.nii.gz -task seg_sc_contrast_agnostic # -qc $PATH_QC -qc-subject ${SUBJECT}
+    sct_deepseg -i ${file_r_t}.nii.gz -task seg_sc_contrast_agnostic -thr 0 # -qc $PATH_QC -qc-subject ${SUBJECT}
     # TODO: soft csa?
     #sct_qc -i ${file_r_t}.nii.gz -s ${file_r_t}_seg.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
 
