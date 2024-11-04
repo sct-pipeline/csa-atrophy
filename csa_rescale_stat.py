@@ -118,10 +118,13 @@ def concatenate_csv_files_perslice(path_results, levels=[3, 4, 5], nb_slices=3):
         filenames = []
         slices = []
         for level in levels:
-            csa.append(subfile.loc[subfile['VertLevel']== level, 'MEAN(area)'][0:nb_slices].mean())
+            csa_above = subfile.loc[subfile['VertLevel']== level-1, 'MEAN(area)'][0:2]
+            csa_above.append(subfile.loc[subfile['VertLevel']== level, 'MEAN(area)'][-1::])
+            csa.append(csa_above.mean())
             filenames.append(subfile['Filename'][0])
             sl = np.array(subfile.loc[subfile['VertLevel']== level, 'Slice (I->S)'])
-            slices.append(str(sl[0]) + ':' + str(sl[nb_slices-1]))
+            sl_above = np.array(subfile.loc[subfile['VertLevel']== level-1, 'Slice (I->S)'])
+            slices.append(str(sl[-1]) + ':' + str(sl_above[1]))
         newdf['Filename'] = filenames
         newdf['VertLevel'] = levels
         newdf['MEAN(area)'] = csa
