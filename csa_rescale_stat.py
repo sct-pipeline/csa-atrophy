@@ -72,6 +72,11 @@ def get_parser():
         nargs="*",
     )
     optional.add_argument(
+        '-perslice',
+        help='Use CSA perslice to compute over 3 slices at intervertebral discs',
+        action="store_true"
+    )
+    optional.add_argument(
         '-o',
         help='Path where figures will be saved. By default, they will be saved in the current directory.',
         default=""
@@ -471,8 +476,10 @@ def main():
     logging.root.addHandler(fh)
 
     # aggregate all csv results files
-    #concatenate_csv_files(path_results)
-    concatenate_csv_files_perslice(path_results)#, levels=vertlevels_input)
+    if args.perslice:
+        concatenate_csv_files_perslice(path_results)
+    else:
+        concatenate_csv_files(path_results)
 
     # read data
     data = pd.read_csv(os.path.join(path_results, r'csa_all.csv'), decimal=".")
