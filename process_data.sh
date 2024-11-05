@@ -8,7 +8,7 @@
 # Example:
 #   ./process_data.sh sub-03
 #
-# Author: Julien Cohen-Adad, Paul Bautin
+# Author: Julien Cohen-Adad, Paul Bautin, Sandrine Bédard
 ###################################################
 
 # TODO: simplify variable names: no need to call file_or_c_blablabla. Instead: update file
