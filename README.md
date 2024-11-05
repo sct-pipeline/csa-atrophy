@@ -1,17 +1,23 @@
+## This version was modified for the [contrast-agnostic segmentation](https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord) for ISMRM submission 2024
 ![csa-atrophy](https://github.com/sct-pipeline/csa-atrophy/blob/master/csa_atrophy_scheme3.png)
 
-# csa-atrophy
+# Csa Atrophy
 
 Evaluate the sensitivity of atrophy detection with SCT. The algorithm works as follows:
 - Consider subject I --> sI
 - Applies a rescaling on the native image (e.g. 1, 0.95, 0.8) --> rX
 - Applies random affine transformation --> tY
-- Segment the cord
+- Segment the cord with contrast-agnostic segmentation for binary and soft outputs
 - Compute CSA --> CSA(sI, rX, tY)
 
-# How to run
+## Data
+ The T1w and T2w scans from 267 helathy adults of the spine genric [data-multi-suject dataset (r20231212)](https://github.com/spine-generic/data-multi-subject/releases/tag/r20231212) were used.
 
-This code has been tested using Python 3.7.
+## Dependencies
+* Pyhton 3.9
+* [Spinal Cord Toolbox v6.4](https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/6.4)
+
+## Installation
 
 Download (or git clone) this repository:
 ~~~
@@ -24,26 +30,30 @@ csa-atrophy requires specific python packages for computing statistics and proce
 pip install -e .
 ~~~
 
-Download the [Spine Generic Multi-Subject dataset](https://github.com/spine-generic/data-multi-subject#download). 
+## Launch analysis
+1. Modify `path-data`, `path-output` and `jobs`in [config_sct_run_batch.yml](https://github.com/sct-pipeline/csa-atrophy/blob/sb/update-for-ca-python3.9/config_sct_run_batch.yml)
+2. Modify the contrast in [config_script.yml](https://github.com/sct-pipeline/csa-atrophy/blob/sb/update-for-ca-python3.9/config_script.yml)
 
-Edit the file `config_sct_run_batch.yml` according to your setup. Notable flags include:
-- `path_data`: If you downloaded the spine-generic data at another location, make sure to update the path;
-- `include_list`: If you only want to run the script in a few subjects, list them here. Example:
-  `include_list: ['sub-unf04', 'sub-unf05']`
-
-See `sct_run_batch -h` to look at the available options.
-
-Run the analysis:
+Run the analysis perlevel:
 ~~~
 sct_run_batch -config config_sct_run_batch.yml
 ~~~
+**Note: To output soft segmentations, add `-thr 0` in the sct_deepseg commmand in [process_data.sh](https://github.com/sct-pipeline/csa-atrophy/blob/sb/update-for-ca-python3.9/process_data.sh)**
 
-:note: **desired subjects using flag -include and in parallel processing using flag -jobs.**
+Run the analysis perlevel:
+~~~
+sct_run_batch -config config_sct_run_batch.yml -script process_data_perslice.sh
+~~~
 
-To output statistics, run in Dataset
+## Statistics
+**NOTE: do not compute in python 3.9, but 3.7**
+To output statistics, run :
 ~~~
-csa_rescale_stat -i csa_atrophy_results/results -o csa_atrophy_results -config config_script.yml -fig
+csa_rescale_stat -i csa_atrophy_results/results -o csa_atrophy_results -config config_script.yml -fig 
 ~~~
+
+To computes stats for specific levels add flag:  `-l 3` for C3.
+
 
 # Quality Control
 
