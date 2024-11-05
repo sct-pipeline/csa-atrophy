@@ -212,11 +212,11 @@ def boxplot_atrophy(df, path_output):
     plt.xlabel('CSA scaling')
     plt.axis('scaled')
     output_file = os.path.join(path_output, "fig_boxplot_atrophy.png")
-    plt.savefig(output_file)
+    plt.savefig(output_file, dpi=300)
     logger.info("--> Created figure: {}".format(output_file))
 
 
-def plot_sample_size(z_conf, z_power, std_arr, mean_csa, path_output):
+def plot_sample_size(z_conf, z_power, std_arr, std_arr_soft,std_arr_ref, mean_csa, mean_csa_soft,mean_csa_ref,path_output, filename=None):
     """plot minimum number of patients required to detect an atrophy of a given value
     :param z_conf: z score for X % uncertainty. Example: z_conf=1.96
     :param z_power: z score for X % Power. Example: z_power=(0.84, 1.282)
@@ -231,28 +231,53 @@ def plot_sample_size(z_conf, z_power, std_arr, mean_csa, path_output):
     n_t2 =[]
     for z_p in z_power:
         # x_axis values ranging from 1.5 to 8.0 mm^2
-        atrophy = np.arange(1.5, 8.0, 0.05)
+        atrophy_perc = 1 - (np.arange(0.925, 0.991, 0.001))**2
         # numerator of sample size equation T1w
         num_n_t1 = 2 * ((z_conf + z_p) ** 2) * (std_arr[0] ** 2)
-        n_t1.append(num_n_t1 / ((0.01*atrophy*mean_csa[0]) ** 2))
+        n_t1.append(num_n_t1 / ((atrophy_perc*mean_csa[0]) ** 2))
+
+        # numerator of sample size equation T1w
+        num_n_t1 = 2 * ((z_conf + z_p) ** 2) * (std_arr_soft[0] ** 2)
+        n_t1.append(num_n_t1 / ((atrophy_perc*mean_csa_soft[0]) ** 2))
+
+        # numerator of sample size equation T1w
+        num_n_t1 = 2 * ((z_conf + z_p) ** 2) * (std_arr_ref[0] ** 2)
+        n_t1.append(num_n_t1 / ((atrophy_perc*mean_csa_ref[0]) ** 2))
+
+
         # numerator of sample size equation T2w
         num_n_t2 = 2 * ((z_conf + z_p) ** 2) * (std_arr[1] ** 2)
-        n_t2.append(num_n_t2 / ((0.01*atrophy*mean_csa[1]) ** 2))
+        n_t2.append(num_n_t2 / ((atrophy_perc)*mean_csa[1]) ** 2)
+
+        # numerator of sample size equation T2w SOFT
+        num_n_t2 = 2 * ((z_conf + z_p) ** 2) * (std_arr_soft[1] ** 2)
+        n_t2.append(num_n_t2 / ((atrophy_perc)*mean_csa_soft[1]) ** 2)
+
+        # numerator of sample size equation T2w SOFT
+        num_n_t2 = 2 * ((z_conf + z_p) ** 2) * (std_arr_ref[1] ** 2)
+        n_t2.append(num_n_t2 / ((atrophy_perc)*mean_csa_ref[1]) ** 2)
+
     # plot
-    ax.plot(atrophy / mean_csa[0] * 100, n_t1[0], 'tab:blue',  label='T1w 80% power')
-    ax.plot(atrophy / mean_csa[0] * 100, n_t1[1], 'tab:blue', linestyle='--', label='T1w 90% power')
-    ax.plot(atrophy / mean_csa[1] * 100, n_t2[0], 'tab:red', label='T2w 80% power')
-    ax.plot(atrophy / mean_csa[1] * 100, n_t2[1], 'tab:red', linestyle='--', label='T2w 90% power')
+    ax.plot(atrophy_perc * 100, n_t1[0], 'tab:blue',  label='T1w BIN')
+    ax.plot(atrophy_perc * 100, n_t1[1], 'tab:blue', linestyle='--', label='T1w SOFT')
+   #ax.plot(atrophy_perc * 100, n_t1[2], alpha=0.3, label='T1w deepseg_sc')
+
+    ax.plot(atrophy_perc * 100, n_t2[0], 'tab:red', label='T2w BIN')
+    ax.plot(atrophy_perc * 100, n_t2[1], 'tab:red', linestyle='--', label='T2w SOFT')
+    #ax.plot(atrophy_perc * 100, n_t2[2], 'tab:red', alpha=0.3, label='T2w deepseg_sc')
+
     ax.set_ylabel('number of participants per group of study \n(patients or controls) with ratio 1:1')
 
     ax.set_xlabel('atrophy in %')
     plt.suptitle('minimum number of participants to detect an atrophy with 5% uncertainty', fontsize=16, y=1.05)
-    ax.set_title('T1w (1.0 mm iso): SD = {} mm², mean CSA= {} mm² \nT2w (0.8 mm iso): SD = {} mm², mean CSA= {} mm²'.format(
-            str(
-                round(std_arr[0], 2)), str(mean_csa[0]), str(round(std_arr[1], 2)) , str(mean_csa[1])))
+    ax.set_title('T1w: mean soft CSA = {} ± {} mm², mean bin CSA = {} ± {} mm² \nT2w: mean soft CSA = {} ± {} mm², mean bin CSA= {} ± {} mm²'.format(
+            str(mean_csa_soft[0]), str(round(std_arr_soft[0], 2)),str(mean_csa[0]), str(round(std_arr[0], 2)) , str(mean_csa_soft[1]), str(round(std_arr_soft[1], 2)),  str(mean_csa[1]), str(round(std_arr[1], 2))))
     ax.legend()
     ax.grid()
-    output_file = os.path.join(path_output, "fig_min_subj.png")
+    if filename is None:
+        output_file = os.path.join(path_output, "fig_min_subj.png")
+    else:
+        output_file = os.path.join(path_output, filename)
     plt.savefig(output_file, bbox_inches='tight')
     logger.info("--> Created figure: {}".format(output_file))
 
@@ -475,8 +500,23 @@ def main():
     fh = logging.FileHandler(os.path.join(path_output, FNAME_LOG))
     logging.root.addHandler(fh)
 
+    # fetch parameters from config.yaml file
+    config_param = yaml_parser(arguments.config)
+    # plot minimum number of patients required to detect an atrophy of a given value
+    # z_score for confidence level,
+    z_score_confidence = config_param['fig']['sample_size']['conf']
+    # z_score for power level,
+    z_score_power = config_param['fig']['sample_size']['power']
+    # std = STD of subjects without rescaling CSA values
+    # mean_csa =  mean CSA value of subjects without rescaling
+    # Mean at C3-C4-C5 for soft
+    plot_sample_size(z_conf=z_score_confidence , z_power=z_score_power , std_arr=[7.62 ,7.55], std_arr_soft=[7.58, 7.44],std_arr_ref=[8.33 ,7.59],
+                        mean_csa=[74.18 , 80.16], mean_csa_soft=[74.91 , 80.06], mean_csa_ref=[69.747 , 76.164], path_output=path_output, filename="fig_min_subj_soft.png")
+    #plot_sample_size(z_conf=z_score_confidence , z_power=z_score_power , std_arr=[8.33 ,7.59],
+                   # mean_csa=[69.747 , 76.164] , path_output=path_output, filename="fig_min_subj_bautin.png")
+
     # aggregate all csv results files
-    if args.perslice:
+    if arguments.perslice:
         concatenate_csv_files_perslice(path_results)
     else:
         concatenate_csv_files(path_results)
@@ -498,8 +538,6 @@ def main():
     df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
     logger.info("  Rows removed: {}".format(lines_to_drop))
 
-    # fetch parameters from config.yaml file
-    config_param = yaml_parser(arguments.config)
 
     # add useful columns to dataframe
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
@@ -604,8 +642,12 @@ def main():
         z_score_power = config_param['fig']['sample_size']['power']
         # std = STD of subjects without rescaling CSA values
         # mean_csa =  mean CSA value of subjects without rescaling
-        plot_sample_size(z_conf=z_score_confidence , z_power=z_score_power , std_arr=[7.56 , 8.29] ,
-                         mean_csa=[69.70 , 76.12] , path_output=path_output)
+        # Mean at C3-C4-C5 for soft
+        plot_sample_size(z_conf=z_score_confidence , z_power=z_score_power , std_arr=[7.58, 7.44],
+                         mean_csa=[74.91 , 80.06] , path_output=path_output, filename="fig_min_subj_soft.png")
+        # Mean at C3-C4-C5 for bin
+        plot_sample_size(z_conf=z_score_confidence , z_power=z_score_power , std_arr=[7.62 ,7.55],
+                         mean_csa=[74.18 , 80.16] , path_output=path_output, filename="fig_min_subj_bin.png")
         # scatter plot of COV in function of error %
         error_function_of_intra_cov(df_sub, path_output=path_output)
         # scatter plot of COV in function of error % to identify outliers
