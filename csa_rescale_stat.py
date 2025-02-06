@@ -519,8 +519,10 @@ def main():
     if arguments.perslice:
         concatenate_csv_files_perslice(path_results)
     else:
-        concatenate_csv_files(path_results)
-
+        if not os.path.isfile(os.path.join(path_results, r'csa_all.csv')):
+            concatenate_csv_files(path_results)
+        else:
+            logger.info("csa_all.csv exists.. skipping")
     # read data
     data = pd.read_csv(os.path.join(path_results, r'csa_all.csv'), decimal=".")
 
@@ -536,13 +538,38 @@ def main():
     # remove rows with missing values
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
     df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
-    logger.info("  Rows removed: {}".format(lines_to_drop))
+    # TODO add option for exclude list
+    sub_to_drop = (df_vert[df_vert['subject']=='sub-brnoCeitec06'].index).to_list()
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb05'].index).to_list())
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-tokyo750w06'].index).to_list())
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb07'].index).to_list())
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-cmrrb05'].index).to_list())
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb02'].index).to_list())
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-juntendo750w03'].index).to_list())
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-stanford04'].index).to_list())
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-juntendo750w02'].index).to_list())
+    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb08'].index).to_list())
 
 
+    df_vert = df_vert.drop(df_vert.index[sub_to_drop])
+
+    list_underseg = [sl for sl in df_vert['Slice (I->S)'] if ';' in sl]
+    sub = []
+    for x in list_underseg:
+        sub = np.unique(np.array(df_vert.loc[df_vert['Slice (I->S)']== x, 'subject']))
+        print(sub)
+
+    #print(sub_to_drop)
+   # for sl in df_vert['Slice (I->S)']:
+   #     listing = [sl if ';' in sl]
+   #     print(listing)
+
+        #print(int(sl.split(':')[0]))
+        #print(int(sl.split(':')[1]))
     # add useful columns to dataframe
     df_vert['basename'] = list(os.path.basename(path).split('.nii.gz')[0] for path in df_vert['Filename'])
     df_vert['rescale'] = list(float(b.split('_r')[1].split('_')[0]) for b in df_vert['basename'])
-    df_vert['slices'] = list(int(slices.split(':')[1]) - int(slices.split(':')[0]) + 1 for slices in df_vert['Slice (I->S)'])
+    df_vert['slices'] = [(int(sl.split(':')[1]) - int(sl.split(':')[0]) + 1) for sl in df_vert['Slice (I->S)']]
 
 
     # verify if vertlevels of interest were given in input by user

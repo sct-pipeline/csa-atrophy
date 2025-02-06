@@ -1,9 +1,9 @@
 # config file for sct_run_batch
 path_data: ~/datasets/data-multi-subject
-path_output: ~/process_results/results_csa-atrophy_t1-all-2024-09-05-bin
+path_output: ~/process_results/csa-atrophy_v3/results_csa-atrophy_t2-all-2025-02-06/
 script: ~/code/csa-atrophy/process_data.sh
 script_args: /home/GRAMES.POLYMTL.CA/sebeda/code/csa-atrophy/config_script.yml
-jobs: 7
+jobs: 8
 batch_log: sct_run_batch_log.txt
 continue_on_error: 1
 subject_prefix: sub-

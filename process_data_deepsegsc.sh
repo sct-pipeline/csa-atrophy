@@ -50,7 +50,7 @@ segment_and_label_if_does_not_exist(){
   local contrast="$2"
   local contrast_str="$3"
   FILESEG="${file}_seg"
-  sct_deepseg_sc -i ${file}.nii.gz -c $contrast -o $FILESEG
+  sct_deepseg_sc -i ${file}.nii.gz -c $contrast -o ${FILESEG}.nii.gz
   #sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc $PATH_QC -qc-subject ${SUBJECT}
   #segment_if_does_not_exist $file ${contrast} "-qc ${PATH_QC} -qc-subject ${SUBJECT}"
   local file_seg=${FILESEG}
