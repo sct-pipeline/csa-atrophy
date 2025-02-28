@@ -384,8 +384,8 @@ def add_columns_df_sub(df):
             if subject in csa_without_rescale.index.values:
                 group.loc[subject, 'theoretic_csa'] = csa_without_rescale.loc[subject, 'mean'] * (rescale ** 2)
         df.loc[rescale, 'theoretic_csa'] = group['theoretic_csa'].values
-        df.loc[rescale, 'csa_without_rescale'] = csa_without_rescale['mean'].values
-        df.loc[rescale, 'csa_without_rescale'] = csa_without_rescale['mean'].values
+        df.loc[df.index == rescale, 'csa_without_rescale'] = df.loc[df.index == rescale, 'subject'].map(csa_without_rescale['mean'])
+        #df.loc[rescale, 'csa_without_rescale'] = csa_without_rescale['mean'].values
     df = df.reset_index()
     return df
 
@@ -539,19 +539,18 @@ def main():
     df_vert = df_vert.drop(df_vert.index[lines_to_drop])
     df_vert['MEAN(area)'] = pd.to_numeric(df_vert['MEAN(area)'])
     # TODO add option for exclude list
-    sub_to_drop = (df_vert[df_vert['subject']=='sub-brnoCeitec06'].index).to_list()
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb05'].index).to_list())
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-tokyo750w06'].index).to_list())
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb07'].index).to_list())
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-cmrrb05'].index).to_list())
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb02'].index).to_list())
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-juntendo750w03'].index).to_list())
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-stanford04'].index).to_list())
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-juntendo750w02'].index).to_list())
-    sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb08'].index).to_list())
+    # sub_to_drop = (df_vert[df_vert['subject']=='sub-brnoCeitec06'].index).to_list()
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb05'].index).to_list())
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-tokyo750w06'].index).to_list())
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb07'].index).to_list())
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-cmrrb05'].index).to_list())
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb02'].index).to_list())
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-juntendo750w03'].index).to_list())
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-stanford04'].index).to_list())
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-juntendo750w02'].index).to_list())
+    # sub_to_drop.extend((df_vert[df_vert['subject']=='sub-brnoUhb08'].index).to_list())
 
-
-    df_vert = df_vert.drop(df_vert.index[sub_to_drop])
+   # df_vert = df_vert.drop(df_vert.index[sub_to_drop])
 
     list_underseg = [sl for sl in df_vert['Slice (I->S)'] if ';' in sl]
     sub = []
